@@ -99,6 +99,7 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
                 // @ts-ignore - onPaneDoubleClick exists in @xyflow/react v12 but linting is failing here
                 onPaneDoubleClick={onPaneDoubleClick}
                 zoomOnDoubleClick={false}
+                paneClickable={true}
                 fitView
                 className="bg-zinc-100 dark:bg-zinc-900"
             >
