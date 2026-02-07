@@ -8,7 +8,8 @@ import {
     Plus,
     X,
     ArrowLeftRight,
-    Upload
+    Upload,
+    FileJson
 } from "lucide-react";
 import Link from "next/link";
 import { type Node } from '@xyflow/react';
@@ -27,6 +28,13 @@ export default function ProjectPage() {
     const [activeChatId, setActiveChatId] = useState('initial');
     const [message, setMessage] = useState("");
     const [editingChatId, setEditingChatId] = useState<string | null>(null);
+    const [projectFiles, setProjectFiles] = useState<{ id: string, name: string, type: string, size: string }[]>([
+        { id: '1', name: 'main_dashboard.csv', type: 'CSV', size: '2.4 MB' },
+        { id: '2', name: 'user_analytics.json', type: 'JSON', size: '1.1 MB' }
+    ]);
+    const [showMentions, setShowMentions] = useState(false);
+    const [mentionSearch, setMentionSearch] = useState("");
+    const [mentionIndex, setMentionIndex] = useState(0);
 
     // Resizable chat state
     const [chatWidth, setChatWidth] = useState(400);
@@ -142,9 +150,55 @@ export default function ProjectPage() {
                 messages: [{ role: 'assistant', content: `Chatting with ${label}. How can I help?` }]
             };
             setChats(prev => [...prev, newChat]);
-            setActiveChatId(chatId);
         }
     };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const newFile = {
+                id: Math.random().toString(36).substring(7),
+                name: file.name,
+                type: file.name.split('.').pop()?.toUpperCase() || 'FILE',
+                size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+            };
+            setProjectFiles(prev => [...prev, newFile]);
+
+            // Add a small notification message to the chat
+            const assistantMsg = {
+                role: 'assistant',
+                content: `I've added "${file.name}" to your project collection. You can now mention it using "@" in our chat to start analyzing its contents.`
+            };
+            setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, messages: [...c.messages, assistantMsg] } : c));
+        }
+    };
+
+    const handleMessageChange = (val: string) => {
+        setMessage(val);
+
+        const lastAtPos = val.lastIndexOf('@');
+        if (lastAtPos !== -1 && (lastAtPos === 0 || val[lastAtPos - 1] === ' ')) {
+            const searchStr = val.substring(lastAtPos + 1);
+            if (!searchStr.includes(' ')) {
+                setMentionSearch(searchStr);
+                setShowMentions(true);
+                setMentionIndex(0);
+                return;
+            }
+        }
+        setShowMentions(false);
+    };
+
+    const selectMention = (fileName: string) => {
+        const lastAtPos = message.lastIndexOf('@');
+        const newMessage = message.substring(0, lastAtPos) + `@${fileName} ` + message.substring(message.indexOf(' ', lastAtPos) !== -1 ? message.indexOf(' ', lastAtPos) : message.length);
+        setMessage(newMessage);
+        setShowMentions(false);
+    };
+
+    const filteredFiles = projectFiles.filter(f =>
+        f.name.toLowerCase().includes(mentionSearch.toLowerCase())
+    );
 
     return (
         <div className="h-screen flex overflow-hidden bg-zinc-50 dark:bg-zinc-950">
@@ -155,23 +209,18 @@ export default function ProjectPage() {
                 <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
                     <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-7 w-7 rounded-md bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
-                        title="Upload File"
+                        className="h-7 gap-2 px-3 rounded-md bg-white/70 dark:bg-zinc-900/70 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all backdrop-blur-sm shadow-sm"
                     >
                         <Upload className="size-3.5" />
+                        <span className="text-xs font-medium">Upload File</span>
                     </Button>
                     <input
                         type="file"
                         ref={fileInputRef}
                         className="hidden"
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                console.log('Uploading file:', file.name);
-                            }
-                        }}
+                        onChange={handleFileUpload}
                     />
                 </div>
 
@@ -180,7 +229,7 @@ export default function ProjectPage() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 rounded-md bg-white/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
+                            className="h-7 w-7 rounded-md bg-white/70 dark:bg-zinc-900/70 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all backdrop-blur-sm shadow-sm"
                             title="Back to Dashboard"
                         >
                             <ArrowLeft className="size-3.5" />
@@ -282,15 +331,54 @@ export default function ProjectPage() {
                                 </Button>
                             )}
                             <div className="relative flex-1 flex items-end">
+                                {showMentions && filteredFiles.length > 0 && (
+                                    <div className="absolute bottom-full left-0 mb-1 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-lg overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-1 duration-100">
+                                        <div className="py-1 max-h-48 overflow-y-auto scrollbar-minimal">
+                                            {filteredFiles.map((file, idx) => (
+                                                <button
+                                                    key={file.id}
+                                                    onClick={() => selectMention(file.name)}
+                                                    onMouseEnter={() => setMentionIndex(idx)}
+                                                    className={`w-full px-3 py-1.5 text-left transition-colors ${mentionIndex === idx ? 'bg-zinc-100 dark:bg-zinc-800' : ''
+                                                        }`}
+                                                >
+                                                    <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate block">{file.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <textarea
                                     value={message}
                                     onChange={(e) => {
-                                        setMessage(e.target.value);
+                                        handleMessageChange(e.target.value);
                                         // Auto-resize height
                                         e.target.style.height = '32px';
                                         e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
                                     }}
                                     onKeyDown={(e) => {
+                                        if (showMentions && filteredFiles.length > 0) {
+                                            if (e.key === 'ArrowDown') {
+                                                e.preventDefault();
+                                                setMentionIndex(prev => (prev + 1) % filteredFiles.length);
+                                                return;
+                                            }
+                                            if (e.key === 'ArrowUp') {
+                                                e.preventDefault();
+                                                setMentionIndex(prev => (prev - 1 + filteredFiles.length) % filteredFiles.length);
+                                                return;
+                                            }
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                selectMention(filteredFiles[mentionIndex].name);
+                                                return;
+                                            }
+                                            if (e.key === 'Escape') {
+                                                setShowMentions(false);
+                                                return;
+                                            }
+                                        }
+
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
                                             handleSend();
