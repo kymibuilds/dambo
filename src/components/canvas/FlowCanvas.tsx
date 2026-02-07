@@ -10,6 +10,7 @@ import {
     addEdge,
     Connection,
     ReactFlowProvider,
+    BackgroundVariant,
     type Node
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -74,7 +75,7 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
     }, [onNodeSelect]);
 
     return (
-        <div className="h-full w-full bg-zinc-100 dark:bg-zinc-900 relative">
+        <div className="h-full w-full bg-zinc-50 dark:bg-[#09090b] relative">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -84,9 +85,15 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
                 onConnect={onConnect}
                 onSelectionChange={onSelectionChange}
                 fitView
-                className="bg-zinc-100 dark:bg-zinc-900"
+                className="bg-transparent"
             >
-                <Background color="#71717a" gap={16} size={1} className="opacity-10" />
+                <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={20}
+                    size={1}
+                    color="currentColor"
+                    className="text-zinc-300 dark:text-zinc-800"
+                />
                 <Controls className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 fill-zinc-900 dark:fill-zinc-100" />
             </ReactFlow>
 
