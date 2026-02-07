@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     Send,
@@ -11,16 +12,146 @@ import {
     Upload,
     FileJson,
     Trash2,
-    FileText
+    FileText,
+    Loader2
 } from "lucide-react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { type Node } from '@xyflow/react';
-import FlowCanvas from "@/components/canvas/FlowCanvas";
+import FlowCanvas, { type FlowCanvasRef, type ChartNodeConfig } from "@/components/canvas/FlowCanvas";
+import { type ChartData, type ChartType } from "@/components/canvas/nodes/DataNode";
+import { getProject, type Project } from "@/lib/api/projects";
+import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
+import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
 
-export default function ProjectPage() {
+interface ProjectFile {
+    id: string;
+    name: string;
+    type: string;
+    size: string;
+}
+
+function formatFileSize(bytes: number): string {
+    if (bytes >= 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+    return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function datasetToFile(dataset: Dataset): ProjectFile {
+    return {
+        id: dataset.dataset_id,
+        name: dataset.filename,
+        type: dataset.filename.split('.').pop()?.toUpperCase() || 'FILE',
+        size: formatFileSize(dataset.file_size || 0),
+    };
+}
+
+// Helper to extract chart data from rendered component props
+function extractChartData(component: React.ReactElement): ChartData | null {
+    const props = component.props;
+    const type = component.type;
+
+    // Try to determine chart type from component name
+    if (!type || typeof type !== 'function') return null;
+
+    const componentName = (type as { displayName?: string }).displayName ||
+        (type as { name?: string }).name || '';
+
+    const chartTypeMap: Record<string, ChartType> = {
+        'HistogramChart': 'histogram_chart',
+        'BarChart': 'bar_chart',
+        'ScatterChart': 'scatter_chart',
+        'CorrelationHeatmap': 'correlation_heatmap',
+    };
+
+    const chartType = chartTypeMap[componentName];
+    if (!chartType) return null;
+
+    return {
+        type: chartType,
+        props: props as Record<string, unknown>,
+    };
+}
+
+// Extract all chart data from a message - handles multiple charts in one response
+function extractAllChartData(message: TamboThreadMessage): ChartNodeConfig[] {
+    const component = message.renderedComponent;
+    if (!component || typeof component !== 'object') return [];
+
+    const results: ChartNodeConfig[] = [];
+
+    // Helper function to recursively extract charts
+    const extractFromElement = (element: React.ReactElement | React.ReactElement[]): void => {
+        if (Array.isArray(element)) {
+            element.forEach(extractFromElement);
+            return;
+        }
+
+        if (!element || typeof element !== 'object') return;
+
+        // Check if this element is a chart
+        const chartData = extractChartData(element);
+        if (chartData) {
+            const chartLabels: Record<ChartType, string> = {
+                'histogram_chart': 'Histogram',
+                'bar_chart': 'Bar Chart',
+                'scatter_chart': 'Scatter Plot',
+                'correlation_heatmap': 'Correlation Heatmap',
+            };
+            results.push({
+                label: chartLabels[chartData.type] || 'Visualization',
+                chartData,
+            });
+            return;
+        }
+
+        // Check if this is a Fragment or wrapper with children
+        const props = element.props as { children?: React.ReactElement | React.ReactElement[] };
+        if (props?.children) {
+            if (Array.isArray(props.children)) {
+                props.children.forEach(child => {
+                    if (child && typeof child === 'object') {
+                        extractFromElement(child as React.ReactElement);
+                    }
+                });
+            } else if (typeof props.children === 'object') {
+                extractFromElement(props.children);
+            }
+        }
+    };
+
+    extractFromElement(component as React.ReactElement);
+    return results;
+}
+
+// Inner component that uses the Tambo hook
+function ProjectPageContent() {
+    const params = useParams();
+    const projectId = params.id as string;
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [chats, setChats] = useState([
+    const flowCanvasRef = useRef<FlowCanvasRef>(null);
+    // Track processed message IDs to avoid duplicate node creation
+    const processedMessageIds = useRef<Set<string>>(new Set());
+
+    // Get Tambo thread context
+    const {
+        thread,
+        sendThreadMessage,
+        isIdle,
+    } = useTamboThread();
+
+    // Project and loading state
+    const [project, setProject] = useState<Project | null>(null);
+    const [isLoadingProject, setIsLoadingProject] = useState(true);
+    const [projectError, setProjectError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
+
+    const [localChats, setLocalChats] = useState([
         {
             id: 'initial',
             title: 'General',
@@ -29,14 +160,72 @@ export default function ProjectPage() {
     ]);
     const [activeChatId, setActiveChatId] = useState('initial');
     const [message, setMessage] = useState("");
-    const [projectFiles, setProjectFiles] = useState<{ id: string, name: string, type: string, size: string }[]>([
-        { id: '1', name: 'main_dashboard.csv', type: 'CSV', size: '2.4 MB' },
-        { id: '2', name: 'user_analytics.json', type: 'JSON', size: '1.1 MB' }
-    ]);
+    const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
     const [showMentions, setShowMentions] = useState(false);
     const [mentionSearch, setMentionSearch] = useState("");
     const [mentionIndex, setMentionIndex] = useState(0);
     const [isUploadExpanded, setIsUploadExpanded] = useState(false);
+    const [datasetProfiles, setDatasetProfiles] = useState<Record<string, DatasetProfile>>({});
+
+    // Fetch project and datasets on mount
+    useEffect(() => {
+        async function fetchProjectData() {
+            console.log('[DEBUG] Starting fetchProjectData for:', projectId);
+            try {
+                setIsLoadingProject(true);
+                setProjectError(null);
+
+                console.log('[DEBUG] Fetching project and datasets...');
+                const [projectData, datasetsData] = await Promise.all([
+                    getProject(projectId),
+                    listDatasets(projectId)
+                ]);
+                console.log('[DEBUG] Got project:', projectData);
+                console.log('[DEBUG] Got datasets:', datasetsData);
+
+                setProject(projectData);
+                setProjectFiles(datasetsData.map(datasetToFile));
+
+                // Fetch profiles for each dataset
+                if (datasetsData.length > 0) {
+                    console.log('[DEBUG] Fetching dataset profiles...');
+                    const profilePromises = datasetsData.map(async (ds) => {
+                        try {
+                            const profile = await getDatasetProfile(ds.dataset_id);
+                            return { id: ds.dataset_id, profile };
+                        } catch (err) {
+                            console.warn(`Failed to fetch profile for dataset ${ds.dataset_id}:`, err);
+                            return null;
+                        }
+                    });
+                    const profileResults = await Promise.all(profilePromises);
+                    const profiles: Record<string, DatasetProfile> = {};
+                    profileResults.forEach(result => {
+                        if (result) {
+                            profiles[result.id] = result.profile;
+                        }
+                    });
+                    setDatasetProfiles(profiles);
+                    console.log('[DEBUG] Got dataset profiles:', profiles);
+                }
+
+                // Update chat title with project name
+                setLocalChats(prev => prev.map(c =>
+                    c.id === 'initial'
+                        ? { ...c, title: projectData.name }
+                        : c
+                ));
+                console.log('[DEBUG] Finished loading project successfully');
+            } catch (err) {
+                console.error('[DEBUG] Failed to fetch project:', err);
+                setProjectError(err instanceof Error ? err.message : 'Failed to load project');
+            } finally {
+                console.log('[DEBUG] Setting isLoadingProject to false');
+                setIsLoadingProject(false);
+            }
+        }
+        fetchProjectData();
+    }, [projectId]);
 
     const handleDeleteFile = (id: string) => {
         setProjectFiles(prev => prev.filter(f => f.id !== id));
@@ -72,7 +261,66 @@ export default function ProjectPage() {
         };
     }, [resize, stopResizing]);
 
-    const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
+    const activeChat = localChats.find(c => c.id === activeChatId) || localChats[0];
+
+    // Process Tambo messages to update local chats and add chart nodes
+    useEffect(() => {
+        if (!thread?.messages) return;
+
+        const tamboMessages = thread.messages;
+
+        // Sync Tambo messages to local chats
+        const newMessages = tamboMessages.map(msg => ({
+            role: msg.role,
+            content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+        }));
+
+        if (newMessages.length > 0 && activeChatId === 'initial') {
+            setLocalChats(prev => prev.map(c =>
+                c.id === 'initial'
+                    ? {
+                        ...c,
+                        messages: [
+                            { role: 'assistant', content: "Hello! I've analyzed your dataset. You can ask me to visualize trends, filter data, or generate a custom UI component based on your performance metrics." },
+                            ...newMessages
+                        ]
+                    }
+                    : c
+            ));
+        }
+
+        // Check for new rendered components and add them to canvas
+        tamboMessages.forEach(msg => {
+            // Skip if already processed to avoid duplicate nodes
+            if (processedMessageIds.current.has(msg.id)) return;
+
+            if (msg.role === 'assistant' && msg.renderedComponent) {
+                // Extract all charts from the message (supports multiple charts)
+                const chartConfigs = extractAllChartData(msg);
+
+                if (chartConfigs.length > 0 && flowCanvasRef.current) {
+                    // Mark message as processed
+                    processedMessageIds.current.add(msg.id);
+
+                    if (chartConfigs.length === 1) {
+                        // Single chart - use simple addChartNode
+                        flowCanvasRef.current.addChartNode(
+                            chartConfigs[0].label,
+                            chartConfigs[0].chartData
+                        );
+                    } else {
+                        // Multiple charts - use grid layout and connect with edges
+                        const nodeIds = flowCanvasRef.current.addMultipleChartNodes(chartConfigs);
+
+                        // Create edges between nodes (chain them together)
+                        for (let i = 0; i < nodeIds.length - 1; i++) {
+                            flowCanvasRef.current.addEdgeBetweenNodes(nodeIds[i], nodeIds[i + 1], true);
+                        }
+                    }
+                }
+            }
+        });
+    }, [thread?.messages, activeChatId]);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -82,33 +330,82 @@ export default function ProjectPage() {
         scrollToBottom();
     }, [activeChat.messages, scrollToBottom]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!message.trim()) return;
 
-        const updatedChats = chats.map(c => {
+        const userMessage = message;
+        setMessage("");
+        setIsWaitingForResponse(true);
+
+        // Add user message to local chat immediately
+        setLocalChats(prev => prev.map(c => {
             if (c.id === activeChatId) {
                 return {
                     ...c,
-                    messages: [...c.messages, { role: 'user', content: message }]
+                    messages: [...c.messages, { role: 'user', content: userMessage }]
                 };
             }
             return c;
-        });
+        }));
 
-        setChats(updatedChats);
-        setMessage("");
+        try {
+            // Build rich context with dataset profiles for the AI
+            const datasetsContext = projectFiles.map(f => {
+                const profile = datasetProfiles[f.id];
+                if (profile) {
+                    return {
+                        filename: f.name,
+                        rowCount: profile.shape.row_count,
+                        columnCount: profile.shape.column_count,
+                        columns: profile.columns.map(c => ({
+                            name: c.name,
+                            type: c.detected_type,
+                            missingPercentage: c.missing_percentage
+                        })),
+                        numericStats: profile.numeric_stats,
+                        categoryStats: profile.category_stats,
+                        samples: profile.samples
+                    };
+                }
+                return { filename: f.name };
+            });
 
-        setTimeout(() => {
-            setChats(prevChats => prevChats.map(c => {
+            const context: Record<string, unknown> = {
+                projectId,
+                projectName: project?.name,
+                datasets: datasetsContext,
+            };
+
+            console.log('[DEBUG] Sending to Tambo with context:', context);
+
+            await sendThreadMessage(userMessage, {
+                additionalContext: context,
+            });
+
+            // Add a placeholder response while waiting
+            setLocalChats(prev => prev.map(c => {
                 if (c.id === activeChatId) {
                     return {
                         ...c,
-                        messages: [...c.messages, { role: 'assistant', content: "I'm processing that in this specific session. I'll update the canvas with the visualization shortly." }]
+                        messages: [...c.messages, { role: 'assistant', content: "Processing your request..." }]
                     };
                 }
                 return c;
             }));
-        }, 1000);
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            setLocalChats(prev => prev.map(c => {
+                if (c.id === activeChatId) {
+                    return {
+                        ...c,
+                        messages: [...c.messages, { role: 'assistant', content: `Error: ${err instanceof Error ? err.message : 'Failed to process request'}` }]
+                    };
+                }
+                return c;
+            }));
+        } finally {
+            setIsWaitingForResponse(false);
+        }
     };
 
     const handleNodeSelect = (node: Node | null) => {
@@ -118,7 +415,7 @@ export default function ProjectPage() {
         }
 
         const chatId = node.id;
-        const existingChat = chats.find(c => c.id === chatId);
+        const existingChat = localChats.find(c => c.id === chatId);
 
         if (existingChat) {
             setActiveChatId(chatId);
@@ -129,27 +426,42 @@ export default function ProjectPage() {
                 title: label,
                 messages: [{ role: 'assistant', content: `Chatting with ${label}. How can I help?` }]
             };
-            setChats(prev => [...prev, newChat]);
+            setLocalChats(prev => [...prev, newChat]);
         }
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const newFile = {
-                id: Math.random().toString(36).substring(7),
-                name: file.name,
-                type: file.name.split('.').pop()?.toUpperCase() || 'FILE',
-                size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-            };
+        if (!file) return;
+
+        try {
+            setIsUploading(true);
+
+            // Upload to backend
+            const dataset = await uploadDataset(projectId, file);
+            const newFile = datasetToFile(dataset);
             setProjectFiles(prev => [...prev, newFile]);
 
-            // Add a small notification message to the chat
+            // Add a notification message to the chat
             const assistantMsg = {
                 role: 'assistant',
                 content: `I've added "${file.name}" to your project collection. You can now mention it using "@" in our chat to start analyzing its contents.`
             };
-            setChats(prev => prev.map(c => c.id === activeChatId ? { ...c, messages: [...c.messages, assistantMsg] } : c));
+            setLocalChats(prev => prev.map(c => c.id === activeChatId ? { ...c, messages: [...c.messages, assistantMsg] } : c));
+
+        } catch (err) {
+            console.error('Failed to upload file:', err);
+            const errorMsg = {
+                role: 'assistant',
+                content: `Failed to upload "${file.name}": ${err instanceof Error ? err.message : 'Unknown error'}`
+            };
+            setLocalChats(prev => prev.map(c => c.id === activeChatId ? { ...c, messages: [...c.messages, errorMsg] } : c));
+        } finally {
+            setIsUploading(false);
+            // Reset the file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -180,6 +492,36 @@ export default function ProjectPage() {
         f.name.toLowerCase().includes(mentionSearch.toLowerCase())
     );
 
+    // Debug: log state values
+    console.log('[DEBUG] Render state:', { isLoadingProject, isWaitingForResponse });
+
+    if (isLoadingProject) {
+        return (
+            <div className="h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                    <p className="text-sm text-zinc-500">Loading project...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (projectError) {
+        return (
+            <div className="h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <p className="text-sm text-red-500">{projectError}</p>
+                    <Link href="/dashboard">
+                        <Button variant="outline" size="sm">
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back to Dashboard
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-screen flex overflow-hidden bg-zinc-50 dark:bg-zinc-950">
             {/* Left: Canvas Area */}
@@ -196,8 +538,14 @@ export default function ProjectPage() {
                     >
                         {!isUploadExpanded ? (
                             <div className="flex items-center gap-2">
-                                <Upload className="size-3.5 text-zinc-600 dark:text-zinc-400" />
-                                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Upload</span>
+                                {isUploading ? (
+                                    <Loader2 className="size-3.5 text-zinc-600 dark:text-zinc-400 animate-spin" />
+                                ) : (
+                                    <Upload className="size-3.5 text-zinc-600 dark:text-zinc-400" />
+                                )}
+                                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                    {isUploading ? 'Uploading...' : 'Upload'}
+                                </span>
                             </div>
                         ) : (
                             <>
@@ -207,8 +555,13 @@ export default function ProjectPage() {
                                         onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                                         className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                                         title="Upload New"
+                                        disabled={isUploading}
                                     >
-                                        <Plus className="size-3.5" />
+                                        {isUploading ? (
+                                            <Loader2 className="size-3.5 animate-spin" />
+                                        ) : (
+                                            <Plus className="size-3.5" />
+                                        )}
                                     </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setIsUploadExpanded(false); }}
@@ -265,6 +618,7 @@ export default function ProjectPage() {
                         ref={fileInputRef}
                         className="hidden"
                         onChange={handleFileUpload}
+                        accept=".csv,.json"
                     />
                 </div>
 
@@ -283,7 +637,7 @@ export default function ProjectPage() {
 
                 {/* React Flow Canvas */}
                 <div className="h-full w-full">
-                    <FlowCanvas onNodeSelect={handleNodeSelect} />
+                    <FlowCanvas ref={flowCanvasRef} onNodeSelect={handleNodeSelect} />
                 </div>
             </div>
 
@@ -302,9 +656,14 @@ export default function ProjectPage() {
                     {/* Chat Header */}
                     <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                                {activeChat.title}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                    {project?.name || activeChat.title}
+                                </h3>
+                                {isWaitingForResponse && (
+                                    <Loader2 className="size-3.5 animate-spin text-blue-500" />
+                                )}
+                            </div>
                             {activeChatId !== 'initial' && (
                                 <Button
                                     variant="ghost"
@@ -320,16 +679,43 @@ export default function ProjectPage() {
 
                     {/* Messages Area */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none scroll-smooth">
-                        {activeChat.messages.map((msg: { role: string, content: string }, i: number) => (
-                            <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[85%] text-[12px] leading-relaxed break-words whitespace-pre-wrap ${msg.role === 'user'
-                                    ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-sm font-medium'
-                                    : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-3.5 py-2.5 rounded-2xl rounded-tl-sm border border-zinc-200/60 dark:border-zinc-700/60 shadow-sm'
-                                    }`}>
-                                    {msg.content}
+                        {activeChat.messages.map((msg: { role: string, content: string }, i: number) => {
+                            // Helper to parse potential JSON content from the AI
+                            const getContent = (content: string) => {
+                                try {
+                                    if (content.trim().startsWith('[')) {
+                                        const parsed = JSON.parse(content);
+                                        if (Array.isArray(parsed)) {
+                                            return parsed.map(item => item.text || '').join('');
+                                        }
+                                    }
+                                } catch (e) {
+                                    // Not JSON or failed to parse, use original
+                                }
+                                return content;
+                            };
+
+                            const displayContent = getContent(msg.content);
+
+                            return (
+                                <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className={`max-w-[85%] text-[12px] leading-relaxed break-words whitespace-pre-wrap ${msg.role === 'user'
+                                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-sm font-medium'
+                                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-3.5 py-2.5 rounded-2xl rounded-tl-sm border border-zinc-200/60 dark:border-zinc-700/60 shadow-sm'
+                                        }`}>
+                                        {msg.role === 'user' ? (
+                                            displayContent
+                                        ) : (
+                                            <div className="prose dark:prose-invert prose-xs max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {displayContent}
+                                                </ReactMarkdown>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         <div ref={messagesEndRef} />
                     </div>
 
@@ -404,9 +790,10 @@ export default function ProjectPage() {
                                             target.style.height = '32px';
                                         }
                                     }}
-                                    placeholder={`Message "${activeChat.title}"...`}
+                                    placeholder={`Message "${project?.name || activeChat.title}"...`}
                                     className="w-full min-h-[32px] max-h-[200px] py-[7px] pl-3 pr-10 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-400 text-[11px] resize-none overflow-y-auto scrollbar-minimal outline-none"
                                     rows={1}
+                                    disabled={isWaitingForResponse}
                                 />
                                 <button
                                     onClick={() => {
@@ -415,7 +802,8 @@ export default function ProjectPage() {
                                         const textarea = document.querySelector('textarea');
                                         if (textarea) textarea.style.height = '32px';
                                     }}
-                                    className="absolute right-2 bottom-1.5 p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                                    disabled={isWaitingForResponse}
+                                    className="absolute right-2 bottom-1.5 p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors disabled:opacity-50"
                                 >
                                     <Send className="size-3.5" />
                                 </button>
@@ -425,5 +813,14 @@ export default function ProjectPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// Main export that wraps with TamboThreadProvider
+export default function ProjectPage() {
+    return (
+        <TamboThreadProvider streaming={true}>
+            <ProjectPageContent />
+        </TamboThreadProvider>
     );
 }

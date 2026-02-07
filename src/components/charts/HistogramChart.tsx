@@ -6,7 +6,7 @@ interface HistogramChartProps {
     counts: number[];
 }
 
-export function HistogramChart({ column, bins, counts }: HistogramChartProps) {
+export function HistogramChart({ column, bins = [], counts = [] }: HistogramChartProps) {
     const maxCount = Math.max(...counts, 1);
 
     return (

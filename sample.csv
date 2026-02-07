@@ -1,0 +1,1001 @@
+User_ID,City,Department,Age,Salary,Experience_Years,Performance_Score,Employment_Type,Joining_Date,Is_Remote
+USR_0000,San Antonio,Sales,29,85885.29,8.2,1,Full-time,2024-06-06,No
+USR_0001,Houston,Product,20,44914.21,20.3,3,Full-time,2019-01-03,No
+USR_0002,San Diego,HR,62,75871.16,16.8,2,Contract,2024-06-23,No
+USR_0003,Phoenix,Marketing,35,42868.36,0.7,3,Full-time,2023-08-03,Yes
+USR_0004,San Antonio,HR,57,79328.6,31.7,5,Full-time,2023-10-21,No
+USR_0005,San Jose,HR,38,69287.17,2.8,4,Part-time,2022-10-02,Yes
+USR_0006,Chicago,HR,32,37697.36,19.0,2,Full-time,2025-03-02,Yes
+USR_0007,San Antonio,HR,50,93294.79,22.4,1,Full-time,2020-12-20,Yes
+USR_0008,San Diego,Finance,52,55308.17,25.1,2,Intern,2016-04-07,Yes
+USR_0009,Phoenix,Finance,43,53794.95,27.5,1,Full-time,2023-10-04,No
+USR_0010,Houston,Product,25,74011.38,10.1,2,Full-time,2022-03-18,No
+USR_0011,San Diego,Engineering,53,92972.75,0.4,1,Full-time,2017-02-06,No
+USR_0012,San Diego,Sales,47,49683.56,28.9,1,Full-time,2024-11-21,No
+USR_0013,Chicago,HR,40,71233.6,21.4,2,Full-time,2021-03-18,Yes
+USR_0014,Philadelphia,Product,59,78576.33,33.4,2,Full-time,2025-07-02,Yes
+USR_0015,Phoenix,Engineering,61,83862.11,32.9,1,Full-time,2016-08-25,Yes
+USR_0016,Los Angeles,Sales,31,73528.83,33.7,5,Contract,2024-06-27,Yes
+USR_0017,San Diego,Support,31,62659.44,19.4,2,Full-time,2023-04-15,No
+USR_0018,Philadelphia,Marketing,19,53448.2,13.3,3,Full-time,2022-07-24,Yes
+USR_0019,Los Angeles,Finance,54,71722.88,31.7,4,Full-time,2023-04-28,No
+USR_0020,Phoenix,Support,22,48557.22,18.1,1,Part-time,2020-06-16,Yes
+USR_0021,New York,Sales,55,11572.99,7.3,1,Full-time,2022-02-22,Yes
+USR_0022,San Jose,Support,62,78731.2,34.2,4,Full-time,2020-07-04,Yes
+USR_0023,Philadelphia,Marketing,58,88078.7,35.3,5,Full-time,2024-09-03,Yes
+USR_0024,Dallas,Product,64,22741.35,18.7,4,Full-time,2018-04-21,No
+USR_0025,New York,Sales,31,49805.39,3.0,2,Full-time,2020-06-11,No
+USR_0026,San Jose,Support,56,82383.09,15.5,4,Contract,2019-11-17,No
+USR_0027,Chicago,Finance,42,111149.91,32.1,1,Full-time,2017-09-28,No
+USR_0028,San Antonio,Finance,37,70415.87,36.1,4,Full-time,2021-02-26,Yes
+USR_0029,Houston,Engineering,19,55439.94,8.1,3,Full-time,2022-07-08,Yes
+USR_0030,Dallas,Support,56,66342.07,2.7,2,Contract,2018-04-15,No
+USR_0031,Chicago,HR,23,97497.53,35.1,4,Full-time,2017-05-01,No
+USR_0032,Phoenix,Support,34,57080.72,15.6,1,Full-time,2022-07-13,Yes
+USR_0033,Chicago,Product,42,54016.16,21.7,2,Full-time,2019-05-25,Yes
+USR_0034,San Antonio,Sales,45,60345.13,38.7,1,Full-time,2023-02-15,No
+USR_0035,Phoenix,Sales,19,50933.43,2.7,5,Full-time,2021-07-12,No
+USR_0036,Dallas,Product,52,72453.41,25.9,3,Full-time,2024-11-29,No
+USR_0037,San Antonio,Support,54,102493.57,3.0,5,Full-time,2023-11-03,Yes
+USR_0038,Los Angeles,Product,22,76461.59,15.0,3,Full-time,2017-12-11,No
+USR_0039,Houston,Marketing,18,64952.93,32.2,4,Full-time,2025-05-26,No
+USR_0040,Dallas,Product,57,64163.77,17.3,2,Full-time,2020-08-15,No
+USR_0041,Los Angeles,Finance,29,38736.18,39.9,4,Full-time,2020-08-29,No
+USR_0042,San Jose,Product,53,87662.2,22.4,3,Part-time,2025-10-29,No
+USR_0043,Dallas,Sales,62,68443.26,12.8,3,Intern,2023-05-23,Yes
+USR_0044,San Jose,Finance,40,66390.4,8.8,3,Intern,2016-02-23,No
+USR_0045,Phoenix,Sales,64,133862.15,14.0,1,Contract,2024-01-02,Yes
+USR_0046,Los Angeles,Engineering,48,75975.06,14.9,2,Full-time,2023-01-11,No
+USR_0047,Houston,HR,28,54964.18,2.7,4,Part-time,2022-10-06,No
+USR_0048,San Antonio,Sales,27,61472.85,14.8,4,Full-time,2018-04-11,No
+USR_0049,San Diego,Finance,20,92968.91,18.6,5,Full-time,2019-11-19,Yes
+USR_0050,Chicago,Engineering,31,72265.41,28.9,3,Full-time,2017-12-02,Yes
+USR_0051,New York,Sales,33,41234.44,26.3,3,Full-time,2019-03-27,Yes
+USR_0052,Houston,Marketing,27,88384.58,28.4,3,Part-time,2025-06-17,No
+USR_0053,Los Angeles,Product,46,56637.12,0.3,4,Full-time,2017-08-17,No
+USR_0054,San Diego,HR,27,107465.96,8.7,5,Full-time,2022-12-22,Yes
+USR_0055,Houston,Sales,29,91600.96,26.5,1,Contract,2019-02-12,Yes
+USR_0056,Los Angeles,Engineering,47,61053.56,19.4,2,Full-time,2017-03-14,No
+USR_0057,Philadelphia,Marketing,58,95620.33,0.2,1,Full-time,2018-04-10,Yes
+USR_0058,Philadelphia,Support,18,71357.11,32.2,4,Contract,2024-01-04,No
+USR_0059,San Jose,Engineering,22,87055.47,30.9,3,Full-time,2018-10-07,Yes
+USR_0060,Houston,Product,37,79694.66,21.9,2,Full-time,2016-03-18,Yes
+USR_0061,Philadelphia,Engineering,25,53072.87,2.7,4,Full-time,2016-11-01,Yes
+USR_0062,Los Angeles,Marketing,60,57129.0,30.7,4,Full-time,2023-05-25,No
+USR_0063,San Jose,Engineering,29,90599.22,23.3,4,Contract,2018-10-23,No
+USR_0064,Los Angeles,Marketing,18,63304.49,31.3,2,Full-time,2021-04-16,Yes
+USR_0065,San Jose,Sales,37,61927.03,30.1,2,Full-time,2019-10-03,No
+USR_0066,Houston,Marketing,45,50897.55,32.1,5,Full-time,2019-11-13,No
+USR_0067,San Diego,Marketing,60,78471.98,20.7,5,Full-time,2016-07-19,No
+USR_0068,San Antonio,HR,54,111250.5,5.6,1,Intern,2018-05-26,No
+USR_0069,Dallas,Marketing,64,48649.34,26.8,2,Full-time,2016-06-27,Yes
+USR_0070,San Diego,Marketing,54,70484.39,24.8,2,Full-time,2024-10-01,No
+USR_0071,Phoenix,Support,29,98244.41,29.7,2,Full-time,2023-03-29,No
+USR_0072,Los Angeles,Sales,54,68407.17,6.8,5,Full-time,2017-05-26,Yes
+USR_0073,Phoenix,Product,61,79047.44,7.8,4,Contract,2021-05-19,No
+USR_0074,San Diego,HR,45,48752.13,35.6,3,Full-time,2019-02-16,No
+USR_0075,San Jose,Support,64,78566.14,30.0,5,Full-time,2020-06-07,No
+USR_0076,Dallas,Finance,32,66257.11,36.3,2,Full-time,2017-03-09,Yes
+USR_0077,Dallas,Sales,23,89714.6,30.3,5,Part-time,2019-09-18,Yes
+USR_0078,New York,Sales,61,93747.72,23.9,1,Full-time,2025-03-08,No
+USR_0079,Dallas,Finance,37,121791.27,26.2,2,Contract,2020-10-20,No
+USR_0080,San Antonio,Product,31,81592.66,35.6,1,Full-time,2017-08-06,Yes
+USR_0081,Dallas,Marketing,19,76515.93,23.2,2,Contract,2021-02-17,Yes
+USR_0082,San Diego,Support,26,73887.69,25.3,5,Full-time,2025-09-25,Yes
+USR_0083,New York,Engineering,54,62936.67,6.3,4,Full-time,2019-02-10,No
+USR_0084,San Diego,HR,37,76769.68,19.0,3,Full-time,2019-11-18,No
+USR_0085,San Diego,Engineering,43,64091.97,28.7,1,Full-time,2025-03-26,Yes
+USR_0086,Chicago,Finance,46,73369.22,10.8,5,Contract,2021-01-02,No
+USR_0087,New York,Sales,18,96351.95,8.1,4,Part-time,2023-08-08,No
+USR_0088,San Diego,Product,52,49869.15,12.6,5,Full-time,2022-10-22,No
+USR_0089,Chicago,Sales,23,92797.57,9.7,1,Full-time,2020-11-29,No
+USR_0090,Chicago,HR,54,96342.3,8.6,3,Full-time,2020-04-07,No
+USR_0091,New York,Sales,22,67638.63,17.0,5,Part-time,2016-06-02,No
+USR_0092,Phoenix,Sales,50,27562.9,36.3,2,Full-time,2023-07-29,No
+USR_0093,San Jose,HR,31,57843.56,20.3,4,Full-time,2020-05-10,Yes
+USR_0094,San Antonio,Support,29,95939.89,7.5,5,Full-time,2018-02-23,Yes
+USR_0095,San Jose,Support,59,69542.64,3.1,4,Full-time,2018-02-16,Yes
+USR_0096,Dallas,HR,37,50013.96,27.8,2,Full-time,2022-08-30,Yes
+USR_0097,San Antonio,Product,41,59904.5,15.3,3,Full-time,2020-09-05,Yes
+USR_0098,Dallas,Finance,60,86812.4,32.9,3,Full-time,2024-12-03,Yes
+USR_0099,San Diego,Sales,51,80934.67,26.4,2,Intern,2016-05-04,Yes
+USR_0100,Los Angeles,Product,42,65221.36,31.8,4,Full-time,2023-05-17,Yes
+USR_0101,New York,Sales,46,62663.51,10.9,5,Full-time,2020-03-24,Yes
+USR_0102,San Antonio,Finance,56,62164.84,27.7,2,Full-time,2023-05-26,No
+USR_0103,San Antonio,Support,48,51551.8,10.6,1,Part-time,2024-06-20,No
+USR_0104,San Diego,Product,64,102307.51,37.6,4,Full-time,2019-05-26,Yes
+USR_0105,Phoenix,Marketing,60,63553.59,25.5,3,Full-time,2025-01-09,No
+USR_0106,Chicago,Marketing,40,94343.17,13.0,2,Full-time,2016-04-03,No
+USR_0107,San Diego,Marketing,61,100426.32,10.8,3,Full-time,2024-12-21,Yes
+USR_0108,Philadelphia,Support,55,89966.22,7.6,4,Full-time,2023-07-16,Yes
+USR_0109,Chicago,Support,37,61367.59,27.8,3,Contract,2021-08-17,Yes
+USR_0110,New York,Finance,40,78074.6,8.7,2,Contract,2018-08-25,No
+USR_0111,Chicago,Sales,62,69516.09,23.8,4,Full-time,2019-03-27,No
+USR_0112,Phoenix,Finance,33,51925.96,10.6,1,Full-time,2024-08-17,Yes
+USR_0113,Chicago,Finance,59,76487.19,26.5,2,Contract,2021-08-04,No
+USR_0114,New York,Support,25,46419.2,32.6,5,Full-time,2020-10-12,No
+USR_0115,Phoenix,Marketing,38,93753.59,31.1,2,Contract,2016-09-13,No
+USR_0116,San Jose,Engineering,18,60707.65,30.4,4,Full-time,2017-05-05,Yes
+USR_0117,San Antonio,Sales,25,74023.19,7.5,2,Contract,2025-11-17,No
+USR_0118,San Antonio,Support,46,75665.76,3.5,1,Part-time,2025-05-14,No
+USR_0119,Dallas,Marketing,49,64821.9,28.0,1,Contract,2019-11-01,No
+USR_0120,San Jose,Product,55,81733.88,14.7,5,Full-time,2025-01-17,No
+USR_0121,San Jose,Engineering,22,60501.93,17.3,3,Full-time,2025-07-10,No
+USR_0122,Chicago,Engineering,64,87425.95,1.2,4,Contract,2018-04-06,No
+USR_0123,San Antonio,Support,39,43080.41,10.4,4,Full-time,2017-03-30,No
+USR_0124,New York,HR,64,72527.59,1.3,3,Full-time,2025-12-12,Yes
+USR_0125,Houston,Sales,51,108778.58,35.2,1,Part-time,2021-08-28,Yes
+USR_0126,Houston,Engineering,18,49993.37,9.7,1,Part-time,2018-01-31,No
+USR_0127,Phoenix,Support,43,56445.1,22.3,2,Contract,2023-10-20,Yes
+USR_0128,San Antonio,Support,60,80278.16,1.6,5,Full-time,2017-12-21,No
+USR_0129,San Antonio,Marketing,27,73591.64,26.7,5,Part-time,2021-12-04,No
+USR_0130,Houston,Product,47,77012.6,12.9,5,Part-time,2021-05-16,No
+USR_0131,San Antonio,HR,35,79783.74,35.9,2,Full-time,2025-10-09,Yes
+USR_0132,Chicago,Sales,34,82694.43,35.5,5,Full-time,2022-03-05,No
+USR_0133,Philadelphia,Finance,43,92194.0,13.0,3,Full-time,2022-12-04,No
+USR_0134,Los Angeles,Product,25,78196.37,36.0,2,Full-time,2017-01-26,Yes
+USR_0135,San Jose,Product,64,65174.85,39.8,3,Intern,2016-12-12,Yes
+USR_0136,Dallas,Marketing,57,83451.47,33.0,2,Full-time,2019-04-20,No
+USR_0137,Phoenix,Engineering,29,107997.64,33.8,5,Part-time,2017-09-14,Yes
+USR_0138,Philadelphia,Engineering,44,67347.33,10.0,3,Intern,2024-07-27,Yes
+USR_0139,Houston,Marketing,25,50509.41,23.1,3,Full-time,2020-03-06,No
+USR_0140,San Jose,Support,42,92141.61,2.7,3,Contract,2021-05-08,No
+USR_0141,San Antonio,Engineering,63,67592.38,3.8,2,Full-time,2023-08-19,No
+USR_0142,Dallas,HR,21,26546.61,40.0,4,Contract,2016-05-17,Yes
+USR_0143,San Antonio,Sales,50,86948.43,13.1,5,Full-time,2025-01-10,Yes
+USR_0144,New York,Product,18,59293.44,29.9,3,Contract,2021-05-19,Yes
+USR_0145,New York,Product,36,68189.33,32.3,4,Full-time,2018-02-07,No
+USR_0146,Dallas,HR,48,76639.61,34.3,5,Full-time,2016-06-09,Yes
+USR_0147,Dallas,Engineering,33,73809.99,39.9,5,Part-time,2021-05-29,Yes
+USR_0148,Houston,Product,31,84189.04,9.7,3,Full-time,2023-07-20,No
+USR_0149,Dallas,Finance,22,61290.27,1.6,3,Full-time,2023-02-03,No
+USR_0150,Chicago,Sales,58,80262.12,16.4,2,Full-time,2017-11-23,No
+USR_0151,San Antonio,Sales,43,64809.07,5.2,4,Part-time,2022-03-06,Yes
+USR_0152,Philadelphia,Product,45,84776.21,0.9,4,Full-time,2025-11-26,No
+USR_0153,San Diego,Marketing,19,82307.35,14.4,3,Full-time,2025-04-20,Yes
+USR_0154,Dallas,Product,23,51291.23,31.3,5,Full-time,2026-01-19,Yes
+USR_0155,Phoenix,Marketing,26,91719.64,22.6,3,Full-time,2017-03-25,No
+USR_0156,New York,Product,50,59280.73,12.5,5,Full-time,2023-04-07,No
+USR_0157,Chicago,Finance,58,86161.16,26.2,5,Full-time,2022-09-23,No
+USR_0158,San Jose,Support,42,77345.75,9.3,3,Full-time,2024-07-29,No
+USR_0159,San Diego,Sales,30,106763.67,0.6,1,Full-time,2023-01-26,No
+USR_0160,Philadelphia,Product,26,65530.68,30.6,4,Full-time,2022-11-24,Yes
+USR_0161,San Diego,Finance,30,63013.66,24.9,5,Contract,2025-02-02,Yes
+USR_0162,Dallas,Marketing,48,69611.61,30.5,5,Full-time,2020-07-22,Yes
+USR_0163,Houston,Marketing,58,63936.4,1.6,1,Full-time,2016-05-20,No
+USR_0164,New York,Sales,28,85998.84,33.5,2,Full-time,2023-11-14,Yes
+USR_0165,New York,HR,21,37673.79,24.8,1,Full-time,2022-11-22,No
+USR_0166,San Jose,Product,51,48926.35,22.5,1,Part-time,2022-12-02,No
+USR_0167,Houston,Engineering,55,48643.94,25.0,5,Full-time,2023-02-12,Yes
+USR_0168,San Antonio,Marketing,63,89006.15,34.6,4,Full-time,2022-08-05,Yes
+USR_0169,Los Angeles,Support,21,104212.27,23.5,1,Full-time,2020-08-07,No
+USR_0170,Chicago,Support,55,67911.02,23.2,2,Full-time,2023-10-17,Yes
+USR_0171,New York,Marketing,36,66623.57,39.6,3,Full-time,2020-08-27,No
+USR_0172,Phoenix,HR,23,71401.04,30.3,1,Full-time,2024-09-06,Yes
+USR_0173,New York,HR,51,93237.57,17.7,1,Full-time,2025-02-03,Yes
+USR_0174,San Diego,Finance,35,51452.94,28.3,2,Intern,2022-02-27,Yes
+USR_0175,New York,Support,30,74767.38,15.6,4,Full-time,2025-10-31,Yes
+USR_0176,New York,Finance,58,89503.95,9.2,1,Full-time,2024-04-19,Yes
+USR_0177,Los Angeles,Support,40,80021.88,23.9,1,Contract,2021-07-03,No
+USR_0178,Los Angeles,Product,36,73791.63,37.1,4,Part-time,2017-11-07,Yes
+USR_0179,Philadelphia,Product,62,90020.92,37.2,2,Full-time,2025-06-11,Yes
+USR_0180,San Antonio,Engineering,28,15935.35,13.7,1,Part-time,2018-06-10,Yes
+USR_0181,Phoenix,Product,18,83557.51,21.1,4,Contract,2024-09-15,No
+USR_0182,New York,Engineering,41,56918.49,8.5,1,Full-time,2018-03-06,No
+USR_0183,New York,Product,24,33387.34,39.8,3,Full-time,2018-12-25,No
+USR_0184,Chicago,Sales,42,80224.05,39.2,5,Full-time,2017-06-09,No
+USR_0185,Los Angeles,Product,38,97473.17,26.0,3,Intern,2019-11-19,No
+USR_0186,Phoenix,Finance,32,67251.03,32.2,1,Full-time,2021-11-20,Yes
+USR_0187,San Jose,Marketing,18,89057.49,28.6,2,Full-time,2019-12-01,Yes
+USR_0188,Philadelphia,Finance,29,102245.57,23.7,5,Contract,2018-07-15,Yes
+USR_0189,San Antonio,Marketing,24,96298.29,2.1,3,Full-time,2020-04-26,No
+USR_0190,Houston,HR,32,102799.29,18.2,4,Full-time,2025-01-09,No
+USR_0191,San Antonio,Finance,38,84842.55,27.0,2,Full-time,2024-06-07,Yes
+USR_0192,San Diego,HR,36,71508.67,27.1,3,Full-time,2017-08-31,No
+USR_0193,New York,Engineering,46,37960.68,14.9,4,Contract,2022-08-28,No
+USR_0194,Philadelphia,Engineering,42,65078.75,37.7,1,Full-time,2021-01-08,No
+USR_0195,San Diego,Sales,50,53135.07,6.7,4,Contract,2024-01-01,Yes
+USR_0196,Phoenix,Product,49,113418.85,20.0,3,Full-time,2022-03-19,Yes
+USR_0197,Houston,Finance,52,66482.28,27.6,3,Full-time,2024-12-29,No
+USR_0198,Los Angeles,HR,61,72464.1,27.9,1,Intern,2017-12-20,No
+USR_0199,Philadelphia,Marketing,55,81029.71,25.9,4,Full-time,2020-12-24,No
+USR_0200,Philadelphia,Engineering,43,70872.05,11.0,4,Full-time,2021-12-28,No
+USR_0201,New York,Product,28,103901.02,6.2,1,Full-time,2018-09-24,Yes
+USR_0202,Dallas,Engineering,52,57547.01,25.4,4,Contract,2019-11-23,No
+USR_0203,Philadelphia,Marketing,25,73892.15,24.0,1,Full-time,2022-11-17,Yes
+USR_0204,Chicago,Product,63,55150.59,7.2,2,Full-time,2024-04-26,Yes
+USR_0205,Houston,Product,31,43599.55,28.2,3,Full-time,2019-05-01,Yes
+USR_0206,Houston,HR,27,57764.62,18.2,2,Full-time,2022-11-15,No
+USR_0207,Chicago,HR,19,69259.26,26.7,5,Part-time,2023-06-08,Yes
+USR_0208,San Jose,Finance,63,61413.96,33.5,5,Full-time,2022-03-02,Yes
+USR_0209,Chicago,Finance,26,56151.58,6.8,5,Full-time,2017-09-30,No
+USR_0210,Chicago,Support,20,41873.65,0.8,1,Full-time,2016-10-21,No
+USR_0211,Houston,Support,38,68337.89,31.2,4,Full-time,2019-06-27,No
+USR_0212,San Antonio,Sales,43,39905.59,24.4,2,Contract,2022-05-13,Yes
+USR_0213,Houston,Engineering,25,85201.12,28.0,2,Full-time,2016-12-24,No
+USR_0214,Dallas,Finance,19,71648.8,33.5,2,Intern,2016-12-03,Yes
+USR_0215,New York,HR,23,40848.97,32.1,2,Full-time,2018-03-05,Yes
+USR_0216,San Diego,Marketing,45,63815.82,38.4,5,Full-time,2018-02-27,No
+USR_0217,San Antonio,HR,46,54956.87,21.4,2,Contract,2025-06-25,Yes
+USR_0218,Los Angeles,Engineering,43,76383.49,19.5,4,Full-time,2019-09-26,Yes
+USR_0219,San Diego,Support,42,96809.01,16.1,5,Part-time,2020-12-03,Yes
+USR_0220,New York,HR,29,32496.55,6.1,2,Intern,2022-07-06,Yes
+USR_0221,Dallas,Sales,22,72300.52,22.9,1,Full-time,2023-03-06,No
+USR_0222,Dallas,Engineering,51,66797.34,11.1,3,Full-time,2023-06-10,Yes
+USR_0223,Los Angeles,Support,54,83426.8,36.9,3,Part-time,2021-05-07,No
+USR_0224,San Antonio,Marketing,32,74263.93,23.3,3,Full-time,2017-02-10,Yes
+USR_0225,San Jose,Support,61,54960.61,23.7,5,Full-time,2024-01-13,Yes
+USR_0226,Chicago,Product,53,63618.92,14.2,2,Full-time,2017-08-19,No
+USR_0227,San Antonio,Sales,32,54079.48,2.1,5,Full-time,2025-03-25,Yes
+USR_0228,San Jose,Engineering,60,91520.14,1.3,4,Part-time,2019-10-02,Yes
+USR_0229,Dallas,Marketing,40,70426.23,16.9,1,Full-time,2024-08-02,Yes
+USR_0230,Houston,Sales,23,108023.81,3.4,1,Full-time,2023-10-19,Yes
+USR_0231,New York,Support,63,68786.78,24.3,3,Full-time,2022-06-13,Yes
+USR_0232,Los Angeles,Sales,61,55831.86,35.2,3,Full-time,2022-04-24,Yes
+USR_0233,New York,Engineering,60,39725.71,35.3,3,Full-time,2024-04-12,No
+USR_0234,Phoenix,Finance,62,33937.21,26.4,2,Part-time,2017-10-06,No
+USR_0235,Phoenix,Sales,38,38317.28,8.4,4,Full-time,2019-06-18,No
+USR_0236,San Antonio,Product,40,75342.53,34.5,4,Part-time,2018-07-22,Yes
+USR_0237,Dallas,Sales,60,80174.5,35.4,4,Contract,2020-10-15,Yes
+USR_0238,Dallas,Support,33,38376.19,7.9,4,Full-time,2020-08-14,Yes
+USR_0239,Chicago,Support,64,87900.77,29.5,3,Full-time,2020-10-27,No
+USR_0240,Chicago,Marketing,32,60338.78,11.5,1,Full-time,2016-05-30,Yes
+USR_0241,Chicago,Support,42,72935.86,32.1,3,Full-time,2024-01-25,No
+USR_0242,Houston,HR,53,102244.41,39.9,4,Contract,2024-04-05,Yes
+USR_0243,San Diego,Engineering,28,87936.79,1.2,3,Contract,2020-03-08,Yes
+USR_0244,Philadelphia,Engineering,32,64629.39,35.9,4,Full-time,2018-11-05,Yes
+USR_0245,San Diego,Finance,21,52176.16,24.9,5,Full-time,2023-03-11,No
+USR_0246,New York,Finance,38,26963.69,38.9,1,Contract,2019-06-19,Yes
+USR_0247,San Diego,Engineering,30,55616.93,18.6,5,Intern,2017-02-18,No
+USR_0248,Houston,Product,39,65777.4,33.9,2,Full-time,2019-03-24,Yes
+USR_0249,New York,Finance,36,50256.41,2.5,3,Full-time,2019-09-26,Yes
+USR_0250,San Diego,Marketing,51,67374.86,13.4,2,Full-time,2024-06-01,No
+USR_0251,Houston,Support,31,71537.04,2.7,3,Intern,2020-03-06,Yes
+USR_0252,Philadelphia,Engineering,21,65502.88,39.0,5,Full-time,2017-01-18,Yes
+USR_0253,San Diego,Finance,63,56999.95,32.7,4,Full-time,2019-08-28,Yes
+USR_0254,Houston,Engineering,44,73373.09,34.1,4,Full-time,2016-06-13,Yes
+USR_0255,Chicago,HR,46,78838.81,37.5,3,Full-time,2016-05-25,No
+USR_0256,Dallas,Sales,64,48192.02,3.4,4,Full-time,2020-03-24,No
+USR_0257,Chicago,Support,45,98218.65,15.4,5,Intern,2019-10-15,Yes
+USR_0258,Dallas,Engineering,52,68028.24,2.8,4,Full-time,2023-05-23,Yes
+USR_0259,Los Angeles,Sales,25,70376.99,8.4,5,Full-time,2022-06-21,No
+USR_0260,Los Angeles,Finance,33,84164.29,9.2,2,Full-time,2022-05-03,Yes
+USR_0261,Los Angeles,Sales,59,74664.32,18.8,5,Full-time,2025-04-29,No
+USR_0262,Philadelphia,Support,53,89062.73,10.7,1,Full-time,2019-08-09,Yes
+USR_0263,Chicago,Engineering,47,75742.48,4.0,1,Full-time,2017-06-01,No
+USR_0264,Dallas,HR,35,57751.25,6.7,1,Full-time,2020-04-30,No
+USR_0265,Houston,Product,19,77230.07,5.9,3,Full-time,2024-03-24,No
+USR_0266,New York,Finance,30,47125.48,38.9,3,Full-time,2022-07-14,No
+USR_0267,Houston,Engineering,21,72171.19,30.4,3,Full-time,2022-02-05,Yes
+USR_0268,New York,Support,43,69335.4,38.7,5,Intern,2016-11-23,Yes
+USR_0269,Phoenix,Finance,42,65837.66,17.6,3,Contract,2024-02-02,No
+USR_0270,Houston,Marketing,47,67429.25,11.1,2,Full-time,2017-09-05,No
+USR_0271,San Diego,Sales,28,32363.02,31.9,1,Full-time,2018-10-02,No
+USR_0272,San Diego,Product,24,59025.5,13.1,5,Contract,2017-12-09,No
+USR_0273,San Antonio,Support,48,71856.9,12.0,1,Full-time,2017-06-12,Yes
+USR_0274,Chicago,Marketing,61,73197.13,9.3,3,Contract,2020-09-29,No
+USR_0275,New York,Engineering,27,49446.5,5.2,5,Contract,2017-03-06,No
+USR_0276,New York,HR,56,95314.16,10.3,4,Full-time,2020-12-02,No
+USR_0277,Chicago,Finance,30,52676.5,14.2,2,Full-time,2019-03-14,No
+USR_0278,Philadelphia,Sales,48,89389.14,27.0,3,Intern,2016-04-19,No
+USR_0279,San Antonio,Finance,24,78543.89,2.5,3,Full-time,2022-01-15,No
+USR_0280,Philadelphia,Product,59,57075.45,8.4,2,Full-time,2020-05-10,No
+USR_0281,Philadelphia,Engineering,59,105506.22,32.4,2,Full-time,2018-06-09,Yes
+USR_0282,Philadelphia,Finance,53,46127.26,5.9,4,Full-time,2024-10-11,No
+USR_0283,Chicago,Sales,37,88383.08,13.7,3,Full-time,2021-12-18,No
+USR_0284,Philadelphia,Engineering,21,90011.65,34.6,3,Part-time,2020-08-17,No
+USR_0285,San Diego,Finance,24,56587.6,6.2,1,Intern,2022-04-23,Yes
+USR_0286,Los Angeles,HR,18,97849.31,3.3,5,Full-time,2017-05-23,Yes
+USR_0287,Phoenix,Support,61,64999.07,19.4,5,Full-time,2019-05-20,Yes
+USR_0288,New York,Engineering,62,75773.87,12.1,1,Full-time,2023-04-15,No
+USR_0289,New York,Support,59,75206.44,22.5,5,Full-time,2021-04-10,No
+USR_0290,Phoenix,Engineering,64,67313.83,32.2,2,Full-time,2024-04-12,No
+USR_0291,Chicago,HR,30,86216.17,5.5,5,Intern,2022-10-07,Yes
+USR_0292,Houston,Support,39,85869.77,23.2,5,Contract,2023-10-28,No
+USR_0293,Chicago,Marketing,38,35029.36,20.2,1,Full-time,2023-09-17,Yes
+USR_0294,New York,Sales,39,96086.8,5.8,4,Full-time,2019-07-01,Yes
+USR_0295,New York,Marketing,45,36750.16,25.0,5,Full-time,2023-05-14,Yes
+USR_0296,Phoenix,Finance,26,90650.92,10.9,5,Full-time,2025-06-04,Yes
+USR_0297,Philadelphia,HR,43,92534.1,19.5,4,Full-time,2020-10-18,Yes
+USR_0298,Chicago,Marketing,26,48180.67,3.3,1,Full-time,2021-09-04,No
+USR_0299,Dallas,Engineering,32,61783.71,18.4,4,Intern,2022-08-25,No
+USR_0300,Phoenix,Finance,27,47885.91,12.3,1,Full-time,2019-06-18,Yes
+USR_0301,San Diego,Finance,41,65701.58,32.9,2,Full-time,2023-09-21,No
+USR_0302,New York,Marketing,59,63839.31,2.3,1,Part-time,2023-10-28,No
+USR_0303,Phoenix,Marketing,25,85593.21,16.7,2,Full-time,2016-05-29,Yes
+USR_0304,Chicago,HR,41,96206.17,18.3,2,Full-time,2018-05-19,Yes
+USR_0305,New York,Sales,33,97913.68,29.0,1,Full-time,2023-08-05,No
+USR_0306,Houston,Marketing,43,58756.64,23.0,3,Full-time,2021-05-21,No
+USR_0307,Phoenix,Product,44,65815.56,26.7,1,Part-time,2019-04-04,No
+USR_0308,San Antonio,Marketing,54,36331.24,31.1,5,Full-time,2019-07-02,No
+USR_0309,New York,Support,21,53882.6,34.5,5,Part-time,2022-07-06,Yes
+USR_0310,Chicago,Engineering,41,89297.03,12.6,3,Full-time,2020-11-29,No
+USR_0311,Los Angeles,Product,36,102311.66,21.5,2,Full-time,2025-01-02,Yes
+USR_0312,Dallas,Product,53,45313.02,33.6,3,Contract,2020-05-05,Yes
+USR_0313,San Jose,Support,56,58150.71,39.6,5,Full-time,2019-01-28,No
+USR_0314,Philadelphia,Support,27,69471.88,35.6,3,Full-time,2022-06-22,No
+USR_0315,San Jose,Finance,42,75603.22,14.9,1,Full-time,2022-12-28,No
+USR_0316,Chicago,Sales,35,53807.93,7.8,3,Full-time,2025-07-14,Yes
+USR_0317,San Diego,Engineering,36,78481.22,19.6,2,Full-time,2023-03-12,Yes
+USR_0318,San Diego,HR,53,60523.21,29.7,1,Full-time,2023-11-16,Yes
+USR_0319,Los Angeles,Product,27,69710.95,19.7,4,Full-time,2020-01-11,Yes
+USR_0320,Philadelphia,HR,50,80925.68,19.3,5,Full-time,2025-06-20,No
+USR_0321,San Antonio,Marketing,22,70128.45,33.5,5,Intern,2023-12-09,Yes
+USR_0322,Los Angeles,Marketing,64,61272.28,14.5,3,Full-time,2020-11-19,Yes
+USR_0323,San Jose,HR,52,67807.8,34.4,1,Contract,2021-09-09,No
+USR_0324,Los Angeles,Marketing,61,68232.74,16.3,4,Full-time,2018-05-01,Yes
+USR_0325,San Jose,Sales,51,62599.78,13.1,1,Full-time,2016-08-05,Yes
+USR_0326,New York,Support,50,64824.08,18.2,5,Contract,2017-08-04,No
+USR_0327,San Diego,Marketing,38,101972.94,30.5,1,Full-time,2020-03-05,Yes
+USR_0328,New York,Finance,34,81218.39,5.0,4,Part-time,2025-03-11,Yes
+USR_0329,Dallas,Marketing,39,64090.39,7.9,3,Full-time,2022-05-21,Yes
+USR_0330,Philadelphia,Engineering,54,83939.09,38.1,2,Full-time,2016-03-22,Yes
+USR_0331,San Antonio,Sales,32,63323.61,7.0,1,Full-time,2021-08-14,No
+USR_0332,San Jose,Engineering,52,93462.49,22.7,2,Full-time,2023-02-07,Yes
+USR_0333,San Antonio,Engineering,45,77392.84,23.2,5,Contract,2022-10-13,No
+USR_0334,San Jose,Finance,24,67853.96,19.6,3,Full-time,2025-03-22,Yes
+USR_0335,Chicago,Sales,49,78954.34,25.8,3,Intern,2017-09-25,No
+USR_0336,Los Angeles,Sales,28,38582.48,9.2,1,Intern,2017-04-18,No
+USR_0337,Dallas,Sales,27,47464.65,22.1,3,Full-time,2021-03-16,No
+USR_0338,San Diego,Sales,26,46121.5,14.9,1,Full-time,2025-05-01,Yes
+USR_0339,San Jose,Sales,31,72858.86,26.5,1,Contract,2025-07-11,Yes
+USR_0340,San Antonio,Finance,30,104650.3,5.6,2,Intern,2021-07-26,Yes
+USR_0341,Dallas,Marketing,42,114626.0,22.8,3,Full-time,2021-05-04,No
+USR_0342,Houston,Engineering,19,82761.02,7.4,1,Full-time,2023-07-26,Yes
+USR_0343,Houston,Sales,52,80016.89,11.1,2,Full-time,2024-01-19,Yes
+USR_0344,New York,Product,24,33978.85,8.7,4,Full-time,2022-03-24,Yes
+USR_0345,San Diego,Marketing,38,59146.52,7.3,2,Full-time,2019-07-29,Yes
+USR_0346,Chicago,Marketing,35,54244.32,33.0,2,Part-time,2021-02-13,No
+USR_0347,San Antonio,Engineering,20,57583.05,11.4,1,Full-time,2023-03-31,No
+USR_0348,Los Angeles,Finance,59,66637.12,37.1,5,Full-time,2021-03-12,Yes
+USR_0349,Los Angeles,HR,56,60558.19,38.8,5,Full-time,2020-12-04,Yes
+USR_0350,San Antonio,HR,58,30414.0,22.9,5,Full-time,2025-10-27,Yes
+USR_0351,Philadelphia,Marketing,28,84958.21,5.7,2,Full-time,2022-01-11,No
+USR_0352,Chicago,Support,56,48545.14,15.0,1,Full-time,2022-01-18,Yes
+USR_0353,Dallas,Support,41,74784.94,31.9,3,Full-time,2022-02-14,No
+USR_0354,San Jose,Engineering,63,111481.65,14.7,2,Full-time,2024-01-01,No
+USR_0355,Philadelphia,HR,36,51612.31,3.5,2,Full-time,2018-07-17,Yes
+USR_0356,San Jose,Marketing,21,19394.25,22.3,1,Intern,2018-05-31,Yes
+USR_0357,San Jose,Finance,43,64279.92,33.8,4,Full-time,2020-09-28,Yes
+USR_0358,Philadelphia,HR,55,92019.19,31.8,2,Full-time,2020-07-22,No
+USR_0359,New York,Marketing,59,109166.95,7.0,4,Full-time,2017-02-03,No
+USR_0360,Houston,Marketing,49,45409.01,26.9,4,Intern,2025-01-26,Yes
+USR_0361,San Jose,Sales,56,79933.98,8.8,5,Full-time,2017-02-02,No
+USR_0362,Philadelphia,Finance,62,60693.79,8.7,1,Full-time,2016-12-28,Yes
+USR_0363,Philadelphia,Sales,63,67881.03,35.0,4,Part-time,2024-02-27,Yes
+USR_0364,Phoenix,Engineering,53,122886.87,10.0,1,Full-time,2016-09-10,No
+USR_0365,New York,Sales,57,39940.59,10.5,5,Full-time,2022-05-08,No
+USR_0366,San Diego,Product,54,75074.79,0.0,1,Full-time,2025-06-29,No
+USR_0367,Phoenix,Sales,50,79353.86,34.8,2,Full-time,2021-05-08,No
+USR_0368,Phoenix,Product,53,91715.73,31.7,4,Full-time,2024-02-02,Yes
+USR_0369,San Antonio,HR,20,71959.66,25.1,1,Part-time,2025-06-18,Yes
+USR_0370,Houston,Support,26,76161.01,30.0,3,Full-time,2025-08-10,Yes
+USR_0371,Philadelphia,Marketing,25,62167.03,6.1,1,Contract,2024-02-28,No
+USR_0372,Houston,Product,50,75382.54,18.3,4,Full-time,2020-12-04,Yes
+USR_0373,Chicago,Finance,23,63136.15,14.0,5,Contract,2019-04-15,No
+USR_0374,San Antonio,Sales,58,82431.44,3.8,5,Full-time,2020-12-08,No
+USR_0375,San Diego,Product,56,62607.79,19.4,4,Full-time,2024-05-27,No
+USR_0376,Houston,Finance,21,77542.01,36.8,2,Full-time,2017-09-06,Yes
+USR_0377,Los Angeles,Support,30,69414.74,1.6,2,Intern,2022-08-29,No
+USR_0378,San Jose,Support,19,92521.01,11.7,5,Full-time,2022-12-16,No
+USR_0379,Chicago,Sales,22,68972.13,8.3,5,Full-time,2017-05-31,No
+USR_0380,New York,Engineering,61,34539.35,9.5,4,Full-time,2024-01-22,No
+USR_0381,San Diego,Sales,44,95238.43,36.3,2,Full-time,2016-05-20,No
+USR_0382,Chicago,HR,49,51885.35,18.7,5,Full-time,2020-01-29,No
+USR_0383,San Jose,Product,38,56924.67,18.7,2,Full-time,2019-10-19,No
+USR_0384,San Antonio,Marketing,25,58086.77,30.4,5,Full-time,2019-11-10,No
+USR_0385,San Jose,Engineering,55,97488.76,6.2,1,Full-time,2019-02-18,No
+USR_0386,Phoenix,Sales,25,27286.52,19.5,3,Full-time,2019-09-17,No
+USR_0387,San Jose,Finance,20,132754.97,17.2,1,Full-time,2024-09-17,No
+USR_0388,Phoenix,Engineering,61,91121.14,23.9,5,Part-time,2021-10-17,No
+USR_0389,San Antonio,Product,20,74464.78,40.0,3,Full-time,2021-02-11,Yes
+USR_0390,Dallas,Engineering,39,68902.12,30.8,3,Full-time,2018-07-24,Yes
+USR_0391,Phoenix,Product,23,75711.08,15.9,5,Full-time,2023-12-17,No
+USR_0392,New York,Sales,19,80422.45,33.1,5,Intern,2018-01-20,No
+USR_0393,San Jose,Product,40,82904.31,6.8,2,Intern,2018-05-18,No
+USR_0394,San Jose,Engineering,61,81112.09,1.2,5,Contract,2016-02-21,Yes
+USR_0395,New York,Finance,19,71791.61,8.2,4,Full-time,2019-09-08,Yes
+USR_0396,Los Angeles,Support,55,66053.23,13.6,5,Full-time,2025-09-25,Yes
+USR_0397,Philadelphia,Engineering,34,66974.53,20.4,4,Full-time,2019-06-22,No
+USR_0398,Dallas,Product,52,66101.83,24.6,5,Full-time,2020-04-06,No
+USR_0399,San Diego,Support,51,92675.4,36.4,2,Full-time,2016-07-20,No
+USR_0400,Phoenix,Product,40,81871.13,20.4,4,Part-time,2021-03-29,No
+USR_0401,New York,Finance,47,11192.23,20.1,1,Contract,2022-10-05,Yes
+USR_0402,San Antonio,Product,25,83118.02,2.0,4,Contract,2016-06-06,No
+USR_0403,Phoenix,Sales,39,73894.72,1.4,2,Full-time,2019-04-22,Yes
+USR_0404,Philadelphia,Marketing,61,69625.82,22.0,4,Full-time,2022-06-16,Yes
+USR_0405,San Antonio,Engineering,53,62229.63,17.5,5,Full-time,2021-03-29,No
+USR_0406,Chicago,Marketing,22,92482.25,33.6,5,Full-time,2022-07-15,Yes
+USR_0407,San Jose,Product,30,88950.53,6.4,2,Part-time,2016-10-24,Yes
+USR_0408,Chicago,Finance,46,54542.45,1.0,3,Full-time,2024-01-07,Yes
+USR_0409,Phoenix,Engineering,48,78141.05,18.0,5,Full-time,2024-03-09,Yes
+USR_0410,Philadelphia,Product,64,50566.87,9.5,1,Full-time,2017-12-03,No
+USR_0411,Dallas,Support,33,42407.64,2.0,2,Full-time,2025-09-10,No
+USR_0412,Phoenix,HR,59,57465.66,29.0,4,Part-time,2022-06-24,Yes
+USR_0413,New York,Product,47,87247.87,4.5,4,Full-time,2022-07-18,No
+USR_0414,Houston,Marketing,33,89062.5,24.3,1,Contract,2021-06-03,Yes
+USR_0415,Phoenix,Engineering,29,80261.71,11.2,5,Full-time,2023-04-14,No
+USR_0416,San Jose,Marketing,34,84501.92,6.9,2,Full-time,2023-11-25,No
+USR_0417,San Jose,Engineering,33,80323.57,15.2,1,Part-time,2025-06-19,No
+USR_0418,Phoenix,Product,29,57170.37,32.1,5,Full-time,2018-08-27,No
+USR_0419,San Antonio,Sales,25,78638.45,15.7,2,Intern,2024-07-28,No
+USR_0420,Houston,Support,37,86008.19,30.0,4,Full-time,2022-06-24,Yes
+USR_0421,New York,Product,20,85085.83,5.0,2,Full-time,2026-01-02,No
+USR_0422,Phoenix,Marketing,33,93778.27,30.9,3,Full-time,2022-12-07,Yes
+USR_0423,San Antonio,HR,47,84166.08,9.5,2,Contract,2018-04-02,Yes
+USR_0424,San Jose,HR,62,77028.96,27.1,3,Full-time,2024-12-15,No
+USR_0425,San Jose,Finance,40,91403.0,22.6,2,Part-time,2022-09-15,Yes
+USR_0426,Philadelphia,Engineering,45,69469.57,37.2,3,Full-time,2025-02-26,No
+USR_0427,Phoenix,Marketing,57,52362.51,15.5,4,Full-time,2021-02-03,Yes
+USR_0428,Houston,Finance,22,66738.66,2.6,5,Full-time,2021-10-23,Yes
+USR_0429,Los Angeles,Marketing,37,55101.95,0.8,3,Full-time,2017-06-25,No
+USR_0430,Houston,Engineering,57,56496.43,33.1,3,Full-time,2018-06-15,No
+USR_0431,San Jose,Product,61,67109.63,21.0,4,Contract,2020-11-08,No
+USR_0432,San Jose,Product,18,54151.6,31.0,3,Full-time,2019-10-03,No
+USR_0433,Chicago,HR,47,63840.77,9.4,1,Full-time,2017-04-04,Yes
+USR_0434,San Jose,Product,38,32127.71,13.8,4,Full-time,2020-11-25,No
+USR_0435,New York,Product,37,74265.87,1.2,1,Full-time,2019-08-29,Yes
+USR_0436,San Diego,Sales,23,70024.11,38.5,4,Full-time,2022-04-13,Yes
+USR_0437,Phoenix,HR,39,53658.23,26.7,3,Full-time,2017-10-30,Yes
+USR_0438,Houston,Finance,35,83184.91,37.3,1,Full-time,2018-06-30,Yes
+USR_0439,San Diego,Support,25,88751.4,10.6,3,Full-time,2017-09-03,Yes
+USR_0440,San Antonio,Sales,56,37848.8,24.5,4,Full-time,2021-02-10,Yes
+USR_0441,Los Angeles,Finance,49,54745.5,27.1,3,Full-time,2019-04-15,No
+USR_0442,New York,Engineering,50,54617.15,12.7,1,Full-time,2017-05-22,Yes
+USR_0443,Houston,Sales,33,51201.94,33.9,1,Full-time,2022-09-29,Yes
+USR_0444,San Diego,Finance,29,86589.5,37.9,3,Full-time,2024-12-31,Yes
+USR_0445,Los Angeles,Engineering,55,66123.48,35.4,2,Contract,2021-05-24,No
+USR_0446,Chicago,HR,51,64709.7,29.6,4,Contract,2018-03-02,No
+USR_0447,New York,Support,31,29922.75,11.1,4,Part-time,2022-10-07,Yes
+USR_0448,New York,Engineering,53,82708.36,11.3,3,Full-time,2018-05-16,No
+USR_0449,Chicago,Product,50,45214.83,38.5,2,Part-time,2025-10-17,Yes
+USR_0450,Phoenix,Marketing,40,71198.65,0.4,1,Contract,2017-05-14,No
+USR_0451,Chicago,Engineering,62,75547.54,28.6,5,Part-time,2021-07-08,Yes
+USR_0452,New York,Engineering,19,97213.17,28.2,5,Full-time,2025-12-06,No
+USR_0453,New York,Support,58,43823.59,24.9,3,Full-time,2022-07-20,No
+USR_0454,San Diego,Marketing,38,9609.76,39.6,2,Contract,2023-11-07,No
+USR_0455,San Jose,Product,19,73676.99,12.5,2,Full-time,2019-11-06,Yes
+USR_0456,Los Angeles,Finance,44,106010.22,13.6,4,Full-time,2019-09-04,Yes
+USR_0457,Chicago,Finance,26,94778.93,3.2,1,Full-time,2022-03-26,Yes
+USR_0458,Los Angeles,Engineering,18,74193.19,17.7,2,Full-time,2016-04-08,No
+USR_0459,Chicago,Marketing,28,60167.28,10.4,5,Full-time,2023-06-16,No
+USR_0460,San Antonio,Marketing,20,86142.45,13.7,1,Full-time,2025-02-05,Yes
+USR_0461,New York,Product,40,50529.08,33.4,1,Full-time,2025-06-21,No
+USR_0462,San Jose,Support,43,79527.16,37.4,3,Full-time,2019-12-20,Yes
+USR_0463,San Diego,HR,21,80109.4,7.4,2,Full-time,2023-08-17,Yes
+USR_0464,San Jose,Finance,35,91204.2,14.9,3,Full-time,2017-08-31,Yes
+USR_0465,San Jose,Support,23,125193.2,37.1,2,Full-time,2023-08-03,Yes
+USR_0466,San Jose,Sales,52,77848.32,2.5,4,Full-time,2024-03-22,No
+USR_0467,Los Angeles,Finance,39,59820.73,3.7,3,Part-time,2025-08-16,No
+USR_0468,Chicago,Support,60,69488.51,6.5,3,Full-time,2019-11-28,No
+USR_0469,Dallas,Finance,32,34618.48,23.8,5,Full-time,2023-04-11,Yes
+USR_0470,San Antonio,HR,39,56105.74,6.0,3,Full-time,2022-01-31,No
+USR_0471,Houston,Sales,54,61814.35,38.7,2,Contract,2024-05-20,Yes
+USR_0472,San Jose,HR,59,59518.23,17.9,5,Full-time,2025-08-29,Yes
+USR_0473,Phoenix,Product,29,73047.1,20.1,3,Full-time,2016-03-10,Yes
+USR_0474,Los Angeles,Sales,64,53551.6,9.9,3,Full-time,2020-05-10,Yes
+USR_0475,San Diego,Engineering,59,92420.61,18.8,4,Full-time,2019-11-27,Yes
+USR_0476,Houston,Support,55,70004.14,26.5,3,Contract,2017-10-07,Yes
+USR_0477,Dallas,Sales,35,69813.99,30.0,1,Contract,2023-11-08,No
+USR_0478,Phoenix,Product,62,63442.11,30.2,5,Full-time,2016-09-17,No
+USR_0479,Dallas,Product,52,73103.81,23.1,1,Full-time,2019-06-13,No
+USR_0480,Houston,HR,47,86501.97,36.2,5,Full-time,2025-12-15,No
+USR_0481,San Jose,Finance,41,52657.4,32.7,4,Full-time,2025-10-14,Yes
+USR_0482,Phoenix,Sales,59,56837.67,30.3,3,Full-time,2018-01-14,Yes
+USR_0483,Dallas,Support,47,63925.48,2.2,3,Full-time,2017-01-02,No
+USR_0484,San Diego,Sales,31,43082.58,0.3,3,Full-time,2023-12-04,No
+USR_0485,Chicago,Marketing,23,53614.84,8.5,5,Full-time,2023-12-22,No
+USR_0486,New York,Finance,20,60475.58,26.5,3,Contract,2017-09-20,No
+USR_0487,Chicago,Support,33,87487.78,16.4,1,Full-time,2018-04-21,No
+USR_0488,Houston,Support,24,75251.23,16.1,3,Contract,2018-03-10,No
+USR_0489,Los Angeles,Engineering,31,73871.8,35.4,4,Part-time,2017-03-16,No
+USR_0490,New York,HR,26,87017.96,35.8,1,Full-time,2022-03-03,No
+USR_0491,San Antonio,Engineering,32,67252.56,36.4,3,Part-time,2020-12-03,Yes
+USR_0492,San Diego,Support,38,77809.3,12.6,3,Full-time,2017-01-20,Yes
+USR_0493,San Antonio,Finance,52,67935.56,27.6,2,Full-time,2018-02-28,Yes
+USR_0494,Phoenix,Sales,19,75307.25,10.9,5,Full-time,2024-03-03,Yes
+USR_0495,New York,Sales,44,58344.83,7.6,1,Intern,2023-02-01,No
+USR_0496,San Antonio,Finance,19,21223.66,7.4,2,Full-time,2026-01-18,Yes
+USR_0497,San Antonio,Support,52,67314.42,13.7,4,Full-time,2021-12-31,No
+USR_0498,Dallas,Product,35,98454.96,17.2,5,Contract,2023-10-20,Yes
+USR_0499,Chicago,Sales,31,88524.31,33.2,1,Full-time,2016-06-29,No
+USR_0500,Dallas,Product,37,89307.95,4.8,3,Full-time,2021-04-15,No
+USR_0501,New York,Sales,35,94722.61,29.4,1,Part-time,2016-02-20,Yes
+USR_0502,New York,Sales,27,71773.15,21.3,3,Contract,2023-01-19,Yes
+USR_0503,Houston,HR,42,73946.31,11.5,5,Intern,2025-08-01,No
+USR_0504,Dallas,HR,19,57646.96,19.7,3,Intern,2023-04-27,No
+USR_0505,Philadelphia,Marketing,42,63678.54,12.0,4,Full-time,2023-01-09,No
+USR_0506,Chicago,Engineering,50,82315.42,23.8,3,Contract,2025-01-09,Yes
+USR_0507,New York,Finance,53,94077.69,17.4,4,Full-time,2017-09-05,Yes
+USR_0508,Houston,Finance,48,67211.07,6.6,5,Full-time,2018-10-01,No
+USR_0509,Dallas,Finance,31,60996.21,4.7,5,Full-time,2023-04-27,Yes
+USR_0510,Chicago,Marketing,18,70010.56,21.9,1,Full-time,2024-07-22,No
+USR_0511,Dallas,HR,63,82024.13,36.1,4,Intern,2025-06-23,Yes
+USR_0512,San Antonio,Support,33,41122.9,13.8,4,Contract,2023-09-19,Yes
+USR_0513,Houston,Product,63,24076.38,29.3,2,Full-time,2018-12-06,Yes
+USR_0514,Chicago,Product,20,58989.26,26.3,2,Full-time,2025-06-14,Yes
+USR_0515,San Jose,Support,52,45585.75,37.3,2,Full-time,2025-11-11,Yes
+USR_0516,Phoenix,Marketing,58,59837.2,32.8,3,Contract,2019-11-13,No
+USR_0517,Phoenix,Support,23,67044.39,22.7,2,Part-time,2024-11-09,No
+USR_0518,Chicago,Finance,42,60935.03,26.3,4,Full-time,2019-11-12,Yes
+USR_0519,Dallas,Engineering,30,99049.35,35.9,3,Full-time,2025-02-20,No
+USR_0520,Houston,Sales,51,76534.9,16.0,5,Full-time,2023-05-11,No
+USR_0521,Phoenix,Product,25,76009.49,13.1,1,Full-time,2022-05-24,Yes
+USR_0522,Houston,HR,38,82444.14,0.4,2,Contract,2024-11-27,No
+USR_0523,Phoenix,HR,51,47223.34,33.1,5,Full-time,2022-04-12,Yes
+USR_0524,San Antonio,Marketing,21,90782.24,32.0,4,Full-time,2016-11-24,No
+USR_0525,Dallas,HR,42,68484.71,4.2,1,Full-time,2025-03-01,No
+USR_0526,San Antonio,Finance,32,83409.61,23.1,5,Full-time,2018-09-07,No
+USR_0527,Phoenix,Product,21,48562.86,18.6,1,Intern,2016-07-11,No
+USR_0528,San Jose,Support,62,38924.82,4.7,2,Full-time,2024-04-23,No
+USR_0529,San Jose,Finance,29,86357.79,39.2,4,Full-time,2020-02-23,No
+USR_0530,San Antonio,Marketing,49,77528.19,8.6,1,Full-time,2020-02-12,No
+USR_0531,San Jose,Finance,49,51958.97,2.7,5,Full-time,2019-05-14,Yes
+USR_0532,Phoenix,Support,45,52606.74,23.8,2,Full-time,2023-01-19,Yes
+USR_0533,Chicago,Engineering,30,92508.7,29.6,2,Part-time,2024-05-24,Yes
+USR_0534,San Antonio,Marketing,48,46211.76,1.3,5,Full-time,2025-05-01,Yes
+USR_0535,Los Angeles,Engineering,31,102853.46,26.3,5,Full-time,2020-09-08,No
+USR_0536,Dallas,Sales,37,51987.59,21.3,1,Full-time,2021-07-06,No
+USR_0537,San Jose,Engineering,35,82767.84,4.1,3,Full-time,2025-07-01,No
+USR_0538,San Jose,Sales,46,63427.63,6.9,2,Full-time,2024-01-27,Yes
+USR_0539,New York,Sales,23,82063.75,22.7,1,Full-time,2024-11-03,Yes
+USR_0540,Philadelphia,Engineering,49,59117.72,11.9,5,Contract,2021-10-24,Yes
+USR_0541,San Antonio,Marketing,46,66744.14,37.5,1,Contract,2016-12-10,No
+USR_0542,San Diego,Support,60,70818.38,32.7,5,Full-time,2021-06-09,Yes
+USR_0543,San Jose,Finance,19,49956.25,39.3,4,Full-time,2022-12-03,No
+USR_0544,Dallas,Finance,40,84816.49,10.4,5,Full-time,2019-07-11,Yes
+USR_0545,Los Angeles,Support,36,59735.73,38.8,5,Full-time,2021-05-09,No
+USR_0546,San Jose,Product,48,65428.0,17.2,5,Contract,2023-03-30,Yes
+USR_0547,Los Angeles,Product,22,50113.01,13.9,3,Full-time,2016-12-16,No
+USR_0548,Phoenix,Sales,36,18753.33,2.0,5,Full-time,2018-02-24,Yes
+USR_0549,Phoenix,Sales,51,66179.44,2.1,2,Contract,2024-04-15,Yes
+USR_0550,Philadelphia,Marketing,27,118252.31,27.7,2,Contract,2022-05-24,No
+USR_0551,Chicago,HR,42,85692.09,18.3,1,Full-time,2023-05-01,No
+USR_0552,San Diego,Engineering,19,69614.79,9.1,3,Full-time,2020-04-08,Yes
+USR_0553,New York,Sales,28,64742.18,24.6,1,Full-time,2018-10-20,No
+USR_0554,Philadelphia,Finance,48,70449.32,10.1,2,Full-time,2023-03-22,Yes
+USR_0555,Houston,Marketing,32,80942.38,23.1,2,Contract,2021-04-11,No
+USR_0556,New York,Engineering,26,46383.74,14.4,4,Contract,2019-11-05,Yes
+USR_0557,San Antonio,Marketing,40,92286.43,32.9,5,Part-time,2020-11-13,No
+USR_0558,Dallas,Engineering,36,84307.63,32.8,2,Full-time,2025-02-11,Yes
+USR_0559,Houston,Engineering,26,84363.71,19.1,1,Contract,2018-04-02,Yes
+USR_0560,Houston,Support,52,78769.51,14.0,1,Full-time,2022-03-29,Yes
+USR_0561,Philadelphia,Sales,38,70392.33,14.5,5,Full-time,2024-04-12,No
+USR_0562,Chicago,Marketing,26,83457.22,32.2,5,Full-time,2016-11-17,Yes
+USR_0563,Philadelphia,Marketing,45,81836.28,13.1,4,Full-time,2020-12-16,No
+USR_0564,San Antonio,Support,63,62919.19,8.4,3,Part-time,2022-04-16,No
+USR_0565,San Jose,Finance,24,58527.96,3.4,1,Full-time,2025-11-02,No
+USR_0566,San Jose,Finance,33,72037.13,18.7,5,Full-time,2020-05-16,Yes
+USR_0567,Chicago,Product,33,100980.4,19.3,1,Full-time,2018-03-16,No
+USR_0568,San Antonio,Sales,50,45217.86,33.6,5,Full-time,2024-12-14,No
+USR_0569,Chicago,Sales,21,40649.49,8.8,2,Full-time,2021-12-28,No
+USR_0570,Los Angeles,HR,21,73295.22,15.2,1,Full-time,2025-12-09,Yes
+USR_0571,San Jose,Support,56,71017.75,32.3,2,Contract,2023-01-03,No
+USR_0572,Houston,Finance,57,73466.83,32.9,1,Full-time,2021-06-12,No
+USR_0573,San Diego,Engineering,34,74879.06,15.4,3,Full-time,2016-03-12,No
+USR_0574,Dallas,Marketing,54,65535.95,18.4,4,Full-time,2017-05-16,No
+USR_0575,San Antonio,Sales,56,99797.27,12.1,2,Contract,2017-09-26,Yes
+USR_0576,New York,Marketing,46,37981.92,37.3,5,Full-time,2024-06-21,Yes
+USR_0577,Chicago,Marketing,53,53430.06,4.7,3,Full-time,2016-08-26,No
+USR_0578,Dallas,HR,55,67934.9,37.3,1,Full-time,2025-01-13,No
+USR_0579,New York,Finance,56,37136.22,27.4,2,Full-time,2017-10-29,No
+USR_0580,Dallas,Sales,54,66482.91,21.3,1,Full-time,2023-03-01,No
+USR_0581,San Diego,Marketing,52,103229.4,1.3,1,Part-time,2018-11-07,Yes
+USR_0582,New York,Sales,24,70417.73,19.0,1,Full-time,2022-07-07,Yes
+USR_0583,Philadelphia,Engineering,44,74614.02,16.3,4,Full-time,2020-07-20,Yes
+USR_0584,Phoenix,HR,45,44796.7,6.4,4,Part-time,2019-07-31,Yes
+USR_0585,Philadelphia,Engineering,39,57672.77,26.3,5,Full-time,2023-11-22,No
+USR_0586,San Jose,Sales,31,62496.07,38.8,2,Full-time,2017-02-20,No
+USR_0587,Phoenix,Product,24,63645.7,22.5,3,Full-time,2017-01-17,Yes
+USR_0588,Philadelphia,Sales,54,95632.88,28.6,3,Full-time,2022-04-05,Yes
+USR_0589,Phoenix,Finance,39,81153.82,2.7,3,Full-time,2018-06-11,No
+USR_0590,Phoenix,Marketing,22,47770.84,16.7,1,Full-time,2022-12-07,No
+USR_0591,Houston,Marketing,19,74930.1,4.7,4,Contract,2016-08-01,No
+USR_0592,Chicago,Engineering,44,79964.43,24.5,2,Intern,2021-11-30,No
+USR_0593,Chicago,HR,38,92802.98,37.5,1,Full-time,2022-04-25,No
+USR_0594,Houston,Product,55,101610.81,26.5,4,Full-time,2016-08-27,Yes
+USR_0595,Dallas,Support,32,49698.12,3.1,4,Full-time,2023-09-12,Yes
+USR_0596,Los Angeles,Marketing,38,53782.85,14.2,2,Contract,2021-09-23,No
+USR_0597,Dallas,Finance,27,44848.44,22.0,2,Full-time,2018-10-06,No
+USR_0598,New York,Engineering,40,65319.6,16.1,2,Full-time,2025-05-31,Yes
+USR_0599,New York,Engineering,56,79327.17,33.3,1,Part-time,2016-05-23,No
+USR_0600,Phoenix,Support,22,89746.69,32.6,5,Part-time,2017-05-21,Yes
+USR_0601,Philadelphia,Finance,18,68480.98,24.5,2,Contract,2020-06-12,Yes
+USR_0602,Philadelphia,HR,30,63603.05,14.9,5,Full-time,2019-01-21,Yes
+USR_0603,Chicago,Finance,38,73035.16,10.2,1,Part-time,2022-11-28,Yes
+USR_0604,San Antonio,HR,43,53297.14,4.2,5,Contract,2022-09-26,No
+USR_0605,Dallas,Finance,62,111790.77,14.2,3,Full-time,2016-03-30,No
+USR_0606,San Jose,Finance,38,37846.78,16.5,5,Full-time,2019-06-22,Yes
+USR_0607,San Diego,Sales,35,73694.81,27.0,2,Full-time,2016-04-26,No
+USR_0608,Philadelphia,Engineering,54,110472.12,26.3,1,Intern,2025-08-27,No
+USR_0609,San Diego,Finance,62,70136.0,2.8,2,Full-time,2021-10-19,No
+USR_0610,Phoenix,Support,49,66199.22,15.8,3,Full-time,2017-03-15,No
+USR_0611,San Diego,Finance,53,62851.09,7.3,2,Full-time,2018-02-22,Yes
+USR_0612,San Jose,Marketing,34,66392.17,6.3,2,Part-time,2024-06-02,No
+USR_0613,Houston,Engineering,52,97456.97,33.1,2,Full-time,2018-10-29,Yes
+USR_0614,San Jose,Marketing,28,25762.76,1.7,4,Full-time,2021-08-28,Yes
+USR_0615,San Diego,Engineering,38,100668.67,16.8,3,Full-time,2016-06-25,No
+USR_0616,San Jose,Marketing,43,41520.86,6.7,2,Contract,2016-10-15,Yes
+USR_0617,Los Angeles,Finance,21,64666.95,35.2,2,Full-time,2024-09-24,No
+USR_0618,Phoenix,Finance,51,61415.11,22.3,2,Full-time,2023-08-11,No
+USR_0619,Dallas,Sales,35,81771.07,9.3,1,Part-time,2020-04-14,Yes
+USR_0620,Houston,Support,57,38037.51,20.1,4,Full-time,2024-07-04,No
+USR_0621,Philadelphia,Marketing,52,79243.45,29.3,1,Contract,2020-09-29,Yes
+USR_0622,New York,HR,58,110486.19,38.3,4,Full-time,2018-08-14,Yes
+USR_0623,Dallas,Sales,46,42736.52,8.8,2,Full-time,2025-01-09,No
+USR_0624,New York,Marketing,46,73794.12,35.4,3,Full-time,2021-08-22,No
+USR_0625,Phoenix,Marketing,55,56760.36,37.4,5,Full-time,2020-12-16,No
+USR_0626,Houston,Sales,59,78517.74,36.7,5,Full-time,2017-06-01,Yes
+USR_0627,Chicago,Finance,38,70382.96,25.4,2,Full-time,2025-01-03,No
+USR_0628,Philadelphia,Marketing,59,57170.26,25.2,1,Part-time,2023-06-10,Yes
+USR_0629,Los Angeles,Finance,30,79757.45,16.1,3,Full-time,2025-06-30,Yes
+USR_0630,Chicago,Sales,58,106086.96,30.1,4,Full-time,2024-09-09,No
+USR_0631,Phoenix,Finance,34,66181.92,21.3,2,Full-time,2018-10-07,No
+USR_0632,Dallas,Engineering,26,84395.16,27.1,3,Intern,2025-06-18,No
+USR_0633,Los Angeles,HR,58,44134.54,17.1,3,Full-time,2016-07-12,Yes
+USR_0634,San Jose,Product,18,50871.27,29.3,4,Full-time,2025-10-16,No
+USR_0635,San Diego,Marketing,19,79448.13,33.0,3,Full-time,2017-04-02,Yes
+USR_0636,Los Angeles,Support,46,99682.32,5.9,1,Full-time,2025-06-28,No
+USR_0637,Phoenix,HR,50,77112.27,33.3,1,Full-time,2019-11-15,No
+USR_0638,San Antonio,Product,27,63738.84,21.6,1,Contract,2025-08-11,Yes
+USR_0639,San Diego,Finance,57,69985.83,33.8,3,Full-time,2017-01-06,Yes
+USR_0640,New York,Marketing,38,44991.85,17.3,1,Contract,2022-06-08,No
+USR_0641,Philadelphia,Finance,45,82090.31,15.2,4,Full-time,2025-07-14,No
+USR_0642,New York,Engineering,28,87646.66,36.6,3,Full-time,2022-03-26,No
+USR_0643,Los Angeles,Sales,51,60958.19,10.0,5,Contract,2020-03-28,No
+USR_0644,New York,Marketing,25,60599.16,33.8,3,Full-time,2023-08-30,No
+USR_0645,Phoenix,Product,39,75317.56,19.4,4,Intern,2020-12-15,Yes
+USR_0646,San Jose,Product,25,61265.61,20.6,5,Full-time,2018-06-07,Yes
+USR_0647,Dallas,Engineering,32,68677.35,12.3,3,Contract,2023-01-26,Yes
+USR_0648,Philadelphia,Engineering,34,111994.44,22.9,1,Full-time,2019-05-14,Yes
+USR_0649,New York,Marketing,40,65059.49,13.0,2,Full-time,2020-07-23,No
+USR_0650,New York,Finance,41,62833.2,1.6,2,Full-time,2025-01-11,Yes
+USR_0651,Los Angeles,Support,62,57049.16,10.9,1,Full-time,2018-08-06,Yes
+USR_0652,Dallas,Product,36,84883.84,0.3,2,Full-time,2023-10-19,Yes
+USR_0653,Chicago,Product,22,66375.52,39.1,2,Full-time,2021-12-07,No
+USR_0654,New York,Engineering,49,57012.54,38.6,1,Full-time,2024-06-15,Yes
+USR_0655,Phoenix,HR,61,96426.08,15.8,1,Full-time,2024-07-07,No
+USR_0656,San Antonio,Engineering,18,98392.06,29.1,3,Part-time,2020-07-07,Yes
+USR_0657,Philadelphia,Support,40,57991.53,13.8,3,Full-time,2020-10-18,No
+USR_0658,New York,Finance,54,32669.2,26.8,1,Full-time,2025-09-29,Yes
+USR_0659,Phoenix,Finance,25,90150.27,32.2,4,Full-time,2018-05-03,No
+USR_0660,Phoenix,HR,30,56307.4,37.9,2,Full-time,2018-09-22,Yes
+USR_0661,Philadelphia,Product,25,85812.51,16.0,3,Full-time,2016-11-02,No
+USR_0662,Chicago,Engineering,40,30597.92,31.3,2,Full-time,2019-11-24,No
+USR_0663,Phoenix,Finance,60,87851.95,10.6,5,Contract,2023-06-09,Yes
+USR_0664,San Antonio,Support,18,45776.56,39.6,1,Contract,2016-07-01,No
+USR_0665,Phoenix,Marketing,62,84615.28,1.0,4,Full-time,2017-07-28,No
+USR_0666,Phoenix,Sales,41,70285.46,24.1,5,Full-time,2021-02-21,Yes
+USR_0667,Phoenix,Sales,52,50921.21,26.4,5,Full-time,2017-03-04,Yes
+USR_0668,San Jose,Sales,41,61859.27,27.5,5,Full-time,2021-11-18,No
+USR_0669,San Jose,Product,34,83726.37,4.8,1,Full-time,2016-08-29,Yes
+USR_0670,Chicago,Engineering,22,72117.89,37.5,3,Full-time,2018-05-06,Yes
+USR_0671,New York,HR,37,81688.26,7.2,1,Full-time,2018-08-11,Yes
+USR_0672,Phoenix,Finance,38,109528.81,24.9,3,Full-time,2022-05-23,No
+USR_0673,Dallas,Marketing,57,38715.17,8.9,5,Full-time,2026-01-01,No
+USR_0674,New York,Support,48,102344.25,12.3,5,Contract,2022-07-03,No
+USR_0675,Chicago,Marketing,63,72087.12,21.9,4,Full-time,2018-08-12,No
+USR_0676,Houston,Support,53,52024.32,16.7,3,Contract,2025-08-31,No
+USR_0677,New York,Product,28,43393.73,6.4,5,Intern,2016-10-16,No
+USR_0678,New York,Engineering,32,66217.59,6.8,2,Full-time,2020-11-17,No
+USR_0679,San Diego,Sales,36,88433.0,16.7,4,Full-time,2023-01-08,Yes
+USR_0680,Los Angeles,Engineering,24,67449.02,30.3,1,Full-time,2020-01-23,No
+USR_0681,San Diego,Product,45,100223.1,35.9,4,Intern,2021-07-26,No
+USR_0682,San Antonio,HR,60,40976.49,3.4,2,Intern,2017-07-20,Yes
+USR_0683,San Jose,HR,22,69758.22,15.7,3,Full-time,2020-09-24,Yes
+USR_0684,San Jose,Product,22,44952.13,4.0,1,Full-time,2023-03-19,Yes
+USR_0685,Los Angeles,Support,47,77272.64,0.7,1,Part-time,2019-11-03,No
+USR_0686,Philadelphia,Finance,49,87737.75,26.5,3,Full-time,2023-06-18,Yes
+USR_0687,Philadelphia,Finance,25,61584.76,24.1,4,Part-time,2023-09-03,No
+USR_0688,Chicago,Support,27,17915.72,6.5,5,Contract,2020-03-11,No
+USR_0689,Los Angeles,HR,55,73978.96,9.4,4,Full-time,2017-09-22,No
+USR_0690,New York,HR,64,78734.77,0.9,2,Full-time,2019-08-19,Yes
+USR_0691,Philadelphia,HR,49,78085.9,33.4,5,Full-time,2020-06-09,Yes
+USR_0692,Phoenix,Engineering,45,94715.64,39.0,4,Full-time,2016-03-03,No
+USR_0693,Dallas,HR,34,48578.93,5.4,3,Full-time,2018-03-31,No
+USR_0694,New York,Marketing,48,83604.32,9.3,2,Part-time,2017-05-17,No
+USR_0695,San Antonio,Sales,25,93850.15,34.7,2,Contract,2018-08-01,Yes
+USR_0696,Phoenix,HR,57,34428.25,37.1,2,Contract,2021-07-18,No
+USR_0697,Phoenix,Support,42,76393.04,16.8,5,Full-time,2017-09-17,Yes
+USR_0698,Los Angeles,Sales,26,59916.4,2.0,1,Contract,2017-02-12,No
+USR_0699,Chicago,Engineering,19,68369.55,1.6,5,Part-time,2022-02-28,Yes
+USR_0700,San Antonio,Support,32,76953.53,23.0,4,Full-time,2017-05-22,No
+USR_0701,Philadelphia,Sales,20,60255.43,15.7,1,Full-time,2023-03-09,Yes
+USR_0702,Los Angeles,Support,53,56485.84,1.1,4,Full-time,2025-10-04,Yes
+USR_0703,Philadelphia,Engineering,21,70683.05,23.3,1,Contract,2018-02-07,Yes
+USR_0704,Los Angeles,Marketing,31,48255.08,0.5,5,Full-time,2025-09-04,Yes
+USR_0705,Los Angeles,Engineering,58,48283.5,31.5,2,Part-time,2023-11-05,Yes
+USR_0706,Los Angeles,Engineering,58,83587.47,12.3,3,Full-time,2016-08-14,Yes
+USR_0707,Chicago,Support,42,47024.12,1.6,2,Part-time,2020-12-06,No
+USR_0708,Los Angeles,Product,27,83326.25,23.5,5,Full-time,2018-03-03,No
+USR_0709,Houston,Finance,38,79251.83,15.9,1,Full-time,2024-09-15,No
+USR_0710,Dallas,HR,53,35483.87,39.0,2,Full-time,2020-05-18,No
+USR_0711,Philadelphia,HR,29,56448.71,21.8,5,Full-time,2017-05-27,Yes
+USR_0712,New York,Marketing,44,93882.19,11.0,4,Contract,2019-11-26,No
+USR_0713,San Diego,Marketing,57,50376.69,28.4,3,Full-time,2024-11-23,Yes
+USR_0714,San Antonio,HR,19,60711.91,10.9,2,Full-time,2019-08-22,Yes
+USR_0715,San Jose,Finance,30,79241.22,36.2,1,Full-time,2020-01-07,Yes
+USR_0716,Chicago,HR,49,85667.81,15.0,4,Full-time,2019-11-17,No
+USR_0717,New York,Product,48,64969.22,22.0,5,Full-time,2021-05-19,Yes
+USR_0718,Phoenix,Finance,33,58049.8,2.0,3,Full-time,2020-08-12,No
+USR_0719,Houston,Marketing,49,98447.4,17.0,1,Contract,2021-06-19,No
+USR_0720,San Jose,Sales,49,104777.99,33.3,5,Full-time,2025-05-18,No
+USR_0721,San Diego,Support,51,89577.16,32.2,5,Contract,2018-02-13,No
+USR_0722,New York,Product,28,71706.36,9.0,2,Intern,2023-10-25,No
+USR_0723,San Jose,Product,27,53834.69,9.0,2,Full-time,2016-08-29,Yes
+USR_0724,New York,Marketing,32,53391.11,32.7,1,Full-time,2024-10-08,Yes
+USR_0725,Houston,Marketing,34,80450.28,37.2,5,Full-time,2024-03-09,No
+USR_0726,San Diego,Engineering,57,78367.96,3.8,2,Intern,2024-03-24,Yes
+USR_0727,Phoenix,Product,35,98031.97,18.0,3,Contract,2016-11-26,No
+USR_0728,Los Angeles,Engineering,26,83009.0,13.5,3,Full-time,2023-05-20,Yes
+USR_0729,Philadelphia,Engineering,42,39938.39,34.8,5,Part-time,2025-02-17,Yes
+USR_0730,Phoenix,Support,57,91038.95,3.3,2,Full-time,2023-09-21,Yes
+USR_0731,Los Angeles,Engineering,31,50038.79,8.4,1,Intern,2020-09-14,Yes
+USR_0732,Chicago,Finance,42,62320.57,30.1,1,Intern,2019-12-11,Yes
+USR_0733,Dallas,HR,39,75004.0,2.1,1,Full-time,2017-02-11,Yes
+USR_0734,San Antonio,Sales,47,109913.35,19.7,3,Full-time,2024-08-06,Yes
+USR_0735,San Antonio,Marketing,37,132198.37,17.7,2,Full-time,2021-02-24,Yes
+USR_0736,Philadelphia,Finance,38,82134.46,13.4,2,Full-time,2025-03-23,Yes
+USR_0737,San Diego,Sales,61,66336.07,15.8,3,Contract,2018-11-16,Yes
+USR_0738,Houston,Product,49,80690.11,21.2,1,Full-time,2020-01-03,Yes
+USR_0739,San Diego,Product,63,87753.11,6.5,1,Full-time,2019-02-19,Yes
+USR_0740,Houston,Product,38,63586.65,22.9,5,Full-time,2016-10-27,Yes
+USR_0741,San Diego,Finance,52,105904.23,32.2,4,Intern,2025-11-18,No
+USR_0742,Dallas,Finance,49,74601.42,30.4,2,Full-time,2019-09-03,Yes
+USR_0743,Chicago,Marketing,47,79954.86,6.2,2,Full-time,2025-05-23,Yes
+USR_0744,Chicago,HR,56,83318.49,6.0,2,Full-time,2023-12-18,Yes
+USR_0745,Los Angeles,Engineering,29,78431.73,10.7,4,Intern,2022-10-04,Yes
+USR_0746,San Jose,Product,58,86778.81,14.4,5,Contract,2017-01-15,Yes
+USR_0747,Chicago,Support,64,57654.94,16.3,4,Full-time,2023-08-10,Yes
+USR_0748,Chicago,HR,35,58833.96,27.2,1,Full-time,2018-08-10,No
+USR_0749,Phoenix,Support,38,47996.92,2.3,1,Full-time,2023-07-11,No
+USR_0750,Phoenix,Marketing,30,78790.02,1.4,2,Full-time,2018-08-19,No
+USR_0751,Los Angeles,Marketing,38,85578.73,15.7,3,Full-time,2022-07-01,Yes
+USR_0752,San Jose,Marketing,25,79155.46,27.9,2,Contract,2021-11-26,Yes
+USR_0753,Philadelphia,Sales,63,103489.85,7.7,3,Full-time,2024-03-22,Yes
+USR_0754,Phoenix,Support,57,69888.08,25.7,4,Contract,2019-06-02,No
+USR_0755,Philadelphia,HR,63,83374.83,10.4,1,Full-time,2021-04-03,Yes
+USR_0756,New York,HR,24,48165.98,35.4,3,Part-time,2017-04-27,Yes
+USR_0757,Phoenix,Finance,40,62258.01,35.8,4,Part-time,2023-10-24,No
+USR_0758,Dallas,Finance,61,83910.76,11.9,1,Full-time,2023-09-15,No
+USR_0759,San Jose,Product,49,86982.04,9.2,3,Full-time,2018-04-01,Yes
+USR_0760,Los Angeles,Finance,28,64120.66,16.5,2,Full-time,2017-05-06,Yes
+USR_0761,New York,Marketing,39,68568.01,9.6,2,Full-time,2025-12-22,Yes
+USR_0762,San Jose,HR,39,39642.53,26.9,2,Full-time,2018-05-05,Yes
+USR_0763,Dallas,Support,60,62859.42,33.0,4,Full-time,2025-04-22,No
+USR_0764,San Jose,Marketing,42,87807.66,26.9,2,Intern,2021-08-02,Yes
+USR_0765,Dallas,Sales,39,81504.1,33.0,5,Full-time,2024-08-22,Yes
+USR_0766,Dallas,Finance,45,80013.31,15.9,1,Contract,2025-04-04,No
+USR_0767,Philadelphia,Marketing,46,70995.47,6.3,4,Full-time,2024-08-21,Yes
+USR_0768,San Diego,Marketing,30,70141.26,29.5,2,Part-time,2020-10-31,Yes
+USR_0769,New York,Sales,35,56793.58,14.4,1,Full-time,2018-10-02,No
+USR_0770,San Jose,Engineering,19,83976.57,26.9,3,Contract,2025-06-20,No
+USR_0771,Houston,HR,46,78419.46,10.8,2,Full-time,2022-09-25,Yes
+USR_0772,New York,Support,38,79840.38,3.2,1,Full-time,2018-11-05,No
+USR_0773,San Diego,Product,32,59479.3,39.7,5,Full-time,2020-03-30,No
+USR_0774,New York,Engineering,44,26933.14,6.2,3,Full-time,2019-08-10,Yes
+USR_0775,Chicago,Finance,48,91943.05,39.5,5,Full-time,2019-11-20,No
+USR_0776,Houston,Marketing,32,60423.25,39.1,1,Full-time,2023-06-18,Yes
+USR_0777,San Diego,Sales,40,52744.48,31.8,5,Full-time,2023-09-03,Yes
+USR_0778,Philadelphia,Sales,41,83869.58,26.4,1,Contract,2020-06-21,Yes
+USR_0779,San Jose,HR,61,62159.75,23.1,1,Full-time,2016-10-18,Yes
+USR_0780,San Antonio,Engineering,30,91198.73,34.6,5,Full-time,2017-08-31,No
+USR_0781,San Diego,Product,39,82340.12,11.6,1,Part-time,2026-01-05,Yes
+USR_0782,Los Angeles,HR,60,83671.39,18.7,2,Full-time,2024-11-19,Yes
+USR_0783,San Jose,Marketing,54,42680.89,24.8,1,Full-time,2016-06-17,Yes
+USR_0784,San Diego,HR,50,94238.88,16.4,4,Full-time,2021-04-12,Yes
+USR_0785,Chicago,Support,20,75225.01,17.1,1,Intern,2017-02-04,No
+USR_0786,San Antonio,Sales,36,62614.46,13.2,4,Contract,2019-04-18,No
+USR_0787,Chicago,Sales,40,72867.77,22.6,1,Contract,2018-09-18,No
+USR_0788,San Antonio,Finance,46,34475.3,34.0,1,Full-time,2021-11-03,Yes
+USR_0789,Los Angeles,Finance,47,78173.06,8.1,5,Part-time,2024-06-24,No
+USR_0790,San Jose,Product,56,49412.57,37.4,2,Full-time,2020-07-24,No
+USR_0791,Philadelphia,Marketing,61,42946.59,27.6,2,Full-time,2019-11-16,Yes
+USR_0792,Chicago,Support,64,39552.82,32.9,3,Full-time,2025-03-02,No
+USR_0793,Chicago,Engineering,42,92253.77,22.2,5,Full-time,2023-02-01,Yes
+USR_0794,Dallas,HR,54,57414.73,31.2,5,Full-time,2016-09-24,No
+USR_0795,San Antonio,Product,64,100674.55,0.6,2,Full-time,2022-03-22,No
+USR_0796,Phoenix,Marketing,25,59283.97,32.7,5,Full-time,2022-07-06,No
+USR_0797,San Jose,Finance,59,35852.84,1.6,2,Full-time,2022-01-22,No
+USR_0798,San Antonio,HR,33,47669.51,35.6,5,Part-time,2017-10-17,Yes
+USR_0799,Dallas,Finance,25,94716.23,39.7,1,Full-time,2022-12-15,Yes
+USR_0800,New York,HR,18,66882.04,11.8,2,Part-time,2018-01-05,No
+USR_0801,San Antonio,Engineering,61,59034.25,8.4,2,Full-time,2016-03-18,Yes
+USR_0802,Philadelphia,Marketing,22,73200.36,30.6,4,Contract,2020-11-05,No
+USR_0803,San Jose,HR,20,80035.65,10.1,5,Full-time,2022-04-28,No
+USR_0804,Dallas,Support,18,92347.98,34.6,5,Full-time,2019-01-22,No
+USR_0805,New York,Product,21,98969.98,4.1,2,Full-time,2016-11-03,No
+USR_0806,Houston,Sales,57,62804.63,5.0,1,Full-time,2020-04-18,No
+USR_0807,Dallas,Support,52,43479.05,39.2,1,Contract,2021-10-23,No
+USR_0808,Houston,Support,49,61730.7,27.0,1,Full-time,2020-12-02,Yes
+USR_0809,San Jose,Product,59,75205.61,33.9,5,Full-time,2019-12-19,Yes
+USR_0810,Chicago,Sales,51,50724.82,13.0,4,Contract,2020-12-30,No
+USR_0811,Dallas,Support,60,50856.98,27.1,2,Full-time,2026-01-11,Yes
+USR_0812,Los Angeles,HR,42,76875.76,23.8,3,Full-time,2024-03-05,No
+USR_0813,Houston,HR,27,69026.95,24.1,4,Full-time,2023-04-25,Yes
+USR_0814,Philadelphia,HR,38,70655.94,27.3,3,Full-time,2020-06-16,Yes
+USR_0815,Los Angeles,Sales,63,54830.09,23.0,4,Full-time,2022-02-23,Yes
+USR_0816,San Diego,Support,56,65391.99,17.2,1,Full-time,2018-04-19,No
+USR_0817,San Diego,Sales,44,51515.34,11.0,5,Intern,2016-08-03,Yes
+USR_0818,New York,HR,44,87803.97,30.7,3,Full-time,2017-12-05,No
+USR_0819,Chicago,Product,19,90704.99,9.1,4,Full-time,2021-07-25,No
+USR_0820,San Jose,Support,58,33076.24,27.7,5,Full-time,2016-03-30,No
+USR_0821,Dallas,Support,30,51409.78,9.3,3,Contract,2023-06-18,Yes
+USR_0822,Phoenix,Finance,26,40069.41,25.0,2,Contract,2017-06-27,Yes
+USR_0823,Philadelphia,Finance,53,56999.52,29.9,4,Full-time,2019-11-16,Yes
+USR_0824,Houston,Engineering,39,68331.24,8.7,2,Part-time,2017-11-13,No
+USR_0825,San Jose,Marketing,59,41007.1,2.4,1,Full-time,2016-11-19,No
+USR_0826,Los Angeles,Finance,43,51562.8,5.2,2,Full-time,2016-04-20,Yes
+USR_0827,San Diego,Sales,29,49920.85,24.2,2,Full-time,2018-07-18,No
+USR_0828,Philadelphia,Finance,34,74145.35,34.0,4,Full-time,2017-10-22,Yes
+USR_0829,Phoenix,Engineering,31,71386.89,1.8,1,Full-time,2024-07-16,Yes
+USR_0830,Dallas,Support,31,55565.25,29.4,2,Contract,2016-03-23,Yes
+USR_0831,New York,Engineering,51,73536.42,13.7,5,Full-time,2021-09-16,Yes
+USR_0832,Phoenix,Support,37,59066.4,19.1,3,Intern,2024-06-04,No
+USR_0833,Philadelphia,Product,28,64566.9,37.2,2,Full-time,2025-03-20,Yes
+USR_0834,Phoenix,Product,33,103469.04,13.3,1,Full-time,2016-09-14,Yes
+USR_0835,Philadelphia,Support,48,96809.22,18.6,2,Full-time,2018-02-08,Yes
+USR_0836,Philadelphia,Marketing,23,44008.38,0.5,3,Full-time,2025-02-15,Yes
+USR_0837,San Antonio,Finance,36,86594.65,3.3,1,Full-time,2021-02-24,Yes
+USR_0838,Houston,Sales,54,86227.93,10.3,4,Full-time,2019-08-13,Yes
+USR_0839,San Diego,Sales,21,47034.73,1.1,1,Full-time,2021-05-24,Yes
+USR_0840,San Antonio,HR,64,86375.55,25.3,4,Full-time,2022-05-31,No
+USR_0841,Dallas,Support,21,100758.64,17.1,1,Part-time,2025-08-28,No
+USR_0842,San Antonio,Sales,37,47549.1,21.9,3,Full-time,2021-09-26,No
+USR_0843,Chicago,Marketing,27,51649.94,7.0,3,Full-time,2021-08-26,No
+USR_0844,Chicago,Support,41,90353.23,11.8,1,Full-time,2018-04-26,Yes
+USR_0845,San Diego,Marketing,52,75429.91,26.6,2,Contract,2019-04-04,No
+USR_0846,Phoenix,Sales,43,81029.53,38.6,3,Part-time,2022-11-20,No
+USR_0847,Houston,Sales,54,76811.78,2.0,4,Full-time,2022-12-16,No
+USR_0848,San Diego,HR,55,77813.92,35.6,4,Full-time,2025-07-31,Yes
+USR_0849,Philadelphia,Sales,38,43470.56,23.1,5,Full-time,2018-10-14,No
+USR_0850,Los Angeles,Support,57,90946.35,22.6,4,Intern,2019-01-19,No
+USR_0851,Houston,Product,56,93391.8,20.0,5,Full-time,2017-09-02,Yes
+USR_0852,Houston,Support,38,65412.19,2.8,1,Full-time,2025-11-09,No
+USR_0853,Philadelphia,Support,27,69130.46,3.6,1,Full-time,2025-09-23,Yes
+USR_0854,Philadelphia,HR,55,39377.85,24.0,1,Full-time,2024-10-16,No
+USR_0855,New York,HR,63,80285.1,13.6,2,Intern,2019-04-10,Yes
+USR_0856,San Diego,Sales,21,81441.15,36.7,2,Full-time,2022-05-24,No
+USR_0857,Philadelphia,Engineering,62,68756.18,16.3,5,Full-time,2018-02-14,No
+USR_0858,Chicago,Engineering,37,92487.07,5.7,4,Full-time,2025-03-06,No
+USR_0859,Dallas,HR,34,63318.46,28.6,4,Part-time,2023-03-01,Yes
+USR_0860,Los Angeles,Sales,24,81292.12,11.7,1,Part-time,2019-03-24,No
+USR_0861,San Diego,Engineering,21,49606.71,21.0,3,Full-time,2018-07-15,Yes
+USR_0862,San Jose,Sales,46,69528.96,27.9,2,Full-time,2023-12-03,Yes
+USR_0863,Chicago,Sales,31,66512.91,36.0,2,Contract,2024-10-22,Yes
+USR_0864,Phoenix,Sales,20,74506.16,31.7,1,Full-time,2019-05-28,Yes
+USR_0865,Philadelphia,Finance,41,62609.46,27.1,2,Full-time,2022-02-07,No
+USR_0866,San Jose,Support,54,67370.55,27.2,1,Full-time,2024-06-14,No
+USR_0867,Philadelphia,Sales,33,86520.94,37.8,5,Intern,2017-12-13,No
+USR_0868,Houston,Finance,21,61264.72,11.8,4,Full-time,2017-10-09,Yes
+USR_0869,Chicago,HR,41,37868.46,0.0,3,Part-time,2017-12-23,No
+USR_0870,Houston,Engineering,51,104991.68,10.9,4,Full-time,2023-11-11,Yes
+USR_0871,New York,Support,47,97629.08,8.7,4,Full-time,2018-09-14,Yes
+USR_0872,Houston,Product,35,44154.75,26.5,5,Full-time,2024-06-21,Yes
+USR_0873,New York,Engineering,36,83794.16,25.3,2,Full-time,2021-11-29,No
+USR_0874,New York,Support,48,59940.5,23.7,3,Full-time,2017-04-12,No
+USR_0875,San Jose,Product,36,75269.74,0.6,2,Full-time,2024-09-13,Yes
+USR_0876,Philadelphia,Engineering,63,75884.48,29.2,4,Full-time,2021-12-05,No
+USR_0877,Phoenix,Support,36,65311.84,12.9,1,Contract,2020-12-19,No
+USR_0878,Houston,Engineering,39,54324.69,26.6,4,Intern,2021-06-15,Yes
+USR_0879,Chicago,Engineering,41,56189.18,22.3,2,Full-time,2023-04-16,Yes
+USR_0880,New York,Product,62,51676.16,13.7,4,Full-time,2024-09-27,No
+USR_0881,Philadelphia,Engineering,29,53363.56,5.4,1,Full-time,2021-06-30,Yes
+USR_0882,Los Angeles,Engineering,47,68656.43,3.8,5,Full-time,2024-02-23,Yes
+USR_0883,San Diego,Product,55,55684.8,33.3,2,Contract,2022-12-25,No
+USR_0884,San Jose,HR,48,83641.04,36.7,4,Full-time,2021-12-23,No
+USR_0885,Phoenix,Sales,53,99744.92,26.0,2,Full-time,2018-11-09,Yes
+USR_0886,San Antonio,Marketing,36,58398.94,4.1,5,Part-time,2024-04-14,No
+USR_0887,San Jose,Finance,62,74788.09,16.1,4,Full-time,2019-03-22,Yes
+USR_0888,Los Angeles,Marketing,53,79993.7,29.2,4,Full-time,2020-01-23,Yes
+USR_0889,San Diego,Marketing,47,79440.05,31.2,2,Full-time,2019-10-06,No
+USR_0890,Los Angeles,Support,50,71519.11,4.7,2,Full-time,2023-02-25,Yes
+USR_0891,Houston,Sales,35,84853.65,0.0,1,Full-time,2025-06-26,Yes
+USR_0892,New York,Support,45,79644.98,28.5,5,Part-time,2018-03-06,Yes
+USR_0893,Phoenix,Sales,64,45246.75,14.3,1,Contract,2025-09-13,No
+USR_0894,Dallas,Product,28,87383.12,10.2,4,Full-time,2023-03-07,No
+USR_0895,New York,Product,62,87745.82,0.5,2,Contract,2022-11-29,No
+USR_0896,Dallas,Sales,50,54734.28,21.6,4,Full-time,2024-05-18,Yes
+USR_0897,San Diego,Engineering,34,70758.76,34.0,4,Part-time,2022-05-17,Yes
+USR_0898,Philadelphia,HR,23,83666.58,38.3,3,Full-time,2024-12-23,No
+USR_0899,San Antonio,Engineering,21,65813.72,22.6,3,Contract,2021-04-20,No
+USR_0900,Chicago,HR,37,91459.56,20.6,4,Contract,2024-09-07,No
+USR_0901,New York,Support,64,117277.45,3.4,2,Full-time,2022-05-13,Yes
+USR_0902,Phoenix,HR,44,54280.28,22.0,4,Contract,2019-06-11,No
+USR_0903,Los Angeles,Support,32,42379.11,15.2,3,Contract,2016-05-27,Yes
+USR_0904,Phoenix,Product,23,76076.37,24.3,2,Part-time,2019-10-01,No
+USR_0905,San Diego,Marketing,64,84431.25,15.5,4,Full-time,2019-07-15,Yes
+USR_0906,Dallas,Product,31,65382.67,9.6,5,Contract,2017-07-08,Yes
+USR_0907,Los Angeles,Product,28,99065.21,3.8,5,Contract,2023-02-02,No
+USR_0908,Chicago,Marketing,56,43227.88,12.6,4,Full-time,2024-06-21,Yes
+USR_0909,Chicago,HR,26,83858.37,3.9,2,Intern,2021-07-25,No
+USR_0910,New York,HR,43,57882.78,7.1,4,Full-time,2017-02-22,Yes
+USR_0911,San Diego,Support,33,104387.56,39.5,4,Full-time,2021-06-29,Yes
+USR_0912,Philadelphia,Engineering,22,109850.31,17.8,3,Full-time,2018-12-22,No
+USR_0913,San Diego,Support,27,54666.87,21.3,5,Full-time,2020-03-11,Yes
+USR_0914,Dallas,Engineering,20,59008.86,34.9,3,Full-time,2017-06-13,No
+USR_0915,Phoenix,Product,30,87191.76,39.8,3,Full-time,2020-02-12,No
+USR_0916,Chicago,Marketing,60,62257.39,23.3,4,Intern,2016-11-27,No
+USR_0917,Phoenix,Product,47,69091.78,32.5,3,Full-time,2020-11-02,Yes
+USR_0918,Phoenix,Sales,62,70507.77,13.1,5,Full-time,2024-02-10,Yes
+USR_0919,Phoenix,HR,23,31606.54,12.2,3,Full-time,2024-06-30,Yes
+USR_0920,Chicago,Engineering,34,69723.25,16.1,5,Full-time,2019-05-18,No
+USR_0921,San Jose,Support,62,56205.44,26.9,3,Contract,2025-01-28,No
+USR_0922,Houston,Marketing,36,60137.54,27.3,5,Full-time,2022-04-03,Yes
+USR_0923,Dallas,Engineering,59,98872.64,12.6,3,Contract,2020-12-27,Yes
+USR_0924,San Jose,Support,52,44869.86,5.3,3,Full-time,2017-04-13,No
+USR_0925,Dallas,HR,63,86264.1,25.3,2,Full-time,2024-01-20,Yes
+USR_0926,Los Angeles,Product,43,64420.74,5.1,5,Full-time,2024-05-23,No
+USR_0927,San Diego,HR,22,64404.8,23.1,5,Full-time,2016-10-28,Yes
+USR_0928,San Diego,Finance,46,85807.44,27.7,5,Full-time,2016-09-08,No
+USR_0929,San Antonio,Sales,54,76801.03,28.0,1,Full-time,2021-08-24,Yes
+USR_0930,San Diego,Finance,37,81412.26,30.1,3,Full-time,2023-05-21,Yes
+USR_0931,Chicago,Marketing,38,89363.69,34.9,5,Part-time,2021-10-09,No
+USR_0932,Philadelphia,Engineering,27,63373.83,20.0,1,Full-time,2024-03-08,No
+USR_0933,New York,Marketing,22,57755.27,29.2,2,Full-time,2019-03-28,No
+USR_0934,San Antonio,Product,53,48296.99,24.8,5,Full-time,2020-06-20,Yes
+USR_0935,New York,Support,23,53491.79,7.5,5,Full-time,2022-11-17,No
+USR_0936,Dallas,HR,43,128981.89,1.0,1,Contract,2024-10-20,No
+USR_0937,New York,Finance,21,94893.59,11.4,3,Full-time,2017-12-06,Yes
+USR_0938,New York,Finance,56,42978.51,17.7,2,Full-time,2025-01-04,No
+USR_0939,San Antonio,Product,56,43550.84,24.7,5,Intern,2018-04-16,No
+USR_0940,Los Angeles,Finance,52,79637.32,34.0,3,Full-time,2020-01-07,No
+USR_0941,Phoenix,Product,18,80945.3,7.8,2,Full-time,2016-10-06,Yes
+USR_0942,San Diego,Marketing,41,80977.68,5.0,4,Full-time,2025-12-14,Yes
+USR_0943,San Diego,HR,53,64900.88,38.5,4,Full-time,2020-12-21,Yes
+USR_0944,Chicago,Engineering,23,67490.91,4.3,2,Contract,2024-11-18,No
+USR_0945,San Antonio,Support,58,76557.59,19.1,1,Contract,2025-07-21,Yes
+USR_0946,Chicago,Engineering,63,71717.86,23.4,2,Intern,2021-07-28,No
+USR_0947,Philadelphia,Marketing,61,25613.99,21.7,2,Full-time,2024-02-02,No
+USR_0948,Philadelphia,Support,48,65404.01,3.4,1,Full-time,2025-07-22,No
+USR_0949,Chicago,Finance,37,52971.87,2.3,1,Part-time,2022-05-27,Yes
+USR_0950,San Antonio,Sales,41,73504.23,4.2,3,Full-time,2019-07-05,Yes
+USR_0951,Chicago,Marketing,42,129705.18,23.4,3,Full-time,2023-09-01,No
+USR_0952,San Diego,Marketing,53,77349.63,21.8,1,Full-time,2019-04-05,No
+USR_0953,San Jose,HR,38,63729.41,9.3,4,Full-time,2019-07-12,Yes
+USR_0954,Houston,Engineering,47,88436.03,25.5,4,Full-time,2025-07-08,Yes
+USR_0955,New York,Marketing,41,79653.76,32.8,2,Contract,2017-11-03,Yes
+USR_0956,Houston,Marketing,61,78401.89,1.7,5,Contract,2018-12-25,No
+USR_0957,San Antonio,Finance,59,82137.01,19.9,2,Full-time,2018-01-27,Yes
+USR_0958,Houston,Finance,47,111130.87,27.6,2,Full-time,2026-01-17,Yes
+USR_0959,Philadelphia,Support,39,47382.23,10.1,5,Full-time,2020-01-29,Yes
+USR_0960,Dallas,Product,45,79472.64,12.3,1,Contract,2022-10-18,No
+USR_0961,New York,Product,24,51472.38,24.5,4,Full-time,2019-10-27,Yes
+USR_0962,Phoenix,Sales,52,81110.25,35.9,2,Part-time,2024-01-22,No
+USR_0963,San Antonio,Product,45,51626.27,32.4,5,Full-time,2023-11-27,No
+USR_0964,New York,HR,31,61652.66,23.3,3,Full-time,2025-09-28,No
+USR_0965,Houston,Sales,27,64098.2,29.2,2,Full-time,2025-03-25,Yes
+USR_0966,Philadelphia,Support,33,89516.33,14.6,4,Part-time,2019-06-08,Yes
+USR_0967,Los Angeles,Finance,33,88369.09,25.6,1,Full-time,2024-12-02,Yes
+USR_0968,San Jose,Product,48,45085.65,18.6,2,Full-time,2023-03-31,No
+USR_0969,Phoenix,Engineering,59,71098.68,7.6,2,Full-time,2023-09-20,Yes
+USR_0970,San Jose,Finance,42,55808.4,28.1,5,Part-time,2017-05-10,No
+USR_0971,New York,HR,30,44829.9,22.3,3,Contract,2017-06-25,Yes
+USR_0972,Philadelphia,Finance,23,65659.66,14.3,3,Full-time,2018-02-25,Yes
+USR_0973,Philadelphia,HR,61,63830.34,36.5,1,Contract,2020-05-12,Yes
+USR_0974,Houston,HR,26,118534.33,0.8,4,Full-time,2020-01-08,Yes
+USR_0975,San Diego,HR,62,78659.2,12.6,1,Full-time,2018-02-13,No
+USR_0976,Houston,Support,53,42447.65,2.3,2,Full-time,2025-06-01,No
+USR_0977,San Diego,HR,60,58704.52,30.7,2,Full-time,2023-06-19,No
+USR_0978,San Diego,HR,37,90427.67,28.1,3,Part-time,2017-01-09,No
+USR_0979,Phoenix,Engineering,35,111768.86,13.3,4,Part-time,2024-02-01,Yes
+USR_0980,Houston,Sales,60,38280.33,27.0,5,Full-time,2023-01-06,No
+USR_0981,Los Angeles,Marketing,38,32401.51,15.8,4,Full-time,2017-03-03,No
+USR_0982,Chicago,Sales,21,107419.3,30.3,2,Contract,2022-06-10,No
+USR_0983,Chicago,HR,50,77792.28,18.2,5,Contract,2025-04-13,Yes
+USR_0984,Houston,Engineering,44,52634.15,16.5,4,Full-time,2019-01-01,No
+USR_0985,Houston,Finance,24,80692.58,37.4,4,Intern,2020-09-10,No
+USR_0986,San Jose,Engineering,23,17285.05,10.0,5,Full-time,2018-07-17,Yes
+USR_0987,Phoenix,HR,32,70067.51,4.8,2,Full-time,2018-05-15,Yes
+USR_0988,Houston,Engineering,35,76556.42,23.4,4,Contract,2019-10-08,No
+USR_0989,San Jose,Product,49,88485.4,38.8,5,Full-time,2017-03-26,No
+USR_0990,San Diego,Engineering,28,49722.08,15.1,2,Full-time,2017-09-26,Yes
+USR_0991,Philadelphia,HR,37,71713.74,2.5,5,Full-time,2024-08-07,No
+USR_0992,Philadelphia,Support,41,51491.51,13.6,5,Contract,2022-01-22,Yes
+USR_0993,San Diego,Product,32,75107.68,20.2,4,Contract,2022-07-04,No
+USR_0994,San Antonio,Engineering,24,52093.07,6.5,2,Full-time,2021-10-05,No
+USR_0995,San Jose,Marketing,38,61837.98,26.3,4,Full-time,2021-02-12,No
+USR_0996,San Jose,Marketing,59,50083.69,39.9,1,Full-time,2021-02-10,No
+USR_0997,San Diego,Engineering,43,83022.72,18.1,1,Full-time,2022-12-02,No
+USR_0998,Los Angeles,Support,61,87169.02,14.2,2,Full-time,2017-04-19,Yes
+USR_0999,Dallas,Finance,31,65307.59,16.0,5,Part-time,2016-07-14,Yes

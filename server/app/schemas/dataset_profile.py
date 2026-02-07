@@ -21,9 +21,18 @@ class NumericStats(BaseModel):
     std: Optional[float] = None
     min: Optional[float] = None
     max: Optional[float] = None
+    histogram: Optional[list[dict]] = None
+
+
+class CategoryStats(BaseModel):
+    column: str
+    unique_count: int
+    top_values: list[dict]
 
 
 class DatasetProfileResponse(BaseModel):
     shape: ShapeInfo
     columns: list[ColumnInfo]
     numeric_stats: list[NumericStats]
+    category_stats: list[CategoryStats]
+    samples: list[dict]

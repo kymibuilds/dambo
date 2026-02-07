@@ -17,7 +17,7 @@ function getColor(value: number | null): string {
     return 'bg-red-500';
 }
 
-export function CorrelationHeatmap({ columns, matrix }: CorrelationHeatmapProps) {
+export function CorrelationHeatmap({ columns = [], matrix = [] }: CorrelationHeatmapProps) {
     if (columns.length === 0) {
         return (
             <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800 text-zinc-400">

@@ -47,6 +47,7 @@ def profile_dataframe(df: pd.DataFrame) -> dict:
 
     columns = []
     numeric_stats = []
+    category_stats = []
 
     for col_name in df.columns:
         series = df[col_name]
@@ -64,14 +65,56 @@ def profile_dataframe(df: pd.DataFrame) -> dict:
 
         # Compute numeric statistics
         if col_type == "numeric":
+            # Calculate histogram
+            try:
+                hist, bin_edges = np.histogram(series.dropna(), bins=10)
+                histogram = []
+                for i in range(len(hist)):
+                    histogram.append({
+                        "bin_start": _make_serializable(bin_edges[i]),
+                        "bin_end": _make_serializable(bin_edges[i+1]),
+                        "count": int(hist[i])
+                    })
+            except Exception:
+                histogram = []
+
             stats = {
                 "column": str(col_name),
                 "mean": _make_serializable(series.mean()),
                 "std": _make_serializable(series.std()),
                 "min": _make_serializable(series.min()),
-                "max": _make_serializable(series.max())
+                "max": _make_serializable(series.max()),
+                "histogram": histogram
             }
             numeric_stats.append(stats)
+            
+        elif col_type == "categorical":
+            # Calculate top values
+            try:
+                value_counts = series.value_counts().head(10)
+                top_values = []
+                for val, count in value_counts.items():
+                    top_values.append({
+                        "value": str(val),
+                        "count": int(count)
+                    })
+                
+                cat_stats = {
+                    "column": str(col_name),
+                    "unique_count": int(series.nunique()),
+                    "top_values": top_values
+                }
+                category_stats.append(cat_stats)
+            except Exception:
+                pass
+
+    # Get first 5 rows as samples
+    samples = []
+    try:
+        sample_df = df.head(5).replace({np.nan: None})
+        samples = sample_df.to_dict(orient="records")
+    except Exception:
+        pass
 
     return {
         "shape": {
@@ -79,5 +122,7 @@ def profile_dataframe(df: pd.DataFrame) -> dict:
             "column_count": column_count
         },
         "columns": columns,
-        "numeric_stats": numeric_stats
+        "numeric_stats": numeric_stats,
+        "category_stats": category_stats,
+        "samples": samples
     }

@@ -1,16 +1,43 @@
 'use client';
 
-import { memo, useState, useRef, useCallback } from 'react';
+import { memo, useState, useRef, useCallback, ReactNode } from 'react';
 import { Handle, Position, NodeProps, type Node, NodeResizer, useReactFlow } from '@xyflow/react';
 import { BarChart3, MoreHorizontal, Download, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { toPng, toJpeg } from 'html-to-image';
+import { HistogramChart, BarChart, ScatterChart, CorrelationHeatmap } from '@/components/charts';
+
+// Chart type definitions
+export type ChartType = 'histogram_chart' | 'bar_chart' | 'scatter_chart' | 'correlation_heatmap';
+
+export interface ChartData {
+    type: ChartType;
+    props: Record<string, unknown>;
+}
 
 export type DataNodeData = {
     label: string;
-    type?: string;
+    chartData?: ChartData;
 };
 
 export type DataNodeType = Node<DataNodeData, 'dataNode'>;
+
+// Render chart based on type
+function renderChart(chartData: ChartData): ReactNode {
+    const { type, props } = chartData;
+
+    switch (type) {
+        case 'histogram_chart':
+            return <HistogramChart {...(props as { column: string; bins: number[]; counts: number[] })} />;
+        case 'bar_chart':
+            return <BarChart {...(props as { column: string; categories: string[]; counts: number[] })} />;
+        case 'scatter_chart':
+            return <ScatterChart {...(props as { x_label: string; y_label: string; x: number[]; y: number[] })} />;
+        case 'correlation_heatmap':
+            return <CorrelationHeatmap {...(props as { columns: string[]; matrix: number[][] })} />;
+        default:
+            return null;
+    }
+}
 
 export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -38,6 +65,8 @@ export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) =
                 console.error('oops, something went wrong!', err);
             });
     }, [label]);
+
+    const hasChart = !!data.chartData;
 
     return (
         <>
@@ -135,11 +164,17 @@ export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) =
                     </div>
                 </div>
 
-                {/* Content / Preview Area - Always visible now */}
-                <div className="flex-1 p-2 bg-zinc-50/30 dark:bg-zinc-900/30 flex flex-col items-center justify-center min-h-0 rounded-b-xl">
-                    <div className="w-full h-full bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
-                        <BarChart3 className="size-8 text-zinc-300 dark:text-zinc-600 opacity-50" />
-                    </div>
+                {/* Content / Chart Area */}
+                <div className="flex-1 p-2 bg-zinc-50/30 dark:bg-zinc-900/30 flex flex-col min-h-0 rounded-b-xl overflow-auto">
+                    {hasChart ? (
+                        <div className="w-full h-full">
+                            {renderChart(data.chartData!)}
+                        </div>
+                    ) : (
+                        <div className="w-full h-full bg-zinc-100/50 dark:bg-zinc-800/50 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                            <BarChart3 className="size-8 text-zinc-300 dark:text-zinc-600 opacity-50" />
+                        </div>
+                    )}
                 </div>
             </div>
 

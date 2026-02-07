@@ -6,7 +6,7 @@ interface BarChartProps {
     counts: number[];
 }
 
-export function BarChart({ column, categories, counts }: BarChartProps) {
+export function BarChart({ column, categories = [], counts = [] }: BarChartProps) {
     const maxCount = Math.max(...counts, 1);
 
     return (

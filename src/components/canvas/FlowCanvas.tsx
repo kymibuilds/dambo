@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useImperativeHandle, forwardRef } from 'react';
 import {
     ReactFlow,
     Background,
@@ -15,37 +15,33 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Plus } from 'lucide-react';
-import { DataNode, type DataNodeType } from './nodes/DataNode';
+import { DataNode, type DataNodeType, type ChartData } from './nodes/DataNode';
 
 const nodeTypes = {
     dataNode: DataNode,
 };
 
-const initialNodes: DataNodeType[] = [
-    {
-        id: '1',
-        position: { x: 100, y: 100 },
-        data: { label: 'User Traffic Source' },
-        type: 'dataNode',
-        style: { width: 300, height: 400 },
-    },
-    {
-        id: '2',
-        position: { x: 600, y: 150 },
-        data: { label: 'Revenue Transformation' },
-        type: 'dataNode',
-        style: { width: 300, height: 400 },
-    },
-];
+const initialNodes: DataNodeType[] = [];
+const initialEdges: { id: string; source: string; target: string; animated?: boolean }[] = [];
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2', animated: true }];
+export interface ChartNodeConfig {
+    label: string;
+    chartData: ChartData;
+}
 
+export interface FlowCanvasRef {
+    addChartNode: (label: string, chartData: ChartData) => string;
+    addEmptyNode: (label: string) => string;
+    addMultipleChartNodes: (configs: ChartNodeConfig[]) => string[];
+    addEdgeBetweenNodes: (sourceId: string, targetId: string, animated?: boolean) => void;
+    getNodeCount: () => number;
+}
 
 interface FlowCanvasProps {
     onNodeSelect?: (node: Node | null) => void;
 }
 
-function FlowMain({ onNodeSelect }: FlowCanvasProps) {
+const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, ref) => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -54,18 +50,104 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
         [setEdges],
     );
 
-    const addNewNode = useCallback((label: string = 'New Visualization') => {
+    // Calculate position for new nodes based on existing ones
+    const getNewNodePosition = useCallback(() => {
+        if (nodes.length === 0) {
+            return { x: 100, y: 100 };
+        }
+        // Place new node to the right of the last node
+        const lastNode = nodes[nodes.length - 1];
+        return {
+            x: (lastNode.position?.x || 100) + 350,
+            y: lastNode.position?.y || 100,
+        };
+    }, [nodes]);
+
+    const addChartNode = useCallback((label: string, chartData: ChartData): string => {
         const id = Math.random().toString(36).substring(7);
+        const position = getNewNodePosition();
         const newNode: DataNodeType = {
             id,
-            position: { x: 250, y: 200 },
+            position,
+            data: { label, chartData },
+            type: 'dataNode',
+            style: { width: 350, height: 300 },
+        };
+        setNodes((nds) => [...nds, newNode]);
+        return id;
+    }, [setNodes, getNewNodePosition]);
+
+    const addEmptyNode = useCallback((label: string = 'New Visualization'): string => {
+        const id = Math.random().toString(36).substring(7);
+        const position = getNewNodePosition();
+        const newNode: DataNodeType = {
+            id,
+            position,
             data: { label },
             type: 'dataNode',
-            selected: true,
             style: { width: 300, height: 400 },
         };
-        setNodes((nds) => nds.concat(newNode));
-    }, [setNodes]);
+        setNodes((nds) => [...nds, newNode]);
+        return id;
+    }, [setNodes, getNewNodePosition]);
+
+    // Add multiple chart nodes in a grid layout
+    const addMultipleChartNodes = useCallback((configs: ChartNodeConfig[]): string[] => {
+        if (configs.length === 0) return [];
+
+        const NODE_WIDTH = 350;
+        const NODE_HEIGHT = 300;
+        const HORIZONTAL_GAP = 50;
+        const VERTICAL_GAP = 50;
+        const COLUMNS = 3;
+
+        // Find the starting position based on existing nodes
+        const startX = nodes.length === 0 ? 100 : Math.max(...nodes.map(n => n.position.x)) + NODE_WIDTH + HORIZONTAL_GAP;
+        const startY = nodes.length === 0 ? 100 : Math.min(...nodes.map(n => n.position.y));
+
+        const newNodes: DataNodeType[] = configs.map((config, index) => {
+            const row = Math.floor(index / COLUMNS);
+            const col = index % COLUMNS;
+            const id = Math.random().toString(36).substring(7);
+
+            return {
+                id,
+                position: {
+                    x: startX + col * (NODE_WIDTH + HORIZONTAL_GAP),
+                    y: startY + row * (NODE_HEIGHT + VERTICAL_GAP),
+                },
+                data: { label: config.label, chartData: config.chartData },
+                type: 'dataNode',
+                style: { width: NODE_WIDTH, height: NODE_HEIGHT },
+            };
+        });
+
+        setNodes((nds) => [...nds, ...newNodes]);
+        return newNodes.map(n => n.id);
+    }, [nodes, setNodes]);
+
+    // Add an edge between two nodes
+    const addEdgeBetweenNodes = useCallback((sourceId: string, targetId: string, animated: boolean = false): void => {
+        const edgeId = `e-${sourceId}-${targetId}`;
+        setEdges((eds) => [
+            ...eds,
+            { id: edgeId, source: sourceId, target: targetId, animated },
+        ]);
+    }, [setEdges]);
+
+    // Get current node count
+    const getNodeCount = useCallback((): number => {
+        return nodes.length;
+    }, [nodes]);
+
+    // Expose methods to parent via ref
+    useImperativeHandle(ref, () => ({
+        addChartNode,
+        addEmptyNode,
+        addMultipleChartNodes,
+        addEdgeBetweenNodes,
+        getNodeCount,
+    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, getNodeCount]);
 
     const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
         if (onNodeSelect) {
@@ -100,7 +182,7 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
             {/* Top Action Button Overlay */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
                 <button
-                    onClick={() => addNewNode()}
+                    onClick={() => addEmptyNode()}
                     className="h-7 flex items-center gap-2 px-3 rounded-md bg-white/70 dark:bg-zinc-900/70 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all backdrop-blur-sm shadow-sm"
                 >
                     <Plus className="size-3.5" />
@@ -109,12 +191,18 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
             </div>
         </div>
     );
-}
+});
 
-export default function FlowCanvas(props: FlowCanvasProps) {
+FlowMain.displayName = 'FlowMain';
+
+const FlowCanvas = forwardRef<FlowCanvasRef, FlowCanvasProps>((props, ref) => {
     return (
         <ReactFlowProvider>
-            <FlowMain {...props} />
+            <FlowMain {...props} ref={ref} />
         </ReactFlowProvider>
     );
-}
+});
+
+FlowCanvas.displayName = 'FlowCanvas';
+
+export default FlowCanvas;

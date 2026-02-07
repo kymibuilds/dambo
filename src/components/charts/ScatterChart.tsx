@@ -7,7 +7,7 @@ interface ScatterChartProps {
     y: number[];
 }
 
-export function ScatterChart({ x_label, y_label, x, y }: ScatterChartProps) {
+export function ScatterChart({ x_label, y_label, x = [], y = [] }: ScatterChartProps) {
     const xMin = Math.min(...x);
     const xMax = Math.max(...x);
     const yMin = Math.min(...y);
