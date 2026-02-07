@@ -91,13 +91,13 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
             </ReactFlow>
 
             {/* Top Action Button Overlay */}
-            <div className="absolute top-3 left-1/2 -track-x-1/2 z-10 -translate-x-1/2">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
                 <button
                     onClick={() => addNewNode()}
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-full shadow-lg text-sm font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all hover:scale-105 active:scale-95"
+                    className="h-7 flex items-center gap-2 px-3 rounded-md bg-white/70 dark:bg-zinc-900/70 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all backdrop-blur-sm shadow-sm"
                 >
-                    <Plus className="size-4" />
-                    New Visualization
+                    <Plus className="size-3.5" />
+                    <span className="text-xs font-medium">New Visualization</span>
                 </button>
             </div>
         </div>

@@ -9,7 +9,9 @@ import {
     X,
     ArrowLeftRight,
     Upload,
-    FileJson
+    FileJson,
+    Trash2,
+    FileText
 } from "lucide-react";
 import Link from "next/link";
 import { type Node } from '@xyflow/react';
@@ -27,7 +29,6 @@ export default function ProjectPage() {
     ]);
     const [activeChatId, setActiveChatId] = useState('initial');
     const [message, setMessage] = useState("");
-    const [editingChatId, setEditingChatId] = useState<string | null>(null);
     const [projectFiles, setProjectFiles] = useState<{ id: string, name: string, type: string, size: string }[]>([
         { id: '1', name: 'main_dashboard.csv', type: 'CSV', size: '2.4 MB' },
         { id: '2', name: 'user_analytics.json', type: 'JSON', size: '1.1 MB' }
@@ -35,6 +36,11 @@ export default function ProjectPage() {
     const [showMentions, setShowMentions] = useState(false);
     const [mentionSearch, setMentionSearch] = useState("");
     const [mentionIndex, setMentionIndex] = useState(0);
+    const [isUploadExpanded, setIsUploadExpanded] = useState(false);
+
+    const handleDeleteFile = (id: string) => {
+        setProjectFiles(prev => prev.filter(f => f.id !== id));
+    };
 
     // Resizable chat state
     const [chatWidth, setChatWidth] = useState(400);
@@ -75,32 +81,6 @@ export default function ProjectPage() {
     useEffect(() => {
         scrollToBottom();
     }, [activeChat.messages, scrollToBottom]);
-
-    const handleCreateChat = () => {
-        const newId = Math.random().toString(36).substring(7);
-        const newChat = {
-            id: newId,
-            title: `Chat ${chats.length + 1}`,
-            messages: [{ role: 'assistant', content: "New chat session started. How can I help with your project?" }]
-        };
-        setChats([...chats, newChat]);
-        setActiveChatId(newId);
-    };
-
-    const handleCloseChat = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        if (chats.length === 1) return;
-
-        const newChats = chats.filter(c => c.id !== id);
-        setChats(newChats);
-        if (activeChatId === id) {
-            setActiveChatId(newChats[newChats.length - 1].id);
-        }
-    };
-
-    const handleRenameChat = (id: string, newTitle: string) => {
-        setChats(chats.map(c => c.id === id ? { ...c, title: newTitle } : c));
-    };
 
     const handleSend = () => {
         if (!message.trim()) return;
@@ -205,17 +185,81 @@ export default function ProjectPage() {
             {/* Left: Canvas Area */}
             <div className="flex-1 flex flex-col relative group overflow-hidden">
                 {/* Back Button */}
-                {/* Top Right Actions */}
-                <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="h-7 gap-2 px-3 rounded-md bg-white/70 dark:bg-zinc-900/70 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all backdrop-blur-sm shadow-sm"
+                {/* Top Right Actions: Expanding Upload Panel */}
+                <div
+                    className={`absolute top-3 right-3 z-30 transition-all duration-300 ease-in-out bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-300 dark:border-zinc-700 rounded-md shadow-sm overflow-hidden flex flex-col ${isUploadExpanded ? 'w-72 max-h-96' : 'w-24 max-h-[28px]'
+                        }`}
+                >
+                    <div
+                        onClick={() => !isUploadExpanded && setIsUploadExpanded(true)}
+                        className={`flex items-center justify-between px-3 h-7 shrink-0 transition-colors ${!isUploadExpanded ? 'cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50' : 'border-b border-zinc-200 dark:border-zinc-800'}`}
                     >
-                        <Upload className="size-3.5" />
-                        <span className="text-xs font-medium">Upload File</span>
-                    </Button>
+                        {!isUploadExpanded ? (
+                            <div className="flex items-center gap-2">
+                                <Upload className="size-3.5 text-zinc-600 dark:text-zinc-400" />
+                                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Upload</span>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Files</span>
+                                <div className="flex items-center gap-1 -mr-1">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                                        className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                                        title="Upload New"
+                                    >
+                                        <Plus className="size-3.5" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setIsUploadExpanded(false); }}
+                                        className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                                    >
+                                        <X className="size-3.5" />
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className={`flex-1 overflow-y-auto p-1 scrollbar-none transition-opacity duration-200 ${isUploadExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                        {projectFiles.length > 0 ? (
+                            <div className="space-y-0.5">
+                                {projectFiles.map((file) => (
+                                    <div
+                                        key={file.id}
+                                        className="group/file flex items-center justify-between p-2 rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            {file.type === 'JSON' ? (
+                                                <FileJson className="size-3.5 text-amber-500 shrink-0" />
+                                            ) : (
+                                                <FileText className="size-3.5 text-blue-500 shrink-0" />
+                                            )}
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                                                    {file.name}
+                                                </span>
+                                                <span className="text-[10px] text-zinc-400">
+                                                    {file.size} • {file.type}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteFile(file.id)}
+                                            className="opacity-0 group-hover/file:opacity-100 p-1 text-zinc-400 hover:text-red-500 transition-all"
+                                        >
+                                            <Trash2 className="size-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-8 flex flex-col items-center justify-center text-zinc-400 gap-2">
+                                <Upload className="size-6 opacity-20" />
+                                <span className="text-[10px] font-medium">No files uploaded</span>
+                            </div>
+                        )}
+                    </div>
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -255,50 +299,23 @@ export default function ProjectPage() {
                     style={{ width: `${chatWidth}px` }}
                     className="flex flex-col bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm pointer-events-auto h-full"
                 >
-                    {/* Chat Tabs */}
-                    <div className="flex items-center gap-1 p-1 bg-zinc-50/50 dark:bg-zinc-950/50 overflow-x-auto scrollbar-minimal border-b border-zinc-100 dark:border-zinc-800">
-                        {chats.map((chat) => (
-                            <div
-                                key={chat.id}
-                                onClick={() => setActiveChatId(chat.id)}
-                                onDoubleClick={() => setEditingChatId(chat.id)}
-                                className={`group/tab flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer ${activeChatId === chat.id
-                                    ? 'bg-zinc-200/50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm border border-zinc-300/50 dark:border-zinc-700'
-                                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    }`}
-                            >
-                                {editingChatId === chat.id ? (
-                                    <input
-                                        autoFocus
-                                        value={chat.title}
-                                        onChange={(e) => handleRenameChat(chat.id, e.target.value)}
-                                        onBlur={() => setEditingChatId(null)}
-                                        onKeyDown={(e) => e.key === 'Enter' && setEditingChatId(null)}
-                                        className="bg-transparent border-none outline-none focus:ring-0 w-16 cursor-text"
-                                        spellCheck={false}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                ) : (
-                                    <span className="w-16 truncate">{chat.title}</span>
-                                )}
-                                {chats.length > 1 && (
-                                    <button
-                                        onClick={(e) => handleCloseChat(e, chat.id)}
-                                        className="opacity-0 group-hover/tab:opacity-100 text-zinc-400 hover:text-red-500 transition-all"
-                                    >
-                                        <X className="size-3" />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleCreateChat}
-                            className="h-6 w-6 p-0 rounded-md shrink-0 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        >
-                            <Plus className="size-3" />
-                        </Button>
+                    {/* Chat Header */}
+                    <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                        <div className="flex items-center justify-between gap-3">
+                            <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                {activeChat.title}
+                            </h3>
+                            {activeChatId !== 'initial' && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setActiveChatId('initial')}
+                                    className="h-6 px-2 rounded-md text-[10px] text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                >
+                                    Global Chat
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Messages Area */}
