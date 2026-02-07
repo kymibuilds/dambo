@@ -24,3 +24,26 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+
+# Storage
+storage/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Distribution
+dist/
+build/
+*.egg-info/

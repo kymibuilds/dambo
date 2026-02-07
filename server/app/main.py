@@ -1,8 +1,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.session import test_connection
+from app.routes.dataset_profile import router as dataset_profile_router
+from app.routes.dataset_visualization import router as dataset_viz_router
+from app.routes.datasets import router as datasets_router
 from app.routes.projects import router as projects_router
 from app.routes.upload import router as upload_router
 
@@ -11,6 +15,7 @@ def init_db():
     """Initialize database tables if DB is available."""
     try:
         from app.db.models.project import Base
+        from app.db.models.dataset import Dataset  # Import to register model
         from app.db.session import engine
         Base.metadata.create_all(bind=engine)
         print("Database tables created successfully")
@@ -29,8 +34,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Dataset Copilot Backend", lifespan=lifespan)
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include routers
 app.include_router(projects_router)
+app.include_router(datasets_router)
+app.include_router(dataset_profile_router)
+app.include_router(dataset_viz_router)
 app.include_router(upload_router)
 
 

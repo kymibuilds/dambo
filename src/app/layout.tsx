@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
+import { TamboClientProvider } from "@/lib/tambo/TamboClientProvider";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -29,8 +30,11 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${shipporiMincho.variable} antialiased font-sans`}
       >
-        {children}
+        <TamboClientProvider>
+          {children}
+        </TamboClientProvider>
       </body>
     </html>
   );
 }
+
