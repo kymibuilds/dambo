@@ -128,7 +128,8 @@
 
 @layer utilities {
   .scrollbar-minimal::-webkit-scrollbar {
-    height: 2px;
+    width: 4px;
+    height: 4px;
   }
 
   .scrollbar-minimal::-webkit-scrollbar-track {

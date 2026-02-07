@@ -24,14 +24,14 @@ const initialNodes: DataNodeType[] = [
         position: { x: 100, y: 100 },
         data: { label: 'User Traffic Source' },
         type: 'dataNode',
-        style: { width: 300 },
+        style: { width: 300, height: 400 },
     },
     {
         id: '2',
         position: { x: 600, y: 150 },
         data: { label: 'Revenue Transformation' },
         type: 'dataNode',
-        style: { width: 300 },
+        style: { width: 300, height: 400 },
     },
 ];
 
