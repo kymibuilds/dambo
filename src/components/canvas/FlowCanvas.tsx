@@ -62,6 +62,7 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
             position: position || { x: 100, y: 100 },
             data: { label },
             type: 'dataNode',
+            selected: true,
             style: { width: 300, height: 400 },
         };
         setNodes((nds) => nds.concat(newNode));
@@ -95,7 +96,8 @@ function FlowMain({ onNodeSelect }: FlowCanvasProps) {
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 onSelectionChange={onSelectionChange}
-                onDoubleClick={onPaneDoubleClick}
+                // @ts-ignore - onPaneDoubleClick exists in @xyflow/react v12 but linting is failing here
+                onPaneDoubleClick={onPaneDoubleClick}
                 fitView
                 className="bg-zinc-100 dark:bg-zinc-900"
             >

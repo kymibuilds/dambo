@@ -1,8 +1,8 @@
 'use client';
 
 import { memo, useState, useRef, useCallback } from 'react';
-import { Handle, Position, NodeProps, type Node, NodeResizer } from '@xyflow/react';
-import { BarChart3, MoreHorizontal, Download, Image as ImageIcon } from 'lucide-react';
+import { Handle, Position, NodeProps, type Node, NodeResizer, useReactFlow } from '@xyflow/react';
+import { BarChart3, MoreHorizontal, Download, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { toPng, toJpeg } from 'html-to-image';
 
 export type DataNodeData = {
@@ -12,11 +12,12 @@ export type DataNodeData = {
 
 export type DataNodeType = Node<DataNodeData, 'dataNode'>;
 
-export const DataNode = memo(({ data, selected }: NodeProps<DataNodeType>) => {
+export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) => {
     const [isEditing, setIsEditing] = useState(false);
     const [label, setLabel] = useState(data.label);
     const [showMenu, setShowMenu] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
+    const { deleteElements } = useReactFlow();
 
     const downloadImage = useCallback((format: 'png' | 'jpeg') => {
         if (nodeRef.current === null) {
@@ -116,6 +117,17 @@ export const DataNode = memo(({ data, selected }: NodeProps<DataNodeType>) => {
                                     >
                                         <Download className="size-3.5" />
                                         Download JPG
+                                    </button>
+                                    <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1" />
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteElements({ nodes: [{ id }] });
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                        Delete Node
                                     </button>
                                 </div>
                             )}
