@@ -6,11 +6,12 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # Read database configuration from environment variables
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "dataset_copilot")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+# Use 'or' to handle empty strings as well as None
+POSTGRES_HOST = os.getenv("POSTGRES_HOST") or "localhost"
+POSTGRES_PORT = os.getenv("POSTGRES_PORT") or "5432"
+POSTGRES_DB = os.getenv("POSTGRES_DB") or "dataset_copilot"
+POSTGRES_USER = os.getenv("POSTGRES_USER") or "postgres"
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD") or "postgres"
 
 # Build connection URL
 DATABASE_URL = (
