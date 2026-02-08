@@ -133,3 +133,86 @@ export async function extractChartColumnsWithCache(
 
     return result;
 }
+
+/**
+ * Validate if a column exists, and if not, use Gemini to find the best match.
+ * This is a safety net for when Tambo provides invalid column names.
+ */
+export async function validateAndFixColumn(
+    invalidColumn: string,
+    availableColumns: string[],
+    chartType: 'bar_chart' | 'histogram_chart' | 'scatter_chart' | 'correlation_heatmap'
+): Promise<string | null> {
+    if (!invalidColumn || availableColumns.length === 0) return null;
+
+    // First, check if it's already a valid column (case-insensitive)
+    const exactMatch = availableColumns.find(
+        c => c.toLowerCase() === invalidColumn.toLowerCase()
+    );
+    if (exactMatch) return exactMatch;
+
+    // If no API key, try fuzzy matching
+    if (!apiKey) {
+        console.warn('[Gemini] No API key, using fuzzy match for column:', invalidColumn);
+        return fuzzyMatchColumn(invalidColumn, availableColumns);
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.0-flash',
+            generationConfig: {
+                responseMimeType: 'application/json',
+            },
+        });
+
+        const prompt = `You are a data column matching assistant. The user tried to use a column called "${invalidColumn}" but it doesn't exist.
+
+Available columns: [${availableColumns.join(', ')}]
+
+Find the best matching column from the available columns. Consider:
+1. Similar meaning (e.g., "director" might match "Manager" or "Supervisor")
+2. Partial matches (e.g., "name" might match "Employee_Name")
+3. Common synonyms
+
+Return JSON: { "column": "best_matching_column", "confidence": 0.0-1.0 }
+If no reasonable match exists, return: { "column": null, "confidence": 0 }`;
+
+        console.log('[Gemini] Fixing invalid column:', invalidColumn);
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+        const parsed = JSON.parse(responseText) as { column: string | null; confidence: number };
+
+        console.log('[Gemini] Column fix result:', parsed);
+
+        if (parsed.column && parsed.confidence >= 0.5) {
+            // Validate the suggested column exists
+            const match = availableColumns.find(c => c.toLowerCase() === parsed.column!.toLowerCase());
+            return match || null;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('[Gemini] Column fix error:', error);
+        return fuzzyMatchColumn(invalidColumn, availableColumns);
+    }
+}
+
+/**
+ * Simple fuzzy matching as fallback when Gemini is unavailable
+ */
+function fuzzyMatchColumn(search: string, columns: string[]): string | null {
+    const searchLower = search.toLowerCase().replace(/[_\s-]/g, '');
+
+    // Try to find a column that contains the search term
+    for (const col of columns) {
+        const colLower = col.toLowerCase().replace(/[_\s-]/g, '');
+        if (colLower.includes(searchLower) || searchLower.includes(colLower)) {
+            return col;
+        }
+    }
+
+    return null;
+}
+

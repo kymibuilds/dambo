@@ -71,7 +71,7 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, r
             position,
             data: { label, chartData },
             type: 'dataNode',
-            style: { width: 350, height: 300 },
+            style: { width: 450, height: 480 },
         };
         setNodes((nds) => [...nds, newNode]);
         return id;
@@ -95,11 +95,11 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, r
     const addMultipleChartNodes = useCallback((configs: ChartNodeConfig[]): string[] => {
         if (configs.length === 0) return [];
 
-        const NODE_WIDTH = 350;
-        const NODE_HEIGHT = 300;
+        const NODE_WIDTH = 450;
+        const NODE_HEIGHT = 480;
         const HORIZONTAL_GAP = 50;
         const VERTICAL_GAP = 50;
-        const COLUMNS = 3;
+        const COLUMNS = 2;
 
         // Find the starting position based on existing nodes
         const startX = nodes.length === 0 ? 100 : Math.max(...nodes.map(n => n.position.x)) + NODE_WIDTH + HORIZONTAL_GAP;

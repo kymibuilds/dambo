@@ -31,7 +31,7 @@ function renderChart(chartData: ChartData): ReactNode {
         case 'bar_chart':
             return <BarChart {...(props as { datasetId: string; column: string })} />;
         case 'scatter_chart':
-            return <ScatterChart {...(props as { datasetId: string; x: string; y: string })} />;
+            return <ScatterChart {...(props as { datasetId: string; x: string; y: string; color?: string })} />;
         case 'correlation_heatmap':
             return <CorrelationHeatmap {...(props as { datasetId: string })} />;
         default:
@@ -71,8 +71,8 @@ export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) =
     return (
         <>
             <NodeResizer
-                minWidth={250}
-                minHeight={150}
+                minWidth={400}
+                minHeight={400}
                 isVisible={selected}
                 lineClassName="border-blue-400"
                 handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"

@@ -26,12 +26,13 @@ const components = [
     },
     {
         name: 'scatter_chart',
-        description: 'Display a scatter plot of TWO NUMERIC columns. ALWAYS extract both column names from the user prompt (e.g., "scatter plot of age vs salary" means x="Age" and y="Salary", "scatter plot between experience_years vs salary" means x="Experience_Years" and y="Salary"). Valid numeric columns: Age, Salary, Experience_Years, Performance_Score. You MUST provide "x", "y" (both case-sensitive) and "datasetId". NEVER ask the user to select columns - infer them from their request.',
+        description: 'Display a scatter plot of TWO NUMERIC columns with optional color customization. ALWAYS extract both column names from the user prompt (e.g., "scatter plot of age vs salary" means x="Age" and y="Salary"). Valid numeric columns: Age, Salary, Experience_Years, Performance_Score. Supported colors: red, blue, green, purple, orange, pink, yellow, cyan, indigo, teal. If user mentions a color (e.g., "with red dots"), set color accordingly. You MUST provide "x", "y" (case-sensitive) and "datasetId".',
         component: ScatterChart,
         propsSchema: z.object({
             datasetId: z.string().describe('The ID of the dataset to visualize'),
-            x: z.string().describe('Column for X axis (e.g., Age, Experience_Years). REQUIRED.'),
-            y: z.string().describe('Column for Y axis (e.g., Salary, Performance_Score). REQUIRED.'),
+            x: z.string().describe('Column for X axis (e.g., Age, Experience_Years). MUST be numeric. REQUIRED.'),
+            y: z.string().describe('Column for Y axis (e.g., Salary, Performance_Score). MUST be numeric. REQUIRED.'),
+            color: z.string().optional().describe('Dot color. Options: red, blue, green, purple, orange, pink, yellow, cyan, indigo, teal. Default: indigo'),
         }),
     },
     {

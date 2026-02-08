@@ -2,25 +2,33 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchBar, fetchDatasetProfile } from '@/lib/api/visualizations';
+import { validateAndFixColumn } from '@/lib/gemini/geminiClient';
 
 interface SimpleBarChartProps {
     datasetId?: string;
     column?: string;
+    itemsPerPage?: number;
 }
 
-export function BarChart({ datasetId, column: propColumn }: SimpleBarChartProps) {
+const ITEMS_PER_PAGE = 10;
+
+export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_PER_PAGE }: SimpleBarChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [availableColumns, setAvailableColumns] = useState<string[]>([]);
     const [selectedColumn, setSelectedColumn] = useState<string | undefined>(propColumn);
+    const [currentPage, setCurrentPage] = useState(0);
 
-    // Update selected column when prop changes
     useEffect(() => {
         if (propColumn) setSelectedColumn(propColumn);
     }, [propColumn]);
+
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [selectedColumn]);
 
     useEffect(() => {
         let mounted = true;
@@ -40,19 +48,34 @@ export function BarChart({ datasetId, column: propColumn }: SimpleBarChartProps)
                     setError(null);
                 }
 
-                // Case 1: Column is selected (either via prop or UI)
+                const profile = await fetchDatasetProfile(datasetId);
+                const cols = profile.columns.map((c: any) => c.name);
+                if (mounted) setAvailableColumns(cols);
+
                 if (selectedColumn && selectedColumn !== 'undefined') {
-                    const result = await fetchBar(datasetId, selectedColumn);
-                    if (mounted) setData(result);
-                }
-                // Case 2: No column selected - fetch metadata to show selection UI
-                else {
-                    const profile = await fetchDatasetProfile(datasetId);
-                    const cols = profile.columns.map((c: any) => c.name);
-                    if (mounted) {
-                        setAvailableColumns(cols);
-                        setData(null); // No chart data yet
+                    let columnToUse = selectedColumn;
+                    const isValidColumn = cols.some((c: string) => c.toLowerCase() === selectedColumn.toLowerCase());
+
+                    if (!isValidColumn) {
+                        console.log('[BarChart] Invalid column, asking Gemini to fix:', selectedColumn);
+                        const fixedColumn = await validateAndFixColumn(selectedColumn, cols, 'bar_chart');
+                        if (fixedColumn) {
+                            console.log('[BarChart] Gemini fixed column:', selectedColumn, '->', fixedColumn);
+                            columnToUse = fixedColumn;
+                            if (mounted) setSelectedColumn(fixedColumn);
+                        } else {
+                            if (mounted) {
+                                setError(`Column "${selectedColumn}" not found. Available: ${cols.slice(0, 5).join(', ')}...`);
+                                setData(null);
+                            }
+                            return;
+                        }
                     }
+
+                    const result = await fetchBar(datasetId, columnToUse);
+                    if (mounted) setData(result);
+                } else {
+                    if (mounted) setData(null);
                 }
             } catch (err: any) {
                 console.error(err);
@@ -68,22 +91,36 @@ export function BarChart({ datasetId, column: propColumn }: SimpleBarChartProps)
         };
     }, [datasetId, selectedColumn]);
 
-    // Memoize chart data to prevent unnecessary re-renders
-    const chartData = useMemo(() => {
-        return data?.categories?.map((cat: string, i: number) => ({
+    const { chartData, totalItems, totalPages, startIndex, endIndex } = useMemo(() => {
+        const allData = data?.categories?.map((cat: string, i: number) => ({
             name: cat,
             value: data.counts[i]
         })) || [];
-    }, [data]);
+
+        const total = allData.length;
+        const pages = Math.ceil(total / itemsPerPage) || 1;
+        const start = currentPage * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, total);
+        const paginated = allData.slice(start, end);
+
+        return {
+            chartData: paginated,
+            totalItems: total,
+            totalPages: pages,
+            startIndex: start,
+            endIndex: end
+        };
+    }, [data, currentPage, itemsPerPage]);
 
     const BAR_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1'];
 
+    // Dynamic height: 28px per bar + padding
+    const chartHeight = Math.max(180, Math.min(380, chartData.length * 28 + 50));
+
     if (loading) return <div className="h-64 flex items-center justify-center text-zinc-500"><Loader2 className="animate-spin mr-2" />Loading...</div>;
 
-    // Show error only if we don't have available columns to show UI
     if (error && availableColumns.length === 0) return <div className="h-64 flex items-center justify-center text-red-500 p-4 text-center">{error}</div>;
 
-    // Show selection UI if no column selected
     if (!selectedColumn || selectedColumn === 'undefined' || !data) {
         return (
             <div className="h-64 flex flex-col items-center justify-center space-y-4 bg-zinc-50 rounded-lg border border-zinc-200 p-6">
@@ -104,20 +141,50 @@ export function BarChart({ datasetId, column: propColumn }: SimpleBarChartProps)
     }
 
     return (
-        <div className="w-full h-64">
-            <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart layout="vertical" data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                    <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]}>
-                        {chartData.map((_entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
-                        ))}
-                    </Bar>
-                </RechartsBarChart>
-            </ResponsiveContainer>
+        <div className="w-full flex flex-col bg-white rounded-lg p-3 border border-zinc-200">
+            <div style={{ height: chartHeight }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart layout="vertical" data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e4e4e7" />
+                        <XAxis type="number" tick={{ fill: '#52525b', fontSize: 11 }} axisLine={{ stroke: '#e4e4e7' }} />
+                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#52525b' }} axisLine={{ stroke: '#e4e4e7' }} />
+                        <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ backgroundColor: '#fff', borderColor: '#e4e4e7' }} />
+                        <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                            {chartData.map((_entry: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                            ))}
+                        </Bar>
+                    </RechartsBarChart>
+                </ResponsiveContainer>
+            </div>
+
+            {/* Always show pagination info */}
+            <div className="flex items-center justify-between mt-3 px-1 text-sm border-t border-zinc-100 pt-2">
+                <span className="text-zinc-500">
+                    Showing {totalItems > 0 ? startIndex + 1 : 0}-{endIndex} of {totalItems}
+                </span>
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                            disabled={currentPage === 0}
+                            className="p-1.5 rounded-md border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-zinc-600 min-w-[60px] text-center">
+                            {currentPage + 1} / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                            disabled={currentPage === totalPages - 1}
+                            className="p-1.5 rounded-md border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

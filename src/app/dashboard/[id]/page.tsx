@@ -291,6 +291,10 @@ function ProjectPageContent() {
     // Track processed message IDs to avoid duplicate node creation
     const processedMessageIds = useRef<Set<string>>(new Set());
     const pendingChatIdRef = useRef<string | null>(null);
+    // Track message IDs that originated from node-specific chats (not General)
+    const nodeMessageIdsRef = useRef<Set<string>>(new Set());
+    // Track the last processed message count according to each chat
+    const lastSyncedCountRef = useRef<Record<string, number>>({ initial: 0 });
 
     // Get Tambo thread context
     const {
@@ -426,19 +430,26 @@ function ProjectPageContent() {
 
         // Sync Tambo messages to local chats
         const newMessages = tamboMessages.map(msg => ({
+            id: msg.id,
             role: msg.role,
             content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
         }));
 
-        // Always sync the 'initial' (General) chat with the full thread history
-        if (newMessages.length > 0) {
+        const pendingChatId = pendingChatIdRef.current;
+
+        // Filter out messages that came from node chats when syncing to General
+        const generalMessages = newMessages.filter(msg => !nodeMessageIdsRef.current.has(msg.id));
+
+        // Only sync to 'initial' (General) chat when NOT using a specific node chat
+        // AND only with messages that originated from General chat
+        if (generalMessages.length > 0 && (!pendingChatId || pendingChatId === 'initial')) {
             setLocalChats(prev => prev.map(c =>
                 c.id === 'initial'
                     ? {
                         ...c,
                         messages: [
                             { role: 'assistant', content: "Hello! I've analyzed your dataset. You can ask me to visualize trends, filter data, or generate a custom UI component based on your performance metrics." },
-                            ...newMessages
+                            ...generalMessages.map(m => ({ role: m.role, content: m.content }))
                         ]
                     }
                     : c
@@ -446,7 +457,6 @@ function ProjectPageContent() {
         }
 
         // Handle specific node chat updates (streaming response)
-        const pendingChatId = pendingChatIdRef.current;
         if (pendingChatId && pendingChatId !== 'initial') {
             const lastMessage = newMessages[newMessages.length - 1];
             if (lastMessage && lastMessage.role === 'assistant') {
@@ -673,9 +683,27 @@ function ProjectPageContent() {
 
             console.log('[DEBUG] Sending to Tambo with context:', JSON.stringify(context, null, 2));
 
+            // Track thread length before sending from node chat
+            // Any new messages after this point belong to this node chat
+            const threadLengthBefore = thread?.messages?.length || 0;
+            const isNodeChat = activeChatId !== 'initial';
+
             await sendThreadMessage(userMessage, {
                 additionalContext: context,
             });
+
+            // If this was from a node chat, mark any new messages as node-originated
+            // We do this in the sync effect by checking the message indices
+            if (isNodeChat) {
+                // Store the starting index for this node chat's messages
+                // Any Tambo messages with index >= threadLengthBefore belong to this node
+                setTimeout(() => {
+                    const currentMessages = thread?.messages || [];
+                    for (let i = threadLengthBefore; i < currentMessages.length; i++) {
+                        nodeMessageIdsRef.current.add(currentMessages[i].id);
+                    }
+                }, 500);
+            }
 
             // Add a placeholder response while waiting
             setLocalChats(prev => prev.map(c => {
