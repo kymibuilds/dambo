@@ -1,11 +1,11 @@
-import { DottedSurface } from "@/components/ui/dotted-surface";
+
 import { cn } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 
 export default function DemoOne() {
     return (
         <div className="relative min-h-screen">
-            <DottedSurface className="size-full" />
+
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10">
                 <div
                     aria-hidden="true"
