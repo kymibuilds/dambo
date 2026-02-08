@@ -29,7 +29,7 @@ import { type ChartData, type ChartType } from "@/components/canvas/nodes/DataNo
 import { getProject, type Project } from "@/lib/api/projects";
 import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
 import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
-import { extractChartColumnsWithCache, parseChartModification } from "@/lib/gemini/geminiClient";
+import { extractChartColumnsWithCache, parseChartModification, parseChartGenerationRequest } from "@/lib/gemini/geminiClient";
 import { useQuickAnalysis } from "@/lib/hooks/useQuickAnalysis";
 import type { QuickAnalysisData } from "@/lib/api/visualizations";
 import { loadCanvasState, saveCanvasState, clearCanvasState, loadChats, saveChats, type ChatItem } from "@/lib/api/persistence";
@@ -480,7 +480,7 @@ function ProjectPageContent() {
         {
             id: 'initial',
             title: 'General',
-            messages: [{ role: 'assistant', content: "Hello! I've analyzed your dataset. You can ask me to visualize trends, filter data, or generate a custom UI component based on your performance metrics." }]
+            messages: [{ role: 'assistant', content: "👋 Welcome to Dambo! I can help you explore and visualize your data. Upload a CSV file to get started, then ask me to create charts, analyze trends, or run a Quick Analysis for instant insights." }]
         }
     ]);
     const [activeChatId, setActiveChatId] = useState('initial');
@@ -749,7 +749,7 @@ function ProjectPageContent() {
                     ? {
                         ...c,
                         messages: [
-                            { role: 'assistant', content: "Hello! I've analyzed your dataset. You can ask me to visualize trends, filter data, or generate a custom UI component based on your performance metrics." },
+                            { role: 'assistant', content: "👋 Welcome to Dambo! I can help you explore and visualize your data. Upload a CSV file to get started, then ask me to create charts, analyze trends, or run a Quick Analysis for instant insights." },
                             ...generalMessages.map(m => ({ role: m.role, content: m.content }))
                         ]
                     }
@@ -962,6 +962,81 @@ function ProjectPageContent() {
             }
             return c;
         }));
+
+        // ============ GEMINI-POWERED CHART GENERATION (bypasses Tambo) ============
+        // For general chat, try to generate charts directly using Gemini instead of Tambo streaming
+        if (activeChatId === 'initial' && flowCanvasRef.current && projectFiles.length > 0) {
+            // Find mentioned dataset or use first one
+            const mentionedDataset = projectFiles.find(f =>
+                userMessage.toLowerCase().includes(f.name.toLowerCase()) ||
+                userMessage.includes(`@${f.name}`)
+            ) || projectFiles[0];
+
+            if (mentionedDataset) {
+                const profile = datasetProfiles[mentionedDataset.id];
+                const availableColumns = profile?.columns?.map((c: { name: string }) => c.name) || [];
+
+                if (availableColumns.length > 0) {
+                    try {
+                        console.log('[Gemini Direct] Parsing chart generation request...');
+                        const chartRequest = await parseChartGenerationRequest(
+                            userMessage,
+                            availableColumns,
+                            mentionedDataset.id,
+                            mentionedDataset.name
+                        );
+
+                        console.log('[Gemini Direct] Parse result:', chartRequest);
+
+                        if (chartRequest.shouldGenerateChart && chartRequest.chartType) {
+                            // Build chart props based on chart type
+                            const chartProps: Record<string, unknown> = {
+                                datasetId: mentionedDataset.id,
+                            };
+
+                            if (chartRequest.column) chartProps.column = chartRequest.column;
+                            if (chartRequest.x) chartProps.x = chartRequest.x;
+                            if (chartRequest.y) chartProps.y = chartRequest.y;
+                            if (chartRequest.dateColumn) chartProps.dateColumn = chartRequest.dateColumn;
+                            if (chartRequest.valueColumn) chartProps.valueColumn = chartRequest.valueColumn;
+                            if (chartRequest.categoryColumn) chartProps.categoryColumn = chartRequest.categoryColumn;
+                            if (chartRequest.stackColumn) chartProps.stackColumn = chartRequest.stackColumn;
+                            if (chartRequest.groupColumns) chartProps.groupColumns = chartRequest.groupColumns;
+
+                            // Determine chart label
+                            const columnName = chartRequest.column || chartRequest.x || chartRequest.valueColumn || 'Data';
+                            const chartLabel = `${columnName} (${chartRequest.chartType.replace('_chart', '').replace('_', ' ')})`;
+
+                            // Add chart node directly to canvas
+                            flowCanvasRef.current.addChartNode(
+                                chartLabel,
+                                { type: chartRequest.chartType!, props: chartProps }
+                            );
+
+                            // Add success response to chat
+                            setLocalChats(prev => prev.map(c => {
+                                if (c.id === activeChatId) {
+                                    return {
+                                        ...c,
+                                        messages: [...c.messages, {
+                                            role: 'assistant',
+                                            content: `✨ Created **${chartRequest.chartType!.replace('_chart', '').replace('_', ' ')}** for **${columnName}**!\n\n${chartRequest.explanation || 'Your chart has been added to the canvas.'}`
+                                        }]
+                                    };
+                                }
+                                return c;
+                            }));
+
+                            setIsWaitingForResponse(false);
+                            return; // Don't proceed to Tambo
+                        }
+                    } catch (error) {
+                        console.error('[Gemini Direct] Chart generation error:', error);
+                        // Fall through to Tambo if Gemini fails
+                    }
+                }
+            }
+        }
 
         // ============ GEMINI-POWERED NODE CHAT ============
         // If chatting from a node, use Gemini to parse and execute chart modifications directly
@@ -1210,7 +1285,7 @@ function ProjectPageContent() {
         }
 
         try {
-            // Build rich context with dataset profiles for the AI
+            // Build lean context with only essential data for Tambo (avoid payload size issues)
             const datasetsContext = projectFiles.map(f => {
                 const profile = datasetProfiles[f.id];
                 if (profile) {
@@ -1219,14 +1294,11 @@ function ProjectPageContent() {
                         filename: f.name,
                         rowCount: profile.shape.row_count,
                         columnCount: profile.shape.column_count,
-                        columns: profile.columns.map(c => ({
+                        columns: profile.columns.slice(0, 30).map(c => ({
                             name: c.name,
                             type: c.detected_type,
-                            missingPercentage: c.missing_percentage
                         })),
-                        numericStats: profile.numeric_stats,
-                        categoryStats: profile.category_stats,
-                        samples: profile.samples
+                        // Note: Removed numericStats, categoryStats, and samples to reduce payload size
                     };
                 }
                 return { datasetId: f.id, filename: f.name };

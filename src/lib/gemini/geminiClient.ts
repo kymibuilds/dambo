@@ -396,3 +396,127 @@ export async function parseChartModification(
         return defaultResult;
     }
 }
+
+// ============ CHART GENERATION REQUEST PARSING ============
+
+export interface ChartGenerationResult {
+    shouldGenerateChart: boolean;
+    chartType?: 'histogram_chart' | 'bar_chart' | 'scatter_chart' | 'pie_chart' | 'line_chart' |
+    'area_chart' | 'boxplot_chart' | 'correlation_heatmap' | 'treemap_chart' | 'stacked_bar_chart';
+    column?: string;
+    x?: string;
+    y?: string;
+    dateColumn?: string;
+    valueColumn?: string;
+    categoryColumn?: string;
+    stackColumn?: string;
+    groupColumns?: string;
+    explanation?: string;
+}
+
+/**
+ * Parse a user's message to determine if they want to generate a chart.
+ * Used to bypass Tambo and generate charts directly via Gemini.
+ */
+export async function parseChartGenerationRequest(
+    userMessage: string,
+    availableColumns: string[],
+    datasetId: string,
+    datasetName: string
+): Promise<ChartGenerationResult> {
+    const defaultResult: ChartGenerationResult = { shouldGenerateChart: false };
+
+    if (!apiKey) {
+        console.warn('[Gemini] No API key for chart generation parsing');
+        return defaultResult;
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.0-flash',
+            generationConfig: {
+                responseMimeType: 'application/json',
+            },
+        });
+
+        const prompt = `
+You are a data visualization assistant. Determine if the user wants to create a chart and extract the details.
+
+Dataset: "${datasetName}"
+Available Columns: ${JSON.stringify(availableColumns)}
+User Message: "${userMessage}"
+
+Chart Types and their required columns:
+1. histogram_chart - for numeric distribution (columns: column)
+2. bar_chart - for categorical counts (columns: column)
+3. pie_chart - for categorical proportions (columns: column)
+4. scatter_chart - for comparing two numeric variables (columns: x, y)
+5. line_chart - for time series (columns: dateColumn, valueColumn)
+6. area_chart - for stacked time series (columns: dateColumn, valueColumn, stackColumn)
+7. boxplot_chart - for statistical distribution with outliers (columns: column)
+8. correlation_heatmap - for showing all correlations (no columns needed)
+9. treemap_chart - for hierarchical data (columns: groupColumns, valueColumn)
+10. stacked_bar_chart - for grouped categorical comparison (columns: categoryColumn, stackColumn)
+
+Instructions:
+1. Determine if the user is requesting a chart/visualization
+2. Identify the chart type from their request
+3. Extract column names (match case-insensitively to available columns)
+4. For "histogram" or "distribution" of a column, use histogram_chart
+5. For "bar chart" or "count" of a column, use bar_chart
+6. For "scatter" or "vs" between two columns, use scatter_chart
+7. For "correlation" without specific columns, use correlation_heatmap
+
+Return JSON:
+{
+    "shouldGenerateChart": true/false,
+    "chartType": "histogram_chart" | "bar_chart" | etc,
+    "column": "ColumnName" (for single-column charts),
+    "x": "XColumn" (for scatter),
+    "y": "YColumn" (for scatter),
+    "dateColumn": "DateCol" (for time series),
+    "valueColumn": "ValueCol" (for time series/treemap),
+    "categoryColumn": "CatCol" (for stacked bar),
+    "stackColumn": "StackCol" (for stacked/area),
+    "groupColumns": "Col1,Col2" (for treemap),
+    "explanation": "Brief description of what you understood"
+}
+
+If the message is NOT a chart request (e.g., a question, greeting, etc.), return:
+{ "shouldGenerateChart": false, "explanation": "Not a chart request" }
+`;
+
+        console.log('[Gemini] Parsing chart generation request:', userMessage);
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+
+        console.log('[Gemini] Chart generation parse result:', responseText);
+
+        const parsed = JSON.parse(responseText) as ChartGenerationResult;
+
+        // Validate and fix column names (case-insensitive matching)
+        const fixColumn = (col: string | undefined): string | undefined => {
+            if (!col) return undefined;
+            const match = availableColumns.find(c => c.toLowerCase() === col.toLowerCase());
+            return match;
+        };
+
+        if (parsed.shouldGenerateChart) {
+            parsed.column = fixColumn(parsed.column);
+            parsed.x = fixColumn(parsed.x);
+            parsed.y = fixColumn(parsed.y);
+            parsed.dateColumn = fixColumn(parsed.dateColumn);
+            parsed.valueColumn = fixColumn(parsed.valueColumn);
+            parsed.categoryColumn = fixColumn(parsed.categoryColumn);
+            parsed.stackColumn = fixColumn(parsed.stackColumn);
+        }
+
+        return parsed;
+    } catch (error) {
+        console.error('[Gemini] Chart generation parse error:', error);
+        return defaultResult;
+    }
+}
+
