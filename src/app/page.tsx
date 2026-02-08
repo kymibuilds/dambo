@@ -246,7 +246,7 @@ export default function Home() {
           {/* Footer */}
           <footer className="w-full pt-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-muted-foreground border-t border-border/50">
             <p>
-              Made with <span className="text-red-500 animate-pulse">❤️</span> by <a href="https://github.com/kymibuilds" className="hover:text-foreground transition-colors underline underline-offset-4">kymibuilds</a>, <a href="https://github.com/aniket2812" className="hover:text-foreground transition-colors underline underline-offset-4">aniket2812</a>, <a href="https://github.com/punaykukreja" className="hover:text-foreground transition-colors underline underline-offset-4">punaykukreja</a>
+              Made with <span className="text-red-500 animate-pulse">❤️</span> by <a href="https://github.com/kymibuilds" className="hover:text-foreground transition-colors underline underline-offset-4">kymibuilds</a>, <a href="https://github.com/aniket2812" className="hover:text-foreground transition-colors underline underline-offset-4">aniket2812</a>, <a href="https://github.com/punay04" className="hover:text-foreground transition-colors underline underline-offset-4">punaykukreja</a>
             </p>
             <a
               href="https://github.com/kymibuilds/dambo"
