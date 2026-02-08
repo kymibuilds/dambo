@@ -2,72 +2,57 @@
 
 Dambo is an AI-powered data visualization and analysis platform that transforms CSV datasets into interactive charts and insights. It features a canvas-based interface where users can create, modify, and explore visualizations through natural language conversations with an AI assistant.
 
+<div align="center">
+  <img src="public/screenshot2.png" alt="Dambo Visualization Interface" width="100%" />
+  <br/><br/>
+  <img src="public/screenshot3.png" alt="Dambo Analysis Dashboard" width="100%" />
+</div>
+
 ## Features
 
-### Data Analysis
-- Upload CSV datasets for automatic profiling and analysis
-- AI-powered quick analysis with data quality scoring
-- Missing data detection and outlier identification
-- Correlation analysis between numeric columns
-- ML readiness assessment for datasets
+### Key Features
 
-### Interactive Canvas
-- Drag-and-drop node-based visualization workspace
-- Create multiple charts from the same dataset
-- Pan, zoom, and organize visualizations freely
-- Export charts as PNG or JPEG images
+| Feature | Capabilities |
+| :--- | :--- |
+| **Data Analysis** | • AI-powered profiling & scoring<br>• Missing data & outlier detection<br>• Correlation analysis<br>• ML readiness assessment |
+| **Interactive Canvas** | • Drag-and-drop node-based workspace<br>• Multiple charts per dataset<br>• Pan, zoom, organize freely<br>• Export as PNG/JPEG |
+| **AI-Powered Chat** | • Natural language modifications<br>• Style customization<br>• Per-node & global chat<br>• Powered by Google Gemini AI |
+| **Filtering** | • Natural language filters<br>• Numeric comparisons (>, <, =)<br>• String matching<br>• Persistent filters |
 
 ### Chart Types
-- Bar Chart - Categorical data distribution
-- Histogram - Numeric data distribution with customizable bins
-- Pie Chart - Proportional breakdown with top N categories
-- Line Chart - Time series with optional grouping
-- Area Chart - Stacked time series visualization
-- Scatter Plot - Two-variable correlation analysis
-- Box Plot - Statistical distribution with outlier detection
-- Correlation Heatmap - Multi-variable correlation matrix
-- Stacked Bar Chart - Grouped categorical comparison
-- Treemap - Hierarchical data visualization
 
-### AI-Powered Chat
-- Natural language chart modifications
-- Ask to change chart type, columns, or add filters
-- Style customization through conversation
-- Per-node and global chat interfaces
-- Powered by Google Gemini AI
+| Chart Type | Description |
+| :--- | :--- |
+| **Bar Chart** | Categorical data distribution |
+| **Histogram** | Numeric data distribution with customizable bins |
+| **Pie Chart** | Proportional breakdown with top N categories |
+| **Line Chart** | Time series with optional grouping |
+| **Area Chart** | Stacked time series visualization |
+| **Scatter Plot** | Two-variable correlation analysis |
+| **Box Plot** | Statistical distribution with outlier detection |
+| **Correlation Heatmap** | Multi-variable correlation matrix |
+| **Stacked Bar Chart** | Grouped categorical comparison |
+| **Treemap** | Hierarchical data visualization |
 
-### Filtering
-- Apply data filters through natural language
-- Filter by numeric comparisons (greater than, less than, equals)
-- Filter by string matching and contains
-- Filters persist across chart type changes
+
 
 ## Tech Stack
 
-### Frontend
-- Next.js 16 with App Router
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- Recharts for data visualization
-- XYFlow for canvas management
-- Framer Motion for animations
-- Radix UI and shadcn/ui components
-
-### Backend
-- FastAPI (Python)
-- Pandas for data processing
-- NumPy for numerical operations
-- Google Generative AI for analysis
-- Docker for containerization
+| Area | Technologies |
+| :--- | :--- |
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Recharts, XYFlow, Framer Motion, Radix UI, shadcn/ui |
+| **Backend** | FastAPI (Python), Pandas, NumPy, Google Generative AI, Docker |
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18 or later (or Bun)
-- Python 3.11 or later
-- Docker and Docker Compose (for backend)
-- Google Gemini API key
+
+| Requirement | Version/Notes |
+| :--- | :--- |
+| **Node.js** | 18+ (or Bun) |
+| **Python** | 3.11+ |
+| **Docker** | Docker & Docker Compose |
+| **API Key** | Google Gemini API Key |
 
 ### Environment Setup
 
