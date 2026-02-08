@@ -61,6 +61,16 @@ app.include_router(persistence_router)
 app.include_router(chart_comparison_router)
 
 
+@app.get("/fix-db")
+def fix_db():
+    from app.db.session import engine
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE datasets ADD COLUMN IF NOT EXISTS file_size INTEGER;"))
+        conn.commit()
+    return {"message": "Database schema updated successfully"}
+
+
 @app.get("/")
 async def root():
     return {"message": "Dataset Copilot Backend Running"}
