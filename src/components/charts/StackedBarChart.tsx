@@ -1,18 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { ChartFilter } from '@/lib/api/visualizations';
+import { generatePalette } from '@/lib/utils/colors';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Color palette for stacked bars
 const STACK_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F', '#FFBB28', '#FF8042'];
-
-
-import { ChartFilter } from '@/lib/api/visualizations';
-
-// ...
 
 interface StackedBarChartProps {
     datasetId?: string;
@@ -20,9 +17,10 @@ interface StackedBarChartProps {
     stackColumn?: string;
     valueColumn?: string;
     filter?: ChartFilter;
+    color?: string;
 }
 
-export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueColumn, filter }: StackedBarChartProps) {
+export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueColumn, filter, color }: StackedBarChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -66,6 +64,14 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
         load();
     }, [datasetId, categoryColumn, stackColumn, valueColumn, filter]);
 
+    const chartColors = useMemo(() => {
+        if (color && data?.data) {
+            // data.data is array of series { name: "stack1", values: [] }
+            return generatePalette(color, data.data.length);
+        }
+        return STACK_COLORS;
+    }, [color, data]);
+
     if (loading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
@@ -81,6 +87,8 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
             </div>
         );
     }
+
+    if (!data) return null;
 
     // Transform data for recharts
     const chartData = data.categories.map((cat: string, i: number) => {
@@ -109,21 +117,14 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
                     tick={{ fontSize: 11 }}
                     label={{ value: `${valueColumn || 'Count'} →`, angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 30 }}
                 />
-                <Tooltip
-                    contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '6px',
-                        fontSize: '12px'
-                    }}
-                />
-                <Legend />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
                 {stackNames.map((name: string, i: number) => (
                     <Bar
                         key={name}
                         dataKey={name}
-                        stackId="stack"
-                        fill={STACK_COLORS[i % STACK_COLORS.length]}
+                        stackId="a"
+                        fill={chartColors[i % chartColors.length]}
                     />
                 ))}
             </RechartsBarChart>

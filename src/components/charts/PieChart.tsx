@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useEffect, useState, useMemo } from 'react';
+import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { ChartFilter } from '@/lib/api/visualizations';
+import { generatePalette } from '@/lib/utils/colors';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Vibrant color palette for pie segments
 const PIE_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F', '#FFBB28', '#FF8042', '#a855f7', '#ec4899', '#0ea5e9'];
-
-
-import { ChartFilter } from '@/lib/api/visualizations';
 
 interface PieChartProps {
     datasetId?: string;
@@ -18,10 +17,10 @@ interface PieChartProps {
     limit?: number;
     donut?: boolean;
     filter?: ChartFilter;
-    color?: string; // Ignored for Pie
+    color?: string;
 }
 
-export function PieChart({ datasetId, column, limit = 10, donut = false, filter }: PieChartProps) {
+export function PieChart({ datasetId, column, limit = 10, donut = false, filter, color }: PieChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -62,6 +61,13 @@ export function PieChart({ datasetId, column, limit = 10, donut = false, filter 
         load();
     }, [datasetId, column, limit, filter]);
 
+    const chartColors = useMemo(() => {
+        if (color && data?.categories) {
+            return generatePalette(color, data.categories.length);
+        }
+        return PIE_COLORS;
+    }, [color, data]);
+
     if (loading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
@@ -78,13 +84,14 @@ export function PieChart({ datasetId, column, limit = 10, donut = false, filter 
         );
     }
 
+    if (!data) return null;
+
     // Transform data for recharts
-    const chartData = data.categories.map((cat: string, i: number) => ({
-        name: cat,
+    // Backend returns { categories: string[], values: number[] }
+    const chartData = data.categories.map((label: string, i: number) => ({
+        name: label,
         value: data.values[i]
     }));
-
-    const total = chartData.reduce((sum: number, d: any) => sum + d.value, 0);
 
     return (
         <ResponsiveContainer width="100%" height="100%">
@@ -98,27 +105,12 @@ export function PieChart({ datasetId, column, limit = 10, donut = false, filter 
                     paddingAngle={2}
                     dataKey="value"
                     label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
-                    labelLine={{ stroke: '#888', strokeWidth: 1 }}
                 >
                     {chartData.map((entry: any, index: number) => (
-                        <Cell
-                            key={`cell-${index}`}
-                            fill={PIE_COLORS[index % PIE_COLORS.length]}
-                            stroke="#fff"
-                            strokeWidth={2}
-                        />
+                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                     ))}
                 </Pie>
-                <Tooltip
-                    contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '6px',
-                        fontSize: '12px'
-                    }}
-                    formatter={(value) => [`${value} (${((Number(value) / total) * 100).toFixed(1)}%)`, 'Count']}
-                />
-                <Legend />
+                <Tooltip />
             </RechartsPieChart>
         </ResponsiveContainer>
     );

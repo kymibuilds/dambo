@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AreaChart as RechartsAreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { useEffect, useState, useMemo } from 'react';
+import { AreaChart as RechartsAreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { ChartFilter } from '@/lib/api/visualizations';
+import { generatePalette } from '@/lib/utils/colors';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Color palette for stacked areas
 const AREA_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F', '#FFBB28', '#FF8042'];
-
-
-import { ChartFilter } from '@/lib/api/visualizations';
 
 interface AreaChartProps {
     datasetId?: string;
@@ -62,6 +61,13 @@ export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn, fil
         load();
     }, [datasetId, dateColumn, valueColumn, stackColumn, filter]);
 
+    const chartColors = useMemo(() => {
+        if (color && data?.series) {
+            return generatePalette(color, data.series.length);
+        }
+        return AREA_COLORS;
+    }, [color, data]);
+
     if (loading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
@@ -77,6 +83,8 @@ export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn, fil
             </div>
         );
     }
+
+    if (!data) return null;
 
     // Transform data for recharts
     const chartData = data.dates.map((date: string, i: number) => {
@@ -98,33 +106,30 @@ export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn, fil
                     tick={{ fontSize: 11 }}
                     tickFormatter={(value) => {
                         const date = new Date(value);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                        return date.toLocaleDateString();
                     }}
-                    label={{ value: `${dateColumn} →`, position: 'insideBottom', offset: -10, fill: '#52525b', fontSize: 12, fontWeight: 500 }}
                 />
-                <YAxis
-                    tick={{ fontSize: 11 }}
-                    label={{ value: `${valueColumn} →`, angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 30 }}
-                />
+                <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip
-                    contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '6px',
-                        fontSize: '12px'
-                    }}
-                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                    labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
-                <Legend />
+                <defs>
+                    {seriesNames.map((name: string, i: number) => (
+                        <linearGradient key={`color-${name}`} id={`color-${name}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={chartColors[i % chartColors.length]} stopOpacity={0.8} />
+                            <stop offset="95%" stopColor={chartColors[i % chartColors.length]} stopOpacity={0} />
+                        </linearGradient>
+                    ))}
+                </defs>
                 {seriesNames.map((name: string, i: number) => (
                     <Area
                         key={name}
                         type="monotone"
                         dataKey={name}
                         stackId="1"
-                        stroke={AREA_COLORS[i % AREA_COLORS.length]}
-                        fill={AREA_COLORS[i % AREA_COLORS.length]}
-                        fillOpacity={0.6}
+                        stroke={chartColors[i % chartColors.length]}
+                        fillOpacity={1}
+                        fill={`url(#color-${name})`}
                     />
                 ))}
             </RechartsAreaChart>

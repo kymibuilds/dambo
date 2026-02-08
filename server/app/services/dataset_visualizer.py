@@ -33,6 +33,8 @@ def apply_filter(df: pd.DataFrame, column: str = None, operator: str = None, val
 
     try:
         series = df[column]
+        print(f"[DEBUG] Filtering column: {column}, dtype: {series.dtype}, operator: {operator}, value: {value}")
+        print(f"[DEBUG] Original rows: {len(df)}")
         
         # Handle numeric comparison
         if pd.api.types.is_numeric_dtype(series):
@@ -53,12 +55,28 @@ def apply_filter(df: pd.DataFrame, column: str = None, operator: str = None, val
         # Handle string comparison
         else:
             str_value = str(value)
-            if operator == '==':
-                return df[series == str_value]
+            # Support lexicographical comparison for strings
+            if operator == '>':
+                return df[series.astype(str) > str_value]
+            elif operator == '<':
+                return df[series.astype(str) < str_value]
+            elif operator == '>=':
+                return df[series.astype(str) >= str_value]
+            elif operator == '<=':
+                return df[series.astype(str) <= str_value]
+            elif operator == '==':
+                return df[series.astype(str) == str_value]
             elif operator == '!=':
-                return df[series != str_value]
+                return df[series.astype(str) != str_value]
             elif operator == 'contains':
                 return df[series.astype(str).str.contains(str_value, case=False, na=False)]
+            
+    except Exception as e:
+        print(f"Filter application failed: {e}")
+        # On error, we should arguably return empty or original. 
+        # Returning original masks errors, but returning empty allows UI to show "no data".
+        # For now, let's keep returning df but ensure we log it visibly.
+        return df
             
     except Exception as e:
         print(f"Filter application failed: {e}")

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Treemap as RechartsTreemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { Loader2 } from 'lucide-react';
 import { ChartFilter } from '@/lib/api/visualizations';
+import { generatePalette } from '@/lib/utils/colors';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -15,13 +16,16 @@ interface TreemapChartProps {
     groupColumns?: string; // comma-separated
     valueColumn?: string;
     filter?: ChartFilter;
+    color?: string;
 }
 
 // Custom content component for treemap cells
 const CustomizedContent = (props: any) => {
-    const { x, y, width, height, name, value, depth, index } = props;
+    const { x, y, width, height, index, colors, name, value } = props;
 
     if (width < 30 || height < 20) return null;
+
+    const fill = colors ? colors[index % colors.length] : COLORS[index % COLORS.length];
 
     return (
         <g>
@@ -31,7 +35,7 @@ const CustomizedContent = (props: any) => {
                 width={width}
                 height={height}
                 style={{
-                    fill: COLORS[index % COLORS.length],
+                    fill: fill,
                     stroke: '#fff',
                     strokeWidth: 2,
                     strokeOpacity: 1,
@@ -64,7 +68,7 @@ const CustomizedContent = (props: any) => {
     );
 };
 
-export function TreemapChart({ datasetId, groupColumns, valueColumn, filter }: TreemapChartProps) {
+export function TreemapChart({ datasetId, groupColumns, valueColumn, filter, color }: TreemapChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -105,6 +109,13 @@ export function TreemapChart({ datasetId, groupColumns, valueColumn, filter }: T
         load();
     }, [datasetId, groupColumns, valueColumn, filter]);
 
+    const chartColors = useMemo(() => {
+        if (color && data?.nodes) {
+            return generatePalette(color, data.nodes.length);
+        }
+        return COLORS;
+    }, [color, data]);
+
     if (loading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
@@ -136,7 +147,7 @@ export function TreemapChart({ datasetId, groupColumns, valueColumn, filter }: T
                 aspectRatio={4 / 3}
                 stroke="#fff"
                 fill="#8884d8"
-                content={<CustomizedContent />}
+                content={<CustomizedContent colors={chartColors} />}
             >
                 <Tooltip
                     contentStyle={{

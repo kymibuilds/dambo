@@ -262,8 +262,9 @@ function fuzzyMatchColumn(search: string, columns: string[]): string | null {
 
 // ============ CHART MODIFICATION PARSING ============
 
+
 export interface ChartModificationResult {
-    action: 'change_type' | 'change_column' | 'add_filter' | 'change_both' | 'unknown';
+    action: 'change_type' | 'change_column' | 'add_filter' | 'change_both' | 'change_style' | 'unknown';
     newChartType?: string;
     newColumn?: string;
     filter?: {
@@ -271,6 +272,7 @@ export interface ChartModificationResult {
         operator: '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains';
         value: number | string;
     };
+    color?: string;
     explanation?: string;
 }
 
@@ -323,6 +325,10 @@ export async function parseChartModification(
     3. Add/Update Filter (e.g., "show count > 100", "only where City is New York", "filter values below 50")
        - Output action: "add_filter"
        - Extract filter details: column, operator, value
+       - Valid operators MUST be one of: ">", "<", ">=", "<=", "==", "!=", "contains"
+       - Example: "count > 100" -> operator: ">"
+       - Example: "city is London" -> operator: "=="
+       - Example: "name has John" -> operator: "contains"
        
     4. Change Both Type and Column (e.g., "show histogram of Age", "plot Salary as line chart")
        - Output action: "change_both"

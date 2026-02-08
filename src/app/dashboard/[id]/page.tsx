@@ -810,6 +810,9 @@ function ProjectPageContent() {
 
                         // Handle the modification directly
                         if (modification.action !== 'unknown') {
+                            console.log('[Gemini Node Chat] Applied Action:', modification.action);
+                            console.log('[Gemini Node Chat] Filter Data:', modification.filter);
+
                             let newChartData = { ...currentChartData };
                             let newLabel = currentNode?.data?.label || 'Chart';
 
@@ -821,22 +824,86 @@ function ProjectPageContent() {
 
                                 const targetType = modification.newChartType;
 
+
+                                // Validation for complex charts using dataset profile
                                 if (complexCharts.includes(targetType)) {
-                                    // Can't convert from simple to complex charts without proper columns
-                                    setLocalChats(prev => prev.map(c => {
-                                        if (c.id === activeChatId) {
-                                            return {
-                                                ...c,
-                                                messages: [...c.messages, {
-                                                    role: 'assistant',
-                                                    content: `⚠️ Cannot convert to ${targetType.replace('_chart', '')} chart. This chart type requires different columns (date/value columns for line charts, x/y columns for scatter charts). Try: bar, pie, histogram, or boxplot instead.`
-                                                }]
-                                            };
+                                    const profile = datasetProfiles[datasetId];
+
+                                    if (profile) {
+                                        if (targetType === 'scatter_chart' || targetType === 'bubble_chart') {
+                                            const numericCols = profile.columns.filter(c =>
+                                                ['numeric', 'integer', 'float', 'number'].includes(c.detected_type.toLowerCase())
+                                            );
+
+                                            if (numericCols.length < 2) {
+                                                setLocalChats(prev => prev.map(c => {
+                                                    if (c.id === activeChatId) {
+                                                        return {
+                                                            ...c,
+                                                            messages: [...c.messages, { role: 'assistant', content: `⚠️ Cannot switch to ${targetType.replace('_chart', '')} plot. This chart type requires at least two numeric columns, but your dataset only has ${numericCols.length}.` }]
+                                                        };
+                                                    }
+                                                    return c;
+                                                }));
+                                                setIsWaitingForResponse(false);
+                                                return;
+                                            }
+
+                                            setLocalChats(prev => prev.map(c => {
+                                                if (c.id === activeChatId) {
+                                                    return {
+                                                        ...c,
+                                                        messages: [...c.messages, { role: 'assistant', content: `⚠️ Scatter/Bubble plots require two specific numeric columns. Please say something like "scatter of Sales vs Profit" to specify them.` }]
+                                                    };
+                                                }
+                                                return c;
+                                            }));
+                                            setIsWaitingForResponse(false);
+                                            return;
                                         }
-                                        return c;
-                                    }));
-                                    setIsWaitingForResponse(false);
-                                    return;
+
+                                        if (targetType === 'line_chart' || targetType === 'area_chart') {
+                                            const dateCols = profile.columns.filter(c => ['date', 'datetime', 'timestamp', 'time'].includes(c.detected_type.toLowerCase()));
+
+                                            if (dateCols.length === 0) {
+                                                setLocalChats(prev => prev.map(c => {
+                                                    if (c.id === activeChatId) {
+                                                        return {
+                                                            ...c,
+                                                            messages: [...c.messages, { role: 'assistant', content: `⚠️ Cannot switch to ${targetType.replace('_chart', '')}. No date/time column detected in this dataset.` }]
+                                                        };
+                                                    }
+                                                    return c;
+                                                }));
+                                                setIsWaitingForResponse(false);
+                                                return;
+                                            }
+
+                                            setLocalChats(prev => prev.map(c => {
+                                                if (c.id === activeChatId) {
+                                                    return {
+                                                        ...c,
+                                                        messages: [...c.messages, { role: 'assistant', content: `⚠️ Line/Area charts require a Date column. Please say something like "line chart of Sales over Date" to specify.` }]
+                                                    };
+                                                }
+                                                return c;
+                                            }));
+                                            setIsWaitingForResponse(false);
+                                            return;
+                                        }
+                                    } else {
+                                        setLocalChats(prev => prev.map(c => {
+                                            if (c.id === activeChatId) {
+                                                return {
+                                                    ...c,
+                                                    messages: [...c.messages, { role: 'assistant', content: `⚠️ Cannot convert from simple to complex chart (${targetType.replace('_chart', '')}) without specific columns. Please specify columns.` }]
+                                                };
+                                            }
+                                            return c;
+                                        }));
+                                        setIsWaitingForResponse(false);
+                                        return;
+                                    }
                                 }
 
                                 newChartData = {
@@ -857,6 +924,7 @@ function ProjectPageContent() {
                                 };
                                 newLabel = `${modification.newColumn} Distribution`;
                             } else if (modification.action === 'add_filter' && modification.filter) {
+                                console.log('[Gemini Node Chat] Applying filter:', modification.filter);
                                 newChartData = {
                                     type: currentChartData.type,
                                     props: {
@@ -864,6 +932,7 @@ function ProjectPageContent() {
                                         filter: modification.filter,
                                     }
                                 };
+                                console.log('[Gemini Node Chat] New props with filter:', newChartData.props);
                                 newLabel = `${currentColumn || currentX} (filtered: ${modification.filter.operator} ${modification.filter.value})`;
                             } else if (modification.action === 'change_style' && modification.color) {
                                 newChartData = {
