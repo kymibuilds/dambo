@@ -6,9 +6,9 @@ import { ScatterChart as RechartsScatterChart, Scatter, XAxis, YAxis, Tooltip, R
 import { Loader2 } from 'lucide-react';
 
 interface ScatterChartProps {
-    datasetId: string;
-    x: string;
-    y: string;
+    datasetId?: string;
+    x?: string;
+    y?: string;
 }
 
 export function ScatterChart({ datasetId, x, y }: ScatterChartProps) {
@@ -18,14 +18,28 @@ export function ScatterChart({ datasetId, x, y }: ScatterChartProps) {
 
     useEffect(() => {
         async function load() {
+            // Validate required parameters before making API call
+            const missing: string[] = [];
+            if (!datasetId) missing.push('datasetId');
+            if (!x) missing.push('x (X-axis column)');
+            if (!y) missing.push('y (Y-axis column)');
+
+            if (missing.length > 0) {
+                setError(`Missing required parameters: ${missing.join(', ')}. Please specify both X and Y columns.`);
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
-                const res = await fetchScatter(datasetId, x, y);
+                console.log('[DEBUG] ScatterChart making API call with:', { datasetId, x, y });
+                const res = await fetchScatter(datasetId!, x!, y!);
+                console.log('[DEBUG] ScatterChart received data:', res);
                 setData(res);
                 setError(null);
             } catch (err) {
-                console.error(err);
-                setError(`Failed to load scatter plot (${datasetId || 'missing ID'})`);
+                console.error('[DEBUG] ScatterChart error:', err);
+                setError(`Failed to load scatter plot: ${err instanceof Error ? err.message : 'Unknown error'}`);
             } finally {
                 setLoading(false);
             }
@@ -34,7 +48,7 @@ export function ScatterChart({ datasetId, x, y }: ScatterChartProps) {
     }, [datasetId, x, y]);
 
     if (loading) return <div className="h-64 flex items-center justify-center text-zinc-500"><Loader2 className="animate-spin mr-2" />Loading chart...</div>;
-    if (error) return <div className="h-64 flex items-center justify-center text-red-500">{error}</div>;
+    if (error) return <div className="h-64 flex items-center justify-center text-red-500 p-4 text-center">{error}</div>;
     if (!data) return null;
 
     const chartData = data.x.map((val, i) => ({ x: val, y: data.y[i] }));

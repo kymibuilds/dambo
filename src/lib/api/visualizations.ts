@@ -44,8 +44,14 @@ export async function fetchBar(datasetId: string, column: string): Promise<BarDa
 }
 
 export async function fetchScatter(datasetId: string, x: string, y: string): Promise<ScatterData> {
-    const res = await fetch(`${API_BASE}/datasets/${datasetId}/scatter?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}`);
-    if (!res.ok) throw new Error(`Failed to fetch scatter: ${res.statusText}`);
+    const url = `${API_BASE}/datasets/${datasetId}/scatter?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}`;
+    console.log('[DEBUG] fetchScatter URL:', url);
+    const res = await fetch(url);
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error('[DEBUG] fetchScatter error response:', errorText);
+        throw new Error(`Failed to fetch scatter: ${res.statusText} - ${errorText}`);
+    }
     return res.json();
 }
 

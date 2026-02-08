@@ -48,8 +48,93 @@ function datasetToFile(dataset: Dataset): ProjectFile {
     };
 }
 
+// Helper to extract column name from user message based on available columns
+function extractColumnFromText(text: string, availableColumns: string[], chartType: string): { column?: string; x?: string; y?: string } {
+    const textLower = text.toLowerCase();
+    const result: { column?: string; x?: string; y?: string } = {};
+
+    // Score each column based on how well it matches the text
+    // Higher score = better match
+    const scoredColumns: { col: string; score: number; position: number }[] = [];
+
+    for (const col of availableColumns) {
+        const colLower = col.toLowerCase();
+        // Split by underscore to get parts (e.g., "Experience_Years" -> ["experience", "years"])
+        const colParts = colLower.split('_');
+
+        // Check for exact match (with word boundaries)
+        const exactRegex = new RegExp(`\\b${colLower.replace(/_/g, '[_\\s]?')}\\b`, 'i');
+        if (exactRegex.test(text)) {
+            const match = text.match(exactRegex);
+            scoredColumns.push({ col, score: 100 + col.length, position: match?.index || 0 });
+            continue;
+        }
+
+        // Check if all parts appear in order (e.g., "experience years" matches "Experience_Years")
+        const partsPattern = colParts.map(p => `\\b${p}`).join('.*');
+        const partsRegex = new RegExp(partsPattern, 'i');
+        if (partsRegex.test(text)) {
+            const match = text.match(partsRegex);
+            scoredColumns.push({ col, score: 50 + col.length, position: match?.index || 0 });
+            continue;
+        }
+
+        // Check if any significant part appears (but require minimum length to avoid false positives)
+        for (const part of colParts) {
+            if (part.length >= 4) { // Only match parts with 4+ chars to avoid "age" matching "usage"
+                const partRegex = new RegExp(`\\b${part}\\b`, 'i');
+                if (partRegex.test(text)) {
+                    const match = text.match(partRegex);
+                    scoredColumns.push({ col, score: part.length, position: match?.index || 0 });
+                    break;
+                }
+            }
+        }
+    }
+
+    // Sort by score (descending), then by position (ascending) for tie-breaking
+    scoredColumns.sort((a, b) => b.score - a.score || a.position - b.position);
+
+    console.log('[DEBUG] extractColumnFromText - text:', text, 'scoredColumns:', scoredColumns);
+
+    if (chartType === 'scatter_chart') {
+        // For scatter, we need two columns - look for patterns like "x vs y", "x and y"
+        // Get unique columns, maintaining order by score
+        const uniqueColumns = [...new Set(scoredColumns.map(s => s.col))];
+
+        if (uniqueColumns.length >= 2) {
+            // Try to detect which comes first in the text (for x) and which comes second (for y)
+            const first = scoredColumns[0];
+            const second = scoredColumns.find(s => s.col !== first.col);
+            if (first && second) {
+                if (first.position <= second.position) {
+                    result.x = first.col;
+                    result.y = second.col;
+                } else {
+                    result.x = second.col;
+                    result.y = first.col;
+                }
+            }
+        } else if (uniqueColumns.length === 1) {
+            result.x = uniqueColumns[0];
+        }
+    } else {
+        // For bar/histogram, use the best matched column
+        if (scoredColumns.length > 0) {
+            result.column = scoredColumns[0].col;
+        }
+    }
+
+    return result;
+}
+
 // Helper to extract chart data from rendered component props
-function extractChartData(component: React.ReactElement, defaultDatasetId?: string): ChartData | null {
+function extractChartData(
+    component: React.ReactElement,
+    defaultDatasetId?: string,
+    userMessage?: string,
+    availableColumns?: string[]
+): ChartData | null {
     const props = component.props as Record<string, unknown>;
     const type = component.type;
 
@@ -69,11 +154,66 @@ function extractChartData(component: React.ReactElement, defaultDatasetId?: stri
     const chartType = chartTypeMap[componentName];
     if (!chartType) return null;
 
+    // Debug: Log what props we received from Tambo
+    console.log('[DEBUG] extractChartData - componentName:', componentName, 'props:', JSON.stringify(props));
+
     // Inject default datasetId if missing
     const enhancedProps = { ...props };
     if (!enhancedProps.datasetId && defaultDatasetId) {
         enhancedProps.datasetId = defaultDatasetId;
         console.log('[DEBUG] Injected default datasetId:', defaultDatasetId);
+    }
+
+    // Fallback: If column/x/y are missing, invalid, or not in available columns, try to extract from user message
+    if (userMessage && availableColumns && availableColumns.length > 0) {
+        const extracted = extractColumnFromText(userMessage, availableColumns, chartType);
+
+        // Helper to check if a column is valid (exists in dataset)
+        const isValidColumn = (col: unknown): boolean => {
+            if (!col || col === 'undefined' || typeof col !== 'string') return false;
+            // Case-insensitive check
+            return availableColumns.some(ac => ac.toLowerCase() === (col as string).toLowerCase());
+        };
+
+        // Helper to get the correctly-cased column name from the dataset
+        const getCorrectCase = (col: string): string => {
+            const match = availableColumns.find(ac => ac.toLowerCase() === col.toLowerCase());
+            return match || col;
+        };
+
+        if (chartType === 'scatter_chart') {
+            // Check if x is valid, otherwise use fallback
+            if (!isValidColumn(enhancedProps.x)) {
+                if (extracted.x) {
+                    console.log('[DEBUG] Fallback - Replacing invalid x:', enhancedProps.x, 'with:', extracted.x);
+                    enhancedProps.x = extracted.x;
+                }
+            } else {
+                // Ensure correct case
+                enhancedProps.x = getCorrectCase(enhancedProps.x as string);
+            }
+
+            // Check if y is valid, otherwise use fallback
+            if (!isValidColumn(enhancedProps.y)) {
+                if (extracted.y) {
+                    console.log('[DEBUG] Fallback - Replacing invalid y:', enhancedProps.y, 'with:', extracted.y);
+                    enhancedProps.y = extracted.y;
+                }
+            } else {
+                // Ensure correct case
+                enhancedProps.y = getCorrectCase(enhancedProps.y as string);
+            }
+        } else if (chartType === 'bar_chart' || chartType === 'histogram_chart') {
+            if (!isValidColumn(enhancedProps.column)) {
+                if (extracted.column) {
+                    console.log('[DEBUG] Fallback - Replacing invalid column:', enhancedProps.column, 'with:', extracted.column);
+                    enhancedProps.column = extracted.column;
+                }
+            } else {
+                // Ensure correct case
+                enhancedProps.column = getCorrectCase(enhancedProps.column as string);
+            }
+        }
     }
 
     return {
@@ -83,7 +223,12 @@ function extractChartData(component: React.ReactElement, defaultDatasetId?: stri
 }
 
 // Extract all chart data from a message - handles multiple charts in one response
-function extractAllChartData(message: TamboThreadMessage, defaultDatasetId?: string): ChartNodeConfig[] {
+function extractAllChartData(
+    message: TamboThreadMessage,
+    defaultDatasetId?: string,
+    userMessage?: string,
+    availableColumns?: string[]
+): ChartNodeConfig[] {
     const component = message.renderedComponent;
     if (!component || typeof component !== 'object') return [];
 
@@ -99,7 +244,7 @@ function extractAllChartData(message: TamboThreadMessage, defaultDatasetId?: str
         if (!element || typeof element !== 'object') return;
 
         // Check if this element is a chart
-        const chartData = extractChartData(element, defaultDatasetId);
+        const chartData = extractChartData(element, defaultDatasetId, userMessage, availableColumns);
         if (chartData) {
             const chartLabels: Record<ChartType, string> = {
                 'histogram_chart': 'Histogram',
@@ -334,7 +479,30 @@ function ProjectPageContent() {
                 // Extract all charts from the message (supports multiple charts)
                 // Use the first project file as default dataset ID if AI doesn't provide one
                 const defaultDatasetId = projectFiles.length > 0 ? projectFiles[0].id : undefined;
-                const chartConfigs = extractAllChartData(msg, defaultDatasetId);
+
+                // Find the last user message for fallback column extraction
+                const userMessages = tamboMessages.filter(m => m.role === 'user');
+                const lastUserMessage = userMessages.length > 0
+                    ? (typeof userMessages[userMessages.length - 1].content === 'string'
+                        ? userMessages[userMessages.length - 1].content
+                        : JSON.stringify(userMessages[userMessages.length - 1].content))
+                    : undefined;
+
+                // Get all available column names from dataset profiles
+                const availableColumns: string[] = [];
+                Object.values(datasetProfiles).forEach((profile: any) => {
+                    if (profile?.columns) {
+                        profile.columns.forEach((col: any) => {
+                            if (col.name && !availableColumns.includes(col.name)) {
+                                availableColumns.push(col.name);
+                            }
+                        });
+                    }
+                });
+
+                console.log('[DEBUG] Processing chart with userMessage:', lastUserMessage, 'availableColumns:', availableColumns);
+
+                const chartConfigs = extractAllChartData(msg, defaultDatasetId, lastUserMessage as string | undefined, availableColumns);
 
                 if (chartConfigs.length > 0 && flowCanvasRef.current) {
                     // Mark message as processed
@@ -358,7 +526,7 @@ function ProjectPageContent() {
                 }
             }
         });
-    }, [thread?.messages]);
+    }, [thread?.messages, datasetProfiles, projectFiles]);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
