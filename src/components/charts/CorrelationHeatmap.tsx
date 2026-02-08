@@ -8,15 +8,30 @@ interface CorrelationHeatmapProps {
     datasetId: string;
 }
 
-function getColor(value: number | null): string {
-    if (value === null) return 'bg-zinc-800';
-    if (value >= 0.7) return 'bg-emerald-500';
-    if (value >= 0.3) return 'bg-emerald-700';
-    if (value >= 0.1) return 'bg-emerald-900';
-    if (value >= -0.1) return 'bg-zinc-800';
-    if (value >= -0.3) return 'bg-rose-900';
-    if (value >= -0.7) return 'bg-rose-700';
-    return 'bg-rose-500';
+// Returns a gradient color based on correlation value
+function getHeatmapColor(value: number | null): string {
+    if (value === null) return 'bg-gray-200 dark:bg-zinc-700';
+
+    // Strong positive: vibrant green
+    if (value >= 0.8) return 'bg-emerald-500';
+    if (value >= 0.6) return 'bg-emerald-400';
+    if (value >= 0.4) return 'bg-teal-400';
+    if (value >= 0.2) return 'bg-teal-300';
+
+    // Neutral: light gray
+    if (value >= -0.2) return 'bg-slate-200 dark:bg-zinc-600';
+
+    // Negative: orange to red
+    if (value >= -0.4) return 'bg-orange-300';
+    if (value >= -0.6) return 'bg-orange-400';
+    if (value >= -0.8) return 'bg-red-400';
+    return 'bg-red-500';
+}
+
+function getTextColor(value: number | null): string {
+    if (value === null) return 'text-gray-500';
+    if (Math.abs(value) >= 0.4) return 'text-white';
+    return 'text-gray-700 dark:text-zinc-200';
 }
 
 export function CorrelationHeatmap({ datasetId }: CorrelationHeatmapProps) {
@@ -33,7 +48,7 @@ export function CorrelationHeatmap({ datasetId }: CorrelationHeatmapProps) {
                 setError(null);
             } catch (err) {
                 console.error(err);
-                setError(`Failed to load correlation matrix (${datasetId || 'missing ID'})`);
+                setError(`Failed to load correlation matrix`);
             } finally {
                 setLoading(false);
             }
@@ -41,54 +56,110 @@ export function CorrelationHeatmap({ datasetId }: CorrelationHeatmapProps) {
         load();
     }, [datasetId]);
 
-    if (loading) return <div className="h-64 flex items-center justify-center text-zinc-500"><Loader2 className="animate-spin mr-2" />Loading matrix...</div>;
-    if (error) return <div className="h-64 flex items-center justify-center text-red-500">{error}</div>;
+    if (loading) {
+        return (
+            <div className="h-64 flex items-center justify-center text-zinc-500 bg-white dark:bg-zinc-900 rounded-xl">
+                <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                Loading matrix...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="h-64 flex items-center justify-center text-red-500 bg-white dark:bg-zinc-900 rounded-xl">
+                {error}
+            </div>
+        );
+    }
+
     if (!data) return null;
 
     const { columns, matrix } = data;
 
-    if (columns.length === 0) return <div className="p-4 text-zinc-500">No numeric columns found.</div>;
+    if (columns.length === 0) {
+        return (
+            <div className="p-6 text-zinc-500 bg-white dark:bg-zinc-900 rounded-xl text-center">
+                No numeric columns found for correlation analysis.
+            </div>
+        );
+    }
 
     return (
-        <div className="w-full bg-zinc-900/50 rounded-lg p-4 border border-zinc-800 overflow-x-auto">
-            <h3 className="text-sm font-medium text-zinc-300 mb-4 text-center">Correlation Matrix</h3>
-            <table className="text-xs mx-auto">
-                <thead>
-                    <tr>
-                        <th className="p-1"></th>
-                        {columns.map((col) => (
-                            <th key={col} className="p-1 text-zinc-400 font-normal truncate max-w-16" title={col}>
-                                {col.length > 8 ? col.substring(0, 8) + '...' : col}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {matrix.map((row, i) => (
-                        <tr key={i}>
-                            <td className="p-1 text-zinc-400 truncate max-w-16" title={columns[i]}>
-                                {columns[i].length > 8 ? columns[i].substring(0, 8) + '...' : columns[i]}
-                            </td>
-                            {row.map((val, j) => (
-                                <td key={j} className="p-0.5">
-                                    <div
-                                        className={`w-8 h-8 rounded flex items-center justify-center ${getColor(val)} transition-colors`}
-                                        title={`${columns[i]} vs ${columns[j]}: ${val?.toFixed(2)}`}
-                                    >
-                                        <span className="text-white text-[10px] font-medium opacity-90">
-                                            {val !== null ? (Math.abs(val as number) < 0.1 ? '' : (val as number).toFixed(1)) : '-'}
-                                        </span>
-                                    </div>
-                                </td>
+        <div className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto">
+            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-4 text-center">
+                Correlation Matrix
+            </h3>
+
+            <div className="overflow-x-auto">
+                <table className="text-xs mx-auto border-separate border-spacing-1">
+                    <thead>
+                        <tr>
+                            <th className="p-1"></th>
+                            {columns.map((col) => (
+                                <th
+                                    key={col}
+                                    className="p-2 text-zinc-600 dark:text-zinc-300 font-medium text-center min-w-[50px] max-w-[80px]"
+                                    title={col}
+                                >
+                                    <span className="block truncate text-[11px]">
+                                        {col.length > 10 ? col.substring(0, 10) + '…' : col}
+                                    </span>
+                                </th>
                             ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-            <div className="flex justify-center gap-4 mt-4 text-xs text-zinc-500">
-                <span className="flex items-center gap-1"><div className="w-3 h-3 bg-rose-500 rounded"></div> Negative</span>
-                <span className="flex items-center gap-1"><div className="w-3 h-3 bg-zinc-800 rounded"></div> Neutral</span>
-                <span className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded"></div> Positive</span>
+                    </thead>
+                    <tbody>
+                        {matrix.map((row, i) => (
+                            <tr key={i}>
+                                <td
+                                    className="p-2 text-zinc-600 dark:text-zinc-300 font-medium text-right min-w-[60px] max-w-[100px]"
+                                    title={columns[i]}
+                                >
+                                    <span className="block truncate text-[11px]">
+                                        {columns[i].length > 12 ? columns[i].substring(0, 12) + '…' : columns[i]}
+                                    </span>
+                                </td>
+                                {row.map((val, j) => (
+                                    <td key={j} className="p-0.5">
+                                        <div
+                                            className={`w-11 h-11 rounded-lg flex items-center justify-center ${getHeatmapColor(val)} ${getTextColor(val)} transition-all duration-200 hover:scale-105 hover:shadow-md cursor-default`}
+                                            title={`${columns[i]} ↔ ${columns[j]}: ${val !== null ? val.toFixed(3) : 'N/A'}`}
+                                        >
+                                            <span className="text-[11px] font-semibold">
+                                                {val !== null ? val.toFixed(2) : '–'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Legend */}
+            <div className="flex justify-center items-center gap-6 mt-5 text-xs text-zinc-600 dark:text-zinc-400">
+                <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-red-500 rounded shadow-sm"></div>
+                        <span>−1</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-orange-400 rounded shadow-sm"></div>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-slate-200 dark:bg-zinc-600 rounded shadow-sm"></div>
+                        <span>0</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-teal-400 rounded shadow-sm"></div>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 bg-emerald-500 rounded shadow-sm"></div>
+                        <span>+1</span>
+                    </span>
+                </div>
             </div>
         </div>
     );

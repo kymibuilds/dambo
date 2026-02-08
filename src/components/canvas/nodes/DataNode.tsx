@@ -4,10 +4,89 @@ import { memo, useState, useRef, useCallback, ReactNode } from 'react';
 import { Handle, Position, NodeProps, type Node, NodeResizer, useReactFlow } from '@xyflow/react';
 import { BarChart3, MoreHorizontal, Download, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { toPng, toJpeg } from 'html-to-image';
-import { HistogramChart, BarChart, ScatterChart, CorrelationHeatmap } from '@/components/charts';
+import {
+    HistogramChart,
+    BarChart,
+    ScatterChart,
+    CorrelationHeatmap,
+    LineChart,
+    PieChart,
+    AreaChart,
+    BoxPlotChart,
+    TreemapChart,
+    StackedBarChart
+} from '@/components/charts';
 
 // Chart type definitions
-export type ChartType = 'histogram_chart' | 'bar_chart' | 'scatter_chart' | 'correlation_heatmap';
+export type ChartType =
+    | 'histogram_chart'
+    | 'bar_chart'
+    | 'scatter_chart'
+    | 'correlation_heatmap'
+    | 'line_chart'
+    | 'pie_chart'
+    | 'area_chart'
+    | 'boxplot_chart'
+    | 'treemap_chart'
+    | 'stacked_bar_chart'
+    | 'comparison_insight';
+
+// Comparison insight props
+interface ComparisonInsightProps {
+    insights: string[];
+    relationship: string;
+    recommendation: string;
+    statistical_notes?: string;
+    visualization_suggestion?: { type: string; reason: string };
+    chart1Label: string;
+    chart2Label: string;
+}
+
+// Comparison Insight Component
+function ComparisonInsight({ insights, relationship, recommendation, statistical_notes, chart1Label, chart2Label }: ComparisonInsightProps) {
+    const relationshipColors: Record<string, string> = {
+        correlation: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+        distribution: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+        trend: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+        categorical: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+        mixed: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+    };
+
+    return (
+        <div className="h-full flex flex-col p-4 bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950">
+            <div className="flex items-center gap-2 mb-3">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${relationshipColors[relationship] || relationshipColors.mixed}`}>
+                    {relationship}
+                </span>
+                <span className="text-xs text-zinc-400">
+                    {chart1Label} ↔ {chart2Label}
+                </span>
+            </div>
+
+            <div className="flex-1 space-y-3 overflow-y-auto">
+                {insights.map((insight, i) => (
+                    <div key={i} className="flex gap-2">
+                        <span className="text-violet-500 font-bold">•</span>
+                        <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{insight}</p>
+                    </div>
+                ))}
+
+                {statistical_notes && (
+                    <div className="mt-3 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 italic">{statistical_notes}</p>
+                    </div>
+                )}
+            </div>
+
+            {recommendation && (
+                <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">💡 Recommendation</p>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">{recommendation}</p>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export interface ChartData {
     type: ChartType;
@@ -34,29 +113,54 @@ function renderChart(chartData: ChartData): ReactNode {
             return <ScatterChart {...(props as { datasetId: string; x: string; y: string; color?: string })} />;
         case 'correlation_heatmap':
             return <CorrelationHeatmap {...(props as { datasetId: string })} />;
+        case 'line_chart':
+            return <LineChart {...(props as { datasetId: string; dateColumn: string; valueColumn: string; groupColumn?: string })} />;
+        case 'pie_chart':
+            return <PieChart {...(props as { datasetId: string; column: string; limit?: number; donut?: boolean })} />;
+        case 'area_chart':
+            return <AreaChart {...(props as { datasetId: string; dateColumn: string; valueColumn: string; stackColumn: string })} />;
+        case 'boxplot_chart':
+            return <BoxPlotChart {...(props as { datasetId: string; column: string })} />;
+        case 'treemap_chart':
+            return <TreemapChart {...(props as { datasetId: string; groupColumns: string; valueColumn: string })} />;
+        case 'stacked_bar_chart':
+            return <StackedBarChart {...(props as { datasetId: string; categoryColumn: string; stackColumn: string; valueColumn?: string })} />;
+        case 'comparison_insight':
+            return <ComparisonInsight {...(props as unknown as ComparisonInsightProps)} />;
         default:
             return null;
     }
 }
+
 
 export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) => {
     const [isEditing, setIsEditing] = useState(false);
     const [label, setLabel] = useState(data.label);
     const [showMenu, setShowMenu] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
+    const chartRef = useRef<HTMLDivElement>(null);
     const { deleteElements } = useReactFlow();
 
     const downloadImage = useCallback((format: 'png' | 'jpeg') => {
-        if (nodeRef.current === null) {
+        // Use chartRef to capture only the graph, not the entire node
+        if (chartRef.current === null) {
             return;
         }
 
         const method = format === 'png' ? toPng : toJpeg;
 
-        method(nodeRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
+        // High resolution export with 2x scale for better quality
+        method(chartRef.current, {
+            cacheBust: true,
+            backgroundColor: '#ffffff',
+            pixelRatio: 2, // 2x resolution for high quality
+            style: {
+                borderRadius: '0', // Remove border radius for clean export
+            }
+        })
             .then((dataUrl) => {
                 const link = document.createElement('a');
-                link.download = `${label || 'node'}.${format}`;
+                link.download = `${label || 'chart'}.${format}`;
                 link.href = dataUrl;
                 link.click();
                 setShowMenu(false);
@@ -71,8 +175,8 @@ export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) =
     return (
         <>
             <NodeResizer
-                minWidth={400}
-                minHeight={400}
+                minWidth={800}
+                minHeight={500}
                 isVisible={selected}
                 lineClassName="border-blue-400"
                 handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"
@@ -167,7 +271,7 @@ export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) =
                 {/* Content / Chart Area */}
                 <div className="flex-1 p-2 bg-zinc-50/30 dark:bg-zinc-900/30 flex flex-col min-h-0 rounded-b-xl overflow-auto">
                     {hasChart ? (
-                        <div className="w-full h-full">
+                        <div ref={chartRef} className="w-full h-full bg-white">
                             {renderChart(data.chartData!)}
                         </div>
                     ) : (

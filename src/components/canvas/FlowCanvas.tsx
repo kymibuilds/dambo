@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useImperativeHandle, forwardRef } from 'react';
+import React, { useCallback, useImperativeHandle, forwardRef, useEffect } from 'react';
 import {
     ReactFlow,
     Background,
@@ -11,10 +11,11 @@ import {
     Connection,
     ReactFlowProvider,
     BackgroundVariant,
-    type Node
+    type Node,
+    type Edge
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus, Zap, Loader2 } from 'lucide-react';
+import { Plus, Zap, Loader2, Trash2 } from 'lucide-react';
 import { DataNode, type DataNodeType, type ChartData } from './nodes/DataNode';
 
 const nodeTypes = {
@@ -36,6 +37,9 @@ export interface FlowCanvasRef {
     addEdgeBetweenNodes: (sourceId: string, targetId: string, animated?: boolean) => void;
     addAnalysisCluster: (datasetName: string, configs: ChartNodeConfig[]) => { parentId: string; childIds: string[] };
     getNodeCount: () => number;
+    getState: () => { nodes: DataNodeType[]; edges: Edge[] };
+    clearCanvas: () => void;
+    setInitialState: (nodes: DataNodeType[], edges: Edge[]) => void;
 }
 
 interface FlowCanvasProps {
@@ -43,15 +47,88 @@ interface FlowCanvasProps {
     onQuickAnalysis?: () => void;
     isQuickAnalysisLoading?: boolean;
     isQuickAnalysisDisabled?: boolean;
+    onStateChange?: (nodes: DataNodeType[], edges: Edge[]) => void;
+    onClearCanvas?: () => void;
 }
 
-const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQuickAnalysis, isQuickAnalysisLoading, isQuickAnalysisDisabled }, ref) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQuickAnalysis, isQuickAnalysisLoading, isQuickAnalysisDisabled, onStateChange, onClearCanvas }, ref) => {
+    const [nodes, setNodes, onNodesChange] = useNodesState<DataNodeType>(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+    // Notify parent of state changes for persistence
+    useEffect(() => {
+        if (onStateChange && (nodes.length > 0 || edges.length > 0)) {
+            onStateChange(nodes as DataNodeType[], edges);
+        }
+    }, [nodes, edges, onStateChange]);
+
     const onConnect = useCallback(
-        (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-        [setEdges],
+        async (params: Connection) => {
+            // Add the edge first
+            setEdges((eds) => addEdge(params, eds));
+
+            // Check if both source and target are chart nodes
+            const sourceNode = nodes.find(n => n.id === params.source);
+            const targetNode = nodes.find(n => n.id === params.target);
+
+            if (sourceNode?.data?.chartData && targetNode?.data?.chartData) {
+                // Both nodes have charts - create comparison
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/charts/compare`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chart1: sourceNode.data.chartData,
+                            chart2: targetNode.data.chartData,
+                            datasetId: sourceNode.data.chartData.props?.datasetId
+                        })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+
+                        // Create comparison node between the two connected nodes
+                        const midX = ((sourceNode.position?.x || 0) + (targetNode.position?.x || 0)) / 2;
+                        const maxY = Math.max(sourceNode.position?.y || 0, targetNode.position?.y || 0);
+
+                        const comparisonId = Math.random().toString(36).substring(7);
+                        const comparisonNode: DataNodeType = {
+                            id: comparisonId,
+                            position: { x: midX, y: maxY + 650 },
+                            data: {
+                                label: result.comparison?.comparison_title || 'Comparison',
+                                chartData: {
+                                    type: 'comparison_insight' as any,
+                                    props: {
+                                        insights: result.comparison?.key_insights || [],
+                                        relationship: result.comparison?.relationship_type || 'mixed',
+                                        recommendation: result.comparison?.recommendation || '',
+                                        statistical_notes: result.comparison?.statistical_notes || '',
+                                        visualization_suggestion: result.comparison?.visualization_suggestion,
+                                        chart1Label: sourceNode.data.label,
+                                        chart2Label: targetNode.data.label
+                                    }
+                                }
+                            },
+                            type: 'dataNode',
+                            style: { width: 500, height: 350 },
+                        };
+
+                        setNodes((nds) => [...nds, comparisonNode]);
+
+                        // Connect both charts to the comparison node
+                        setEdges((eds) => [
+                            ...eds,
+                            { id: `${params.source}-${comparisonId}`, source: params.source!, target: comparisonId, animated: true },
+                            { id: `${params.target}-${comparisonId}`, source: params.target!, target: comparisonId, animated: true }
+                        ]);
+                    }
+                } catch (e) {
+                    console.error('Failed to generate comparison:', e);
+                }
+            }
+        },
+        [setEdges, nodes, setNodes],
     );
 
     // Calculate position for new nodes based on existing ones
@@ -75,7 +152,7 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
             position,
             data: { label, chartData },
             type: 'dataNode',
-            style: { width: 450, height: 480 },
+            style: { width: 900, height: 600 },
         };
         setNodes((nds) => [...nds, newNode]);
         return id;
@@ -89,7 +166,7 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
             position,
             data: { label },
             type: 'dataNode',
-            style: { width: 300, height: 400 },
+            style: { width: 600, height: 500 },
         };
         setNodes((nds) => [...nds, newNode]);
         return id;
@@ -99,8 +176,8 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
     const addMultipleChartNodes = useCallback((configs: ChartNodeConfig[]): string[] => {
         if (configs.length === 0) return [];
 
-        const NODE_WIDTH = 450;
-        const NODE_HEIGHT = 480;
+        const NODE_WIDTH = 900;
+        const NODE_HEIGHT = 600;
         const HORIZONTAL_GAP = 50;
         const VERTICAL_GAP = 50;
         const COLUMNS = 2;
@@ -144,13 +221,33 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         return nodes.length;
     }, [nodes]);
 
+    // Get current state for persistence
+    const getState = useCallback(() => {
+        return { nodes: nodes as DataNodeType[], edges };
+    }, [nodes, edges]);
+
+    // Clear all nodes and edges
+    const clearCanvas = useCallback(() => {
+        setNodes([]);
+        setEdges([]);
+        if (onClearCanvas) {
+            onClearCanvas();
+        }
+    }, [setNodes, setEdges, onClearCanvas]);
+
+    // Set initial state from persistence
+    const setInitialState = useCallback((initialNodes: DataNodeType[], initialEdges: Edge[]) => {
+        setNodes(initialNodes);
+        setEdges(initialEdges);
+    }, [setNodes, setEdges]);
+
     // Add analysis cluster: center parent node with chart nodes radiating outward
     const addAnalysisCluster = useCallback((datasetName: string, configs: ChartNodeConfig[]): { parentId: string; childIds: string[] } => {
-        const CHART_NODE_WIDTH = 450;
-        const CHART_NODE_HEIGHT = 480;
-        const PARENT_WIDTH = 200;
-        const PARENT_HEIGHT = 80;
-        const RADIUS = 550; // Distance from parent to child nodes
+        const CHART_NODE_WIDTH = 900;
+        const CHART_NODE_HEIGHT = 600;
+        const PARENT_WIDTH = 250;
+        const PARENT_HEIGHT = 100;
+        const RADIUS = 800; // Distance from parent to child nodes (increased for larger nodes)
 
         // Calculate center position based on existing nodes
         const centerX = nodes.length === 0 ? 600 : Math.max(...nodes.map(n => n.position.x)) + 700;
@@ -205,7 +302,10 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         addEdgeBetweenNodes,
         addAnalysisCluster,
         getNodeCount,
-    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, addAnalysisCluster, getNodeCount]);
+        getState,
+        clearCanvas,
+        setInitialState,
+    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, addAnalysisCluster, getNodeCount, getState, clearCanvas, setInitialState]);
 
     const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
         if (onNodeSelect) {
@@ -258,6 +358,15 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
                             <Zap className="size-3.5" />
                         )}
                         <span className="text-xs font-medium">Quick Analysis</span>
+                    </button>
+                )}
+                {nodes.length > 0 && (
+                    <button
+                        onClick={clearCanvas}
+                        className="h-7 flex items-center gap-2 px-3 rounded-md bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 transition-all backdrop-blur-sm shadow-sm"
+                        title="Clear Canvas"
+                    >
+                        <span className="text-sm">🧹</span>
                     </button>
                 )}
             </div>

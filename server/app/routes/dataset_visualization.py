@@ -1,20 +1,33 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.models.dataset import Dataset
 from app.db.session import get_db
 from app.schemas.dataset_visualization import (
+    AreaChartResponse,
     BarChartResponse,
+    BoxPlotResponse,
     CorrelationResponse,
     HistogramResponse,
+    LineChartResponse,
+    PieChartResponse,
     ScatterResponse,
+    StackedBarResponse,
+    TreemapResponse,
 )
 from app.services.dataset_loader import load_dataset
 from app.services.dataset_visualizer import (
+    get_area_data,
     get_bar_counts,
+    get_boxplot,
     get_correlation,
     get_histogram,
+    get_line_data,
+    get_pie_data,
     get_scatter,
+    get_stacked_bar,
+    get_treemap_data,
 )
 
 router = APIRouter()
@@ -44,11 +57,8 @@ def get_histogram_data(
         raise HTTPException(status_code=500, detail=str(e))
 
     try:
-        print(f"DEBUG: Requesting histogram for column '{column}' in dataset '{dataset_id}'")
-        print(f"DEBUG: DF columns: {df.columns.tolist()}")
         result = get_histogram(df, column, bins)
     except ValueError as e:
-        print(f"DEBUG: ValueError in histogram: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
     return result
@@ -114,3 +124,147 @@ def get_correlation_data(
 
     result = get_correlation(df)
     return result
+
+
+# ============ New Chart Endpoints ============
+
+@router.get("/datasets/{dataset_id}/line", response_model=LineChartResponse)
+def get_line_chart_data(
+    dataset_id: str,
+    date_column: str = Query(..., description="Date/time column"),
+    value_column: str = Query(..., description="Value column to plot"),
+    group_column: Optional[str] = Query(None, description="Optional grouping column for multiple lines"),
+    db: Session = Depends(get_db)
+):
+    """Get line chart data for time series visualization."""
+    validate_dataset(dataset_id, db)
+
+    try:
+        df = load_dataset(db, dataset_id)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        result = get_line_data(df, date_column, value_column, group_column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get("/datasets/{dataset_id}/pie", response_model=PieChartResponse)
+def get_pie_chart_data(
+    dataset_id: str,
+    column: str = Query(..., description="Categorical column for pie chart"),
+    limit: int = Query(10, ge=1, le=20, description="Max number of slices"),
+    db: Session = Depends(get_db)
+):
+    """Get pie/donut chart data for categorical breakdown."""
+    validate_dataset(dataset_id, db)
+
+    try:
+        df = load_dataset(db, dataset_id)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        result = get_pie_data(df, column, limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get("/datasets/{dataset_id}/area", response_model=AreaChartResponse)
+def get_area_chart_data(
+    dataset_id: str,
+    date_column: str = Query(..., description="Date/time column"),
+    value_column: str = Query(..., description="Value column to stack"),
+    stack_column: str = Query(..., description="Column to stack by"),
+    db: Session = Depends(get_db)
+):
+    """Get stacked area chart data."""
+    validate_dataset(dataset_id, db)
+
+    try:
+        df = load_dataset(db, dataset_id)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        result = get_area_data(df, date_column, value_column, stack_column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get("/datasets/{dataset_id}/boxplot", response_model=BoxPlotResponse)
+def get_boxplot_data(
+    dataset_id: str,
+    column: str = Query(..., description="Numeric column for box plot"),
+    db: Session = Depends(get_db)
+):
+    """Get box plot statistics (quartiles, outliers)."""
+    validate_dataset(dataset_id, db)
+
+    try:
+        df = load_dataset(db, dataset_id)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        result = get_boxplot(df, column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get("/datasets/{dataset_id}/treemap", response_model=TreemapResponse)
+def get_treemap_chart_data(
+    dataset_id: str,
+    group_columns: str = Query(..., description="Comma-separated grouping columns"),
+    value_column: str = Query(..., description="Value column for sizing"),
+    db: Session = Depends(get_db)
+):
+    """Get treemap data for hierarchical visualization."""
+    validate_dataset(dataset_id, db)
+
+    try:
+        df = load_dataset(db, dataset_id)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        group_cols = [col.strip() for col in group_columns.split(",")]
+        result = get_treemap_data(df, group_cols, value_column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get("/datasets/{dataset_id}/stacked-bar", response_model=StackedBarResponse)
+def get_stacked_bar_data(
+    dataset_id: str,
+    category_column: str = Query(..., description="Category axis column"),
+    stack_column: str = Query(..., description="Column to stack by"),
+    value_column: Optional[str] = Query(None, description="Value column (optional, counts if omitted)"),
+    db: Session = Depends(get_db)
+):
+    """Get stacked bar chart data."""
+    validate_dataset(dataset_id, db)
+
+    try:
+        df = load_dataset(db, dataset_id)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        result = get_stacked_bar(df, category_column, stack_column, value_column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+

@@ -10,6 +10,8 @@ from app.routes.datasets import router as datasets_router
 from app.routes.projects import router as projects_router
 from app.routes.upload import router as upload_router
 from app.routes.quick_analysis import router as quick_analysis_router
+from app.routes.persistence import router as persistence_router
+from app.routes.chart_comparison import router as chart_comparison_router
 
 
 def init_db():
@@ -17,6 +19,8 @@ def init_db():
     try:
         from app.db.models.project import Base
         from app.db.models.dataset import Dataset  # Import to register model
+        from app.db.models.canvas_state import CanvasState  # Import to register model
+        from app.db.models.chat_message import ChatMessage  # Import to register model
         from app.db.session import engine
         Base.metadata.create_all(bind=engine)
         print("Database tables created successfully")
@@ -51,6 +55,8 @@ app.include_router(dataset_profile_router)
 app.include_router(dataset_viz_router)
 app.include_router(upload_router)
 app.include_router(quick_analysis_router)
+app.include_router(persistence_router)
+app.include_router(chart_comparison_router)
 
 
 @app.get("/")

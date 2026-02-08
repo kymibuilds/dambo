@@ -28,6 +28,9 @@ import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@t
 import { extractChartColumnsWithCache } from "@/lib/gemini/geminiClient";
 import { useQuickAnalysis } from "@/lib/hooks/useQuickAnalysis";
 import type { QuickAnalysisData } from "@/lib/api/visualizations";
+import { loadCanvasState, saveCanvasState, clearCanvasState, loadChats, saveChats, type ChatItem } from "@/lib/api/persistence";
+import type { Edge } from '@xyflow/react';
+import type { DataNodeType } from "@/components/canvas/nodes/DataNode";
 
 interface ProjectFile {
     id: string;
@@ -153,6 +156,12 @@ function extractChartData(
         'BarChart': 'bar_chart',
         'ScatterChart': 'scatter_chart',
         'CorrelationHeatmap': 'correlation_heatmap',
+        'LineChart': 'line_chart',
+        'PieChart': 'pie_chart',
+        'AreaChart': 'area_chart',
+        'BoxPlotChart': 'boxplot_chart',
+        'TreemapChart': 'treemap_chart',
+        'StackedBarChart': 'stacked_bar_chart',
     };
 
     const chartType = chartTypeMap[componentName];
@@ -255,6 +264,12 @@ function extractAllChartData(
                 'bar_chart': 'Bar Chart',
                 'scatter_chart': 'Scatter Plot',
                 'correlation_heatmap': 'Correlation Heatmap',
+                'line_chart': 'Line Chart',
+                'pie_chart': 'Pie Chart',
+                'area_chart': 'Area Chart',
+                'boxplot_chart': 'Box Plot',
+                'treemap_chart': 'Treemap',
+                'stacked_bar_chart': 'Stacked Bar',
             };
             results.push({
                 label: chartLabels[chartData.type] || 'Visualization',
@@ -754,11 +769,109 @@ function ProjectPageContent() {
             const newChat = {
                 id: chatId,
                 title: label,
-                messages: [{ role: 'assistant', content: `Chatting with ${label}. How can I help?` }]
+                messages: [{ role: 'assistant', content: `📊 **Active Node:** ${label}` }]
             };
             setLocalChats(prev => [...prev, newChat]);
         }
     };
+
+    // ============ Persistence: Debounced Auto-Save (5 seconds) ============
+
+    const canvasSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const chatSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hasLoadedPersistedState = useRef(false);
+
+    // Load persisted canvas and chats on mount
+    useEffect(() => {
+        async function loadPersistedState() {
+            if (hasLoadedPersistedState.current) return;
+            hasLoadedPersistedState.current = true;
+
+            try {
+                // Load canvas state
+                const canvasState = await loadCanvasState(projectId);
+                if (canvasState.nodes.length > 0 && flowCanvasRef.current) {
+                    console.log('[Persistence] Loading saved canvas state:', canvasState.nodes.length, 'nodes');
+                    flowCanvasRef.current.setInitialState(
+                        canvasState.nodes as DataNodeType[],
+                        canvasState.edges as Edge[]
+                    );
+                }
+
+                // Load chats
+                const chatsData = await loadChats(projectId);
+                if (chatsData.chats.length > 0) {
+                    console.log('[Persistence] Loading saved chats:', chatsData.chats.length, 'chats');
+                    setLocalChats(chatsData.chats.map(c => ({
+                        id: c.id,
+                        title: c.title,
+                        messages: c.messages.map(m => ({ role: m.role, content: m.content }))
+                    })));
+                }
+            } catch (err) {
+                console.warn('[Persistence] Failed to load persisted state:', err);
+            }
+        }
+
+        // Small delay to ensure components are mounted
+        setTimeout(loadPersistedState, 500);
+    }, [projectId]);
+
+    // Debounced canvas state save (5 seconds)
+    const handleCanvasStateChange = useCallback((nodes: DataNodeType[], edges: Edge[]) => {
+        if (canvasSaveTimeoutRef.current) {
+            clearTimeout(canvasSaveTimeoutRef.current);
+        }
+
+        canvasSaveTimeoutRef.current = setTimeout(async () => {
+            try {
+                console.log('[Persistence] Saving canvas state:', nodes.length, 'nodes');
+                await saveCanvasState(projectId, nodes, edges);
+            } catch (err) {
+                console.error('[Persistence] Failed to save canvas state:', err);
+            }
+        }, 5000); // 5 second debounce
+    }, [projectId]);
+
+    // Debounced chat save (5 seconds)
+    useEffect(() => {
+        // Skip initial render and empty chats
+        if (!hasLoadedPersistedState.current || localChats.length === 0) return;
+
+        if (chatSaveTimeoutRef.current) {
+            clearTimeout(chatSaveTimeoutRef.current);
+        }
+
+        chatSaveTimeoutRef.current = setTimeout(async () => {
+            try {
+                console.log('[Persistence] Saving chats:', localChats.length, 'chats');
+                const chatsToSave: ChatItem[] = localChats.map(c => ({
+                    id: c.id,
+                    title: c.title,
+                    messages: c.messages.map(m => ({ role: m.role, content: m.content }))
+                }));
+                await saveChats(projectId, chatsToSave);
+            } catch (err) {
+                console.error('[Persistence] Failed to save chats:', err);
+            }
+        }, 5000); // 5 second debounce
+
+        return () => {
+            if (chatSaveTimeoutRef.current) {
+                clearTimeout(chatSaveTimeoutRef.current);
+            }
+        };
+    }, [localChats, projectId]);
+
+    // Clear canvas handler
+    const handleClearCanvas = useCallback(async () => {
+        try {
+            console.log('[Persistence] Clearing canvas state');
+            await clearCanvasState(projectId);
+        } catch (err) {
+            console.error('[Persistence] Failed to clear canvas state:', err);
+        }
+    }, [projectId]);
 
     // Quick Analysis handler - calls backend and triggers Tambo summary + adds chart nodes
     const handleQuickAnalysis = () => {
@@ -1170,7 +1283,200 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                         onQuickAnalysis={handleQuickAnalysis}
                         isQuickAnalysisLoading={quickAnalysis.isLoading}
                         isQuickAnalysisDisabled={projectFiles.length === 0}
+                        onStateChange={handleCanvasStateChange}
+                        onClearCanvas={handleClearCanvas}
                     />
+
+                    {/* Quick Analysis Buttons - Bottom Center */}
+                    {projectFiles.length > 0 && (
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2">
+                            <button
+                                onClick={async () => {
+                                    const datasetId = projectFiles[0]?.id;
+                                    if (!datasetId || !flowCanvasRef.current) return;
+
+                                    try {
+                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
+                                        const numericCols = profile.columns?.filter((c: any) => c.type === 'numeric') || [];
+
+                                        if (numericCols.length >= 2) {
+                                            flowCanvasRef.current.addChartNode('Feature Correlations', {
+                                                type: 'correlation_heatmap',
+                                                props: { datasetId }
+                                            });
+                                        } else if (numericCols.length === 1) {
+                                            // Fallback: show histogram if only 1 numeric column
+                                            flowCanvasRef.current.addChartNode(`${numericCols[0].name} Distribution`, {
+                                                type: 'histogram_chart',
+                                                props: { datasetId, column: numericCols[0].name }
+                                            });
+                                        } else {
+                                            // Fallback: show bar chart of first categorical
+                                            const catCol = profile.columns?.find((c: any) => c.type === 'categorical');
+                                            if (catCol) {
+                                                flowCanvasRef.current.addChartNode(`${catCol.name} Counts`, {
+                                                    type: 'bar_chart',
+                                                    props: { datasetId, column: catCol.name }
+                                                });
+                                            }
+                                        }
+                                    } catch (e) { console.error(e); }
+                                }}
+                                className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
+                                title="Show correlations between numeric features"
+                            >
+                                <span className="text-violet-500">🔗</span>
+                                Correlations
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const datasetId = projectFiles[0]?.id;
+                                    if (!datasetId || !flowCanvasRef.current) return;
+
+                                    try {
+                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
+
+                                        // Get relevant numeric columns (exclude IDs)
+                                        const numericCols = (profile.columns || [])
+                                            .filter((c: any) => c.type === 'numeric')
+                                            .filter((c: any) => {
+                                                const name = c.name.toLowerCase();
+                                                return !name.includes('id') && !name.includes('index') && name !== 'id';
+                                            });
+
+                                        if (numericCols.length > 0) {
+                                            // Show top 2 numeric distributions
+                                            numericCols.slice(0, 2).forEach((col: any) => {
+                                                flowCanvasRef.current?.addChartNode(`${col.name} Distribution`, {
+                                                    type: 'histogram_chart',
+                                                    props: { datasetId, column: col.name }
+                                                });
+                                            });
+                                        } else {
+                                            // Fallback: show bar chart of categorical columns
+                                            const catCols = (profile.columns || [])
+                                                .filter((c: any) => c.type === 'categorical')
+                                                .slice(0, 2);
+                                            catCols.forEach((col: any) => {
+                                                flowCanvasRef.current?.addChartNode(`${col.name} Counts`, {
+                                                    type: 'bar_chart',
+                                                    props: { datasetId, column: col.name }
+                                                });
+                                            });
+                                        }
+                                    } catch (e) { console.error(e); }
+                                }}
+                                className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
+                                title="Show distributions of key features"
+                            >
+                                <span className="text-blue-500">📊</span>
+                                Distributions
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const datasetId = projectFiles[0]?.id;
+                                    if (!datasetId || !flowCanvasRef.current) return;
+
+                                    try {
+                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
+
+                                        // Get categorical columns with reasonable cardinality
+                                        const catCols = (profile.columns || [])
+                                            .filter((c: any) => c.type === 'categorical')
+                                            .filter((c: any) => {
+                                                const name = c.name.toLowerCase();
+                                                const uniqueCount = c.unique_values || c.nunique || 0;
+                                                return !name.includes('id') &&
+                                                    !name.endsWith('_id') &&
+                                                    name !== 'id' &&
+                                                    uniqueCount >= 2 &&
+                                                    uniqueCount <= 25;
+                                            });
+
+                                        if (catCols.length > 0) {
+                                            catCols.slice(0, 2).forEach((col: any) => {
+                                                flowCanvasRef.current?.addChartNode(`${col.name} Breakdown`, {
+                                                    type: 'pie_chart',
+                                                    props: { datasetId, column: col.name }
+                                                });
+                                            });
+                                        } else {
+                                            // Fallback: show any categorical as bar chart
+                                            const anyCat = (profile.columns || []).find((c: any) => c.type === 'categorical');
+                                            if (anyCat) {
+                                                flowCanvasRef.current.addChartNode(`${anyCat.name} Breakdown`, {
+                                                    type: 'bar_chart',
+                                                    props: { datasetId, column: anyCat.name }
+                                                });
+                                            } else {
+                                                // Last resort: show first numeric as histogram
+                                                const numCol = (profile.columns || []).find((c: any) => c.type === 'numeric');
+                                                if (numCol) {
+                                                    flowCanvasRef.current.addChartNode(`${numCol.name} Distribution`, {
+                                                        type: 'histogram_chart',
+                                                        props: { datasetId, column: numCol.name }
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    } catch (e) { console.error(e); }
+                                }}
+                                className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
+                                title="Show category breakdowns"
+                            >
+                                <span className="text-green-500">🥧</span>
+                                Categories
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const datasetId = projectFiles[0]?.id;
+                                    if (!datasetId || !flowCanvasRef.current) return;
+
+                                    try {
+                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
+
+                                        // Get best numeric column for outlier analysis
+                                        const numericCols = (profile.columns || [])
+                                            .filter((c: any) => c.type === 'numeric')
+                                            .filter((c: any) => {
+                                                const name = c.name.toLowerCase();
+                                                return !name.includes('id') && !name.includes('index') && name !== 'id';
+                                            });
+
+                                        if (numericCols.length > 0) {
+                                            flowCanvasRef.current.addChartNode(`${numericCols[0].name} Outliers`, {
+                                                type: 'boxplot_chart',
+                                                props: { datasetId, column: numericCols[0].name }
+                                            });
+                                        } else {
+                                            // Fallback: show any numeric column
+                                            const anyNum = (profile.columns || []).find((c: any) => c.type === 'numeric');
+                                            if (anyNum) {
+                                                flowCanvasRef.current.addChartNode(`${anyNum.name} Outliers`, {
+                                                    type: 'boxplot_chart',
+                                                    props: { datasetId, column: anyNum.name }
+                                                });
+                                            } else {
+                                                // Last resort: show histogram of categorical counts
+                                                const catCol = (profile.columns || []).find((c: any) => c.type === 'categorical');
+                                                if (catCol) {
+                                                    flowCanvasRef.current.addChartNode(`${catCol.name} Counts`, {
+                                                        type: 'bar_chart',
+                                                        props: { datasetId, column: catCol.name }
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    } catch (e) { console.error(e); }
+                                }}
+                                className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
+                                title="Show outliers and statistical distribution"
+                            >
+                                <span className="text-amber-500">📦</span>
+                                Outliers
+                            </button>
+                        </div>
+                    )}
 
                     {/* Dataset Selector Dropdown */}
                     {showDatasetSelector && (
@@ -1216,7 +1522,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                     className="flex flex-col bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm pointer-events-auto h-full"
                 >
                     {/* Chat Header */}
-                    <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                    <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
@@ -1240,7 +1546,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                     </div>
 
                     {/* Messages Area */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none scroll-smooth">
+                    <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 scrollbar-none scroll-smooth">
                         {activeChat.messages.map((msg: { role: string, content: string }, i: number) => {
                             // Helper to parse potential JSON content from the AI
                             const getContent = (content: string) => {
@@ -1262,8 +1568,8 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                             return (
                                 <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                     <div className={`max-w-[85%] text-[12px] leading-relaxed break-words whitespace-pre-wrap ${msg.role === 'user'
-                                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-sm font-medium'
-                                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-3.5 py-2.5 rounded-2xl rounded-tl-sm border border-zinc-200/60 dark:border-zinc-700/60 shadow-sm'
+                                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-2xl rounded-tr-sm shadow-sm font-medium'
+                                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-3 py-1.5 rounded-2xl rounded-tl-sm border border-zinc-200/60 dark:border-zinc-700/60 shadow-sm'
                                         }`}>
                                         {msg.role === 'user' ? (
                                             displayContent
@@ -1283,7 +1589,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                    <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                         <div className="flex items-center gap-2">
                             {activeChatId !== 'initial' && (
                                 <Button

@@ -177,24 +177,31 @@ def compute_scatter_recommendations(
     """
     Compute scatter plot recommendations based on correlation strength.
     
-    Returns pairs with |correlation| > 0.3, sorted by strength.
+    Returns pairs sorted by correlation strength. If no correlations exist
+    but there are 2+ numeric columns, returns column pairs anyway.
     """
     recommendations = []
     
+    # First, try to use correlations
     for corr in correlations:
         corr_value = corr.get("correlation")
         if corr_value is None:
             continue
-            
-        if abs(corr_value) >= 0.3:
+        
+        # Lowered threshold to 0.1 to include weaker correlations
+        if abs(corr_value) >= 0.1:
             if corr_value > 0.7:
                 relationship = "Strong positive correlation"
             elif corr_value > 0.3:
                 relationship = "Moderate positive correlation"
+            elif corr_value > 0.1:
+                relationship = "Weak positive correlation"
             elif corr_value < -0.7:
                 relationship = "Strong negative correlation"
-            else:
+            elif corr_value < -0.3:
                 relationship = "Moderate negative correlation"
+            else:
+                relationship = "Weak negative correlation"
                 
             recommendations.append({
                 "x": corr["column_a"],
@@ -205,6 +212,18 @@ def compute_scatter_recommendations(
     
     # Sort by absolute correlation value
     recommendations.sort(key=lambda r: abs(r["correlation"]), reverse=True)
+    
+    # Fallback: if no correlation-based recommendations but 2+ numeric columns exist,
+    # create recommendations for the first few pairs
+    if len(recommendations) == 0 and len(numeric_columns) >= 2:
+        from itertools import combinations
+        for col_a, col_b in list(combinations(numeric_columns[:4], 2))[:5]:
+            recommendations.append({
+                "x": col_a,
+                "y": col_b,
+                "correlation": 0.0,
+                "insight": "Explore relationship"
+            })
     
     return recommendations[:5]  # Top 5
 

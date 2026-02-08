@@ -1,7 +1,18 @@
 'use client';
 
 import { TamboProvider } from '@tambo-ai/react';
-import { HistogramChart, BarChart, ScatterChart, CorrelationHeatmap } from '@/components/charts';
+import {
+    HistogramChart,
+    BarChart,
+    ScatterChart,
+    CorrelationHeatmap,
+    LineChart,
+    PieChart,
+    AreaChart,
+    BoxPlotChart,
+    TreemapChart,
+    StackedBarChart
+} from '@/components/charts';
 import { DataPrepCard } from '@/components/analysis/DataPrepCard';
 import { FeatureInsightsCard } from '@/components/analysis/FeatureInsightsCard';
 import { z } from 'zod';
@@ -45,6 +56,71 @@ const components = [
             datasetId: z.string().describe('The ID of the dataset to visualize'),
         }),
     },
+    // ============ NEW CHART TYPES ============
+    {
+        name: 'line_chart',
+        description: 'Display a line chart for TIME SERIES data. Use when user asks about trends over time, date analysis, or time-based patterns. Extract date column (e.g., "date", "Date", "created_at") and value column (e.g., "sales_amount", "revenue"). Optionally group by a category for multiple lines (e.g., "sales over time by region"). You MUST provide "dateColumn", "valueColumn", and "datasetId".',
+        component: LineChart,
+        propsSchema: z.object({
+            datasetId: z.string().describe('The ID of the dataset to visualize'),
+            dateColumn: z.string().describe('The date/time column (e.g., date, created_at, timestamp). REQUIRED.'),
+            valueColumn: z.string().describe('The numeric value column to plot over time (e.g., sales_amount, revenue). REQUIRED.'),
+            groupColumn: z.string().optional().describe('Optional category column for multiple lines (e.g., region, product_category).'),
+        }),
+    },
+    {
+        name: 'pie_chart',
+        description: 'Display a pie or donut chart showing CATEGORICAL BREAKDOWN as proportions. Use when user asks about proportions, percentages, distribution of categories, market share, or "how much of each". Extract the categorical column from user request. Set donut=true for donut style. You MUST provide "column" and "datasetId".',
+        component: PieChart,
+        propsSchema: z.object({
+            datasetId: z.string().describe('The ID of the dataset to visualize'),
+            column: z.string().describe('The categorical column to show breakdown for (e.g., product_category, region). REQUIRED.'),
+            limit: z.number().optional().describe('Maximum number of slices (default: 10, groups rest as "Other").'),
+            donut: z.boolean().optional().describe('Set to true for donut chart style (hollow center).'),
+        }),
+    },
+    {
+        name: 'area_chart',
+        description: 'Display a STACKED AREA chart for cumulative time series. Use when user asks about cumulative trends, stacked values over time, or contribution of categories over time. Requires date column, value column, and stack column. You MUST provide "dateColumn", "valueColumn", "stackColumn", and "datasetId".',
+        component: AreaChart,
+        propsSchema: z.object({
+            datasetId: z.string().describe('The ID of the dataset to visualize'),
+            dateColumn: z.string().describe('The date/time column (e.g., date, timestamp). REQUIRED.'),
+            valueColumn: z.string().describe('The numeric value to stack (e.g., sales_amount). REQUIRED.'),
+            stackColumn: z.string().describe('The category column to stack by (e.g., product_category, region). REQUIRED.'),
+        }),
+    },
+    {
+        name: 'boxplot_chart',
+        description: 'Display a BOX PLOT showing statistical distribution with quartiles, median, min, max, and outliers. Use when user asks about distribution, outliers, quartiles, variance, or spread of a numeric column. You MUST provide "column" (must be numeric) and "datasetId".',
+        component: BoxPlotChart,
+        propsSchema: z.object({
+            datasetId: z.string().describe('The ID of the dataset to visualize'),
+            column: z.string().describe('The numeric column to analyze (e.g., sales_amount, customer_age). REQUIRED.'),
+        }),
+    },
+    {
+        name: 'treemap_chart',
+        description: 'Display a TREEMAP for hierarchical data visualization showing proportions as nested rectangles. Use when user asks about hierarchical breakdown, nested categories, or proportional sizes across groups. Requires grouping columns (comma-separated for hierarchy) and value column. You MUST provide "groupColumns", "valueColumn", and "datasetId".',
+        component: TreemapChart,
+        propsSchema: z.object({
+            datasetId: z.string().describe('The ID of the dataset to visualize'),
+            groupColumns: z.string().describe('Comma-separated grouping columns for hierarchy (e.g., "region,product_category"). REQUIRED.'),
+            valueColumn: z.string().describe('The numeric value for sizing rectangles (e.g., sales_amount). REQUIRED.'),
+        }),
+    },
+    {
+        name: 'stacked_bar_chart',
+        description: 'Display a STACKED BAR chart for grouped categorical comparisons. Use when user asks to compare categories with sub-groups, grouped bars, or stacked categories. Requires category column and stack column. You MUST provide "categoryColumn", "stackColumn", and "datasetId".',
+        component: StackedBarChart,
+        propsSchema: z.object({
+            datasetId: z.string().describe('The ID of the dataset to visualize'),
+            categoryColumn: z.string().describe('The main category axis column (e.g., region). REQUIRED.'),
+            stackColumn: z.string().describe('The column to stack/group by (e.g., product_category). REQUIRED.'),
+            valueColumn: z.string().optional().describe('Optional value column for summing. If omitted, counts occurrences.'),
+        }),
+    },
+    // ============ ANALYSIS CARDS ============
     {
         name: 'data_prep_card',
         description: 'Display an actionable list of data preparation tips for ML. Use this when the user asks for data cleaning advice, feature engineering steps, or how to prepare the data for machine learning. Also use it when Gemini provides specific data prep tips.',
