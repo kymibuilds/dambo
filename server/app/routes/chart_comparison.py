@@ -1,12 +1,12 @@
 """Chart Comparison API Routes."""
 
 import logging
-from fastapi import APIRouter, HTTPException, Body
-from pydantic import BaseModel
-from typing import Optional, Any
-
+from fastapi import APIRouter, HTTPException, Body, Depends
+from sqlalchemy.orm import Session
+from app.db.session import get_db
 from app.services.chart_comparison import compare_charts
-from app.database import datasets_db
+from app.services.dataset_loader import load_dataset
+from app.services.dataset_profiler import profile_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class CompareRequest(BaseModel):
 
 
 class ComparisonInsight(BaseModel):
-    """A single insight from comparison."""
+    """A single comparison insight."""
     comparison_title: str
     relationship_type: str
     key_insights: list[str]
@@ -44,7 +44,10 @@ class CompareResponse(BaseModel):
 
 
 @router.post("/compare", response_model=CompareResponse)
-async def compare_charts_endpoint(request: CompareRequest):
+async def compare_charts_endpoint(
+    request: CompareRequest,
+    db: Session = Depends(get_db)
+):
     """
     Compare two chart configurations and generate insights.
     
@@ -54,10 +57,11 @@ async def compare_charts_endpoint(request: CompareRequest):
     try:
         # Get dataset profile if available
         profile = None
-        if request.datasetId and request.datasetId in datasets_db:
+        if request.datasetId:
             try:
-                from app.services.dataset_visualizer import get_dataset_profile
-                profile = get_dataset_profile(request.datasetId)
+                # Load dataset and generate profile
+                df = load_dataset(db, request.datasetId)
+                profile = profile_dataframe(df)
             except Exception as e:
                 logger.warning(f"Failed to get profile for comparison: {e}")
         

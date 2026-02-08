@@ -126,9 +126,70 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
                 } catch (e) {
                     console.error('Failed to generate comparison:', e);
                 }
+            } else if (sourceNode?.data?.chartData && targetNode && !targetNode.data.chartData) {
+                // Connecting a chart to an empty node
+                // Check if this empty node now has 2 valid chart sources (including this current connection)
+                const existingIncomingEdges = edges.filter(e => e.target === params.target);
+                const chartSources = existingIncomingEdges
+                    .map(e => nodes.find(n => n.id === e.source))
+                    .filter(n => n?.data?.chartData);
+
+                // Add the current source
+                if (sourceNode) chartSources.push(sourceNode);
+
+                if (chartSources.length === 2) {
+                    // We have exactly 2 charts feeding into this empty node -> Trigger Comparison!
+                    const chart1 = chartSources[0]!;
+                    const chart2 = chartSources[1]!;
+
+                    try {
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/charts/compare`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chart1: chart1.data.chartData,
+                                chart2: chart2.data.chartData,
+                                datasetId: chart1.data.chartData?.props?.datasetId
+                            })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+
+                            // Update the TARGET node with comparison data
+                            setNodes((nds) => nds.map(n => {
+                                if (n.id === params.target) {
+                                    return {
+                                        ...n,
+                                        data: {
+                                            ...n.data,
+                                            label: result.comparison?.comparison_title || 'Comparison Insight',
+                                            chartData: {
+                                                type: 'comparison_insight' as any,
+                                                props: {
+                                                    insights: result.comparison?.key_insights || [],
+                                                    relationship: result.comparison?.relationship_type || 'mixed',
+                                                    recommendation: result.comparison?.recommendation || '',
+                                                    statistical_notes: result.comparison?.statistical_notes || '',
+                                                    visualization_suggestion: result.comparison?.visualization_suggestion,
+                                                    chart1Label: chart1.data.label,
+                                                    chart2Label: chart2.data.label
+                                                }
+                                            }
+                                        },
+                                        style: { ...n.style, width: 500, height: 350 }
+                                    };
+                                }
+                                return n;
+                            }));
+                        }
+                    } catch (e) {
+                        console.error('Failed to generate comparison for target node:', e);
+                    }
+                }
             }
         },
-        [setEdges, nodes, setNodes],
+        [setEdges, nodes, setNodes, edges],
     );
 
     // Calculate position for new nodes based on existing ones

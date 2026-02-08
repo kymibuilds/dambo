@@ -9,17 +9,22 @@ interface ColumnExtractionResult {
     column?: string;  // For bar/histogram charts
     x?: string;       // For scatter plots
     y?: string;       // For scatter plots
+    dateColumn?: string; // For line/area charts
+    valueColumn?: string; // For line/area charts
+    categoryColumn?: string; // For stacked bar charts
+    stackColumn?: string; // For stacked bar/area charts
+    groupColumns?: string; // For treemaps
     confidence: number;
 }
 
 /**
- * Use Gemini to extract column names from a user's natural language prompt.
+ * Use Gemini to extract column names from a natural language prompt.
  * This makes Tambo's chart generation smarter by ensuring correct column names.
  */
 export async function extractChartColumns(
     userMessage: string,
     availableColumns: string[],
-    chartType: 'bar_chart' | 'histogram_chart' | 'scatter_chart' | 'correlation_heatmap'
+    chartType: string
 ): Promise<ColumnExtractionResult | null> {
     if (!apiKey) {
         console.warn('[Gemini] No API key found, falling back to regex extraction');
@@ -58,6 +63,10 @@ export async function extractChartColumns(
             column: validateColumn(parsed.column),
             x: validateColumn(parsed.x),
             y: validateColumn(parsed.y),
+            dateColumn: validateColumn(parsed.dateColumn),
+            valueColumn: validateColumn(parsed.valueColumn),
+            categoryColumn: validateColumn(parsed.categoryColumn),
+            stackColumn: validateColumn(parsed.stackColumn),
             confidence: parsed.confidence,
         };
 
@@ -87,13 +96,49 @@ User request: "${userMessage}"
 Instructions:
 1. Identify which column should be on the X-axis (usually mentioned first or before "vs", "against", "and")
 2. Identify which column should be on the Y-axis (usually mentioned second or after "vs", "against", "and")
-3. Match column names case-insensitively (e.g., "salary" matches "Salary", "experience_years" matches "Experience_Years")
-4. If a column name uses underscores, the user might use spaces instead (e.g., "experience years" = "Experience_Years")
-5. Set confidence to 1.0 if both columns are clearly mentioned, lower if you're guessing
+3. Match column names case-insensitively (e.g., "salary" matches "Salary")
+4. Set confidence to 1.0 if both columns are clearly mentioned, lower if you're guessing
 
-Return JSON with: x (X-axis column), y (Y-axis column), confidence (0-1)`;
+Return JSON with: x, y, confidence (0-1)`;
+    } else if (chartType === 'line_chart' || chartType === 'area_chart') {
+        return `You are a data visualization assistant. Extract the date and value column names.
+
+Available columns in the dataset: [${columnList}]
+
+User request: "${userMessage}"
+
+Instructions:
+1. Identify the Date/Time column (e.g., "date", "created_at", year, month) -> dateColumn
+2. Identify the numeric Value column to plot (e.g., "sales", "revenue", "count") -> valueColumn
+3. For area charts, look for a stacking category (e.g., "by region") -> stackColumn (optional)
+4. Match column names case-insensitively
+
+Return JSON with: dateColumn, valueColumn, stackColumn (optional), confidence (0-1)`;
+    } else if (chartType === 'stacked_bar_chart') {
+        return `You are a data visualization assistant. Extract the category and stack column names.
+
+Available columns: [${columnList}]
+User request: "${userMessage}"
+
+Instructions:
+1. Identify the main Category column (e.g., axis) -> categoryColumn
+2. Identify the Stack/Group column (e.g., "broken down by") -> stackColumn
+3. Match column names case-insensitively
+
+Return JSON with: categoryColumn, stackColumn, confidence (0-1)`;
+    } else if (chartType === 'treemap_chart') {
+        return `You are a data visualization assistant. Extract the value column for sizing.
+
+Available columns: [${columnList}]
+User request: "${userMessage}"
+
+Instructions:
+1. Identify the numeric Value column for sizing rectangles -> valueColumn
+2. Match column names case-insensitively
+
+Return JSON with: valueColumn, confidence (0-1)`;
     } else {
-        return `You are a data visualization assistant. Extract the column name from the user's request.
+        return `You are a data visualization assistant. Extract the relevant column name.
 
 Available columns in the dataset: [${columnList}]
 
@@ -102,9 +147,8 @@ User request: "${userMessage}"
 Instructions:
 1. Identify which column the user wants to visualize
 2. Match column names case-insensitively (e.g., "city" matches "City")
-3. If a column name uses underscores, the user might use spaces instead
-4. For histograms, prefer numeric columns. For bar charts, prefer categorical columns.
-5. Set confidence to 1.0 if the column is clearly mentioned, lower if you're guessing
+3. For histograms, prefer numeric columns. For bar/pie charts, prefer categorical columns.
+4. Set confidence to 1.0 if the column is clearly mentioned, lower if you're guessing
 
 Return JSON with: column (the column name), confidence (0-1)`;
     }
@@ -116,7 +160,7 @@ const extractionCache = new Map<string, ColumnExtractionResult>();
 export async function extractChartColumnsWithCache(
     userMessage: string,
     availableColumns: string[],
-    chartType: 'bar_chart' | 'histogram_chart' | 'scatter_chart' | 'correlation_heatmap'
+    chartType: string
 ): Promise<ColumnExtractionResult | null> {
     const cacheKey = `${chartType}:${userMessage}:${availableColumns.sort().join(',')}`;
 
@@ -141,7 +185,7 @@ export async function extractChartColumnsWithCache(
 export async function validateAndFixColumn(
     invalidColumn: string,
     availableColumns: string[],
-    chartType: 'bar_chart' | 'histogram_chart' | 'scatter_chart' | 'correlation_heatmap'
+    chartType: string
 ): Promise<string | null> {
     if (!invalidColumn || availableColumns.length === 0) return null;
 

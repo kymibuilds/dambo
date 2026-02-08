@@ -56,9 +56,27 @@ function datasetToFile(dataset: Dataset): ProjectFile {
 }
 
 // Helper to extract column name from user message based on available columns
-function extractColumnFromText(text: string, availableColumns: string[], chartType: string): { column?: string; x?: string; y?: string } {
+function extractColumnFromText(text: string, availableColumns: string[], chartType: string): {
+    column?: string;
+    x?: string;
+    y?: string;
+    dateColumn?: string;
+    valueColumn?: string;
+    categoryColumn?: string;
+    stackColumn?: string;
+    groupColumns?: string;
+} {
     const textLower = text.toLowerCase();
-    const result: { column?: string; x?: string; y?: string } = {};
+    const result: {
+        column?: string;
+        x?: string;
+        y?: string;
+        dateColumn?: string;
+        valueColumn?: string;
+        categoryColumn?: string;
+        stackColumn?: string;
+        groupColumns?: string;
+    } = {};
 
     // Score each column based on how well it matches the text
     // Higher score = better match
@@ -104,29 +122,51 @@ function extractColumnFromText(text: string, availableColumns: string[], chartTy
 
     console.log('[DEBUG] extractColumnFromText - text:', text, 'scoredColumns:', scoredColumns);
 
-    if (chartType === 'scatter_chart') {
-        // For scatter, we need two columns - look for patterns like "x vs y", "x and y"
-        // Get unique columns, maintaining order by score
-        const uniqueColumns = [...new Set(scoredColumns.map(s => s.col))];
+    const uniqueColumns = [...new Set(scoredColumns.map(s => s.col))];
 
+    if (chartType === 'scatter_chart') {
         if (uniqueColumns.length >= 2) {
             // Try to detect which comes first in the text (for x) and which comes second (for y)
             const first = scoredColumns[0];
             const second = scoredColumns.find(s => s.col !== first.col);
+
             if (first && second) {
-                if (first.position <= second.position) {
-                    result.x = first.col;
-                    result.y = second.col;
-                } else {
-                    result.x = second.col;
-                    result.y = first.col;
-                }
+                // Heuristic: usually "y vs x" or "y by x", so first mentioned might be y
+                // But let's stick to simple position for now: first found is x, second is y
+                // actually simpler: just map top 2 matches to x and y
+                result.x = uniqueColumns[0];
+                result.y = uniqueColumns[1];
             }
         } else if (uniqueColumns.length === 1) {
             result.x = uniqueColumns[0];
         }
+    } else if (chartType === 'line_chart' || chartType === 'area_chart') {
+        // Look for date column and value column
+        // Heuristic: columns containing "date", "time", "year", "month" are date columns
+        const dateCol = uniqueColumns.find(c => /date|time|year|month|day/i.test(c));
+        const valueCol = uniqueColumns.find(c => c !== dateCol);
+
+        if (dateCol) result.dateColumn = dateCol;
+        if (valueCol) result.valueColumn = valueCol;
+
+        // If we only found one column and it looks like a date, use it as dateColumn
+        if (uniqueColumns.length === 1 && !result.dateColumn && !result.valueColumn) {
+            if (/date|time|year|month|day/i.test(uniqueColumns[0])) {
+                result.dateColumn = uniqueColumns[0];
+            } else {
+                result.valueColumn = uniqueColumns[0];
+            }
+        }
+    } else if (chartType === 'stacked_bar_chart') {
+        // Need category and stack
+        if (uniqueColumns.length >= 2) {
+            result.categoryColumn = uniqueColumns[0];
+            result.stackColumn = uniqueColumns[1];
+        } else if (uniqueColumns.length === 1) {
+            result.categoryColumn = uniqueColumns[0];
+        }
     } else {
-        // For bar/histogram, use the best matched column
+        // For bar/histogram/pie/boxplot, use the best matched column
         if (scoredColumns.length > 0) {
             result.column = scoredColumns[0].col;
         }
@@ -171,7 +211,7 @@ function extractChartData(
     console.log('[DEBUG] extractChartData - componentName:', componentName, 'props:', JSON.stringify(props));
 
     // Inject default datasetId if missing
-    const enhancedProps = { ...props };
+    const enhancedProps = { ...props } as Record<string, any>;
     if (!enhancedProps.datasetId && defaultDatasetId) {
         enhancedProps.datasetId = defaultDatasetId;
         console.log('[DEBUG] Injected default datasetId:', defaultDatasetId);
@@ -216,7 +256,58 @@ function extractChartData(
                 // Ensure correct case
                 enhancedProps.y = getCorrectCase(enhancedProps.y as string);
             }
-        } else if (chartType === 'bar_chart' || chartType === 'histogram_chart') {
+        } else if (chartType === 'line_chart' || chartType === 'area_chart') {
+            // Check dateColumn
+            if (!isValidColumn(enhancedProps.dateColumn)) {
+                if (extracted.dateColumn) {
+                    console.log('[DEBUG] Fallback - Replacing invalid dateColumn:', enhancedProps.dateColumn, 'with:', extracted.dateColumn);
+                    enhancedProps.dateColumn = extracted.dateColumn;
+                }
+            } else {
+                enhancedProps.dateColumn = getCorrectCase(enhancedProps.dateColumn as string);
+            }
+
+            // Check valueColumn
+            if (!isValidColumn(enhancedProps.valueColumn)) {
+                if (extracted.valueColumn) {
+                    console.log('[DEBUG] Fallback - Replacing invalid valueColumn:', enhancedProps.valueColumn, 'with:', extracted.valueColumn);
+                    enhancedProps.valueColumn = extracted.valueColumn;
+                }
+            } else {
+                enhancedProps.valueColumn = getCorrectCase(enhancedProps.valueColumn as string);
+            }
+
+            // Also check stackColumn for area_chart
+            if (chartType === 'area_chart') {
+                if (!isValidColumn(enhancedProps.stackColumn)) {
+                    if (extracted.stackColumn) {
+                        enhancedProps.stackColumn = extracted.stackColumn;
+                    } else if (extracted.column) {
+                        enhancedProps.stackColumn = extracted.column;
+                    }
+                } else {
+                    enhancedProps.stackColumn = getCorrectCase(enhancedProps.stackColumn as string);
+                }
+            }
+        } else if (chartType === 'stacked_bar_chart') {
+            if (!isValidColumn(enhancedProps.categoryColumn)) {
+                if (extracted.categoryColumn) enhancedProps.categoryColumn = extracted.categoryColumn;
+            } else {
+                enhancedProps.categoryColumn = getCorrectCase(enhancedProps.categoryColumn as string);
+            }
+            if (!isValidColumn(enhancedProps.stackColumn)) {
+                if (extracted.stackColumn) enhancedProps.stackColumn = extracted.stackColumn;
+            } else {
+                enhancedProps.stackColumn = getCorrectCase(enhancedProps.stackColumn as string);
+            }
+        } else if (chartType === 'treemap_chart') {
+            if (!isValidColumn(enhancedProps.valueColumn)) {
+                if (extracted.valueColumn) enhancedProps.valueColumn = extracted.valueColumn;
+            } else {
+                enhancedProps.valueColumn = getCorrectCase(enhancedProps.valueColumn as string);
+            }
+        } else {
+            // For others (bar/histogram/pie/boxplot), use 'column'
             if (!isValidColumn(enhancedProps.column)) {
                 if (extracted.column) {
                     console.log('[DEBUG] Fallback - Replacing invalid column:', enhancedProps.column, 'with:', extracted.column);
@@ -270,6 +361,7 @@ function extractAllChartData(
                 'boxplot_chart': 'Box Plot',
                 'treemap_chart': 'Treemap',
                 'stacked_bar_chart': 'Stacked Bar',
+                'comparison_insight': 'Comparison Insight',
             };
             results.push({
                 label: chartLabels[chartData.type] || 'Visualization',
@@ -550,7 +642,10 @@ function ProjectPageContent() {
                             // Check if we need Gemini help (missing or invalid columns)
                             const needsGemini = (
                                 (chartType === 'scatter_chart' && (!props.x || !props.y)) ||
-                                ((chartType === 'bar_chart' || chartType === 'histogram_chart') && !props.column)
+                                ((chartType === 'bar_chart' || chartType === 'histogram_chart' || chartType === 'pie_chart' || chartType === 'boxplot_chart') && !props.column) ||
+                                ((chartType === 'line_chart' || chartType === 'area_chart') && (!props.dateColumn || !props.valueColumn)) ||
+                                (chartType === 'stacked_bar_chart' && (!props.categoryColumn || !props.stackColumn)) ||
+                                (chartType === 'treemap_chart' && !props.valueColumn)
                             );
 
                             if (needsGemini) {
@@ -563,20 +658,25 @@ function ProjectPageContent() {
                                     );
 
                                     if (geminiResult) {
-                                        const enhancedProps = { ...props };
+                                        const enhancedProps = { ...props } as Record<string, any>;
 
                                         if (chartType === 'scatter_chart') {
-                                            if (geminiResult.x && !props.x) {
-                                                enhancedProps.x = geminiResult.x;
-                                                console.log('[Gemini] Injected x:', geminiResult.x);
+                                            if (geminiResult.x && !props.x) enhancedProps.x = geminiResult.x;
+                                            if (geminiResult.y && !props.y) enhancedProps.y = geminiResult.y;
+                                        } else if (chartType === 'line_chart' || chartType === 'area_chart') {
+                                            if (geminiResult.dateColumn && !props.dateColumn) enhancedProps.dateColumn = geminiResult.dateColumn;
+                                            if (geminiResult.valueColumn && !props.valueColumn) enhancedProps.valueColumn = geminiResult.valueColumn;
+                                            if (chartType === 'area_chart' && geminiResult.stackColumn && !props.stackColumn) {
+                                                enhancedProps.stackColumn = geminiResult.stackColumn;
                                             }
-                                            if (geminiResult.y && !props.y) {
-                                                enhancedProps.y = geminiResult.y;
-                                                console.log('[Gemini] Injected y:', geminiResult.y);
-                                            }
+                                        } else if (chartType === 'stacked_bar_chart') {
+                                            if (geminiResult.categoryColumn && !props.categoryColumn) enhancedProps.categoryColumn = geminiResult.categoryColumn;
+                                            if (geminiResult.stackColumn && !props.stackColumn) enhancedProps.stackColumn = geminiResult.stackColumn;
+                                        } else if (chartType === 'treemap_chart') {
+                                            if (geminiResult.valueColumn && !props.valueColumn) enhancedProps.valueColumn = geminiResult.valueColumn;
                                         } else if (geminiResult.column && !props.column) {
+                                            // Fallback for bar/histogram/pie/boxplot
                                             enhancedProps.column = geminiResult.column;
-                                            console.log('[Gemini] Injected column:', geminiResult.column);
                                         }
 
                                         enhancedConfigs.push({

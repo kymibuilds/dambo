@@ -140,7 +140,10 @@ def _build_comparison_context(chart1: dict, chart2: dict, profile: Optional[dict
     if profile:
         context["profile"] = {
             "columns": [
-                {"name": c.get("name"), "type": c.get("type")}
+                {
+                    "name": c.get("name"), 
+                    "type": c.get("type") or c.get("detected_type")
+                }
                 for c in profile.get("columns", [])[:10]
             ]
         }
