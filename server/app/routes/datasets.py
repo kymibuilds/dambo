@@ -50,7 +50,8 @@ async def upload_dataset(
         dataset_id=dataset_id,
         project_id=project_id,
         filename=file.filename,
-        file_path=file_path
+        file_path=file_path,
+        file_size=len(content)
     )
     db.add(dataset)
     db.commit()

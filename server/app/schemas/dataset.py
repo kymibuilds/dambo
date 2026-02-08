@@ -7,7 +7,9 @@ class DatasetResponse(BaseModel):
     dataset_id: str
     project_id: str
     filename: str
+    file_size: int | None = None
     uploaded_at: datetime
+
 
     class Config:
         from_attributes = True
@@ -16,6 +18,7 @@ class DatasetResponse(BaseModel):
 class DatasetListItem(BaseModel):
     dataset_id: str
     filename: str
+    file_size: int | None = None
     uploaded_at: datetime
 
     class Config:

@@ -14,6 +14,7 @@ class Dataset(Base):
     project_id = Column(String(6), ForeignKey("projects.project_id"), index=True, nullable=False)
     filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
+    file_size = Column(Integer, nullable=True)  # File size in bytes
     uploaded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationship
