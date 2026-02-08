@@ -1,6 +1,6 @@
 # Dambo
 
-Dambo is an AI-powered data visualization and analysis platform that transforms CSV datasets into interactive charts and insights. It features a canvas-based interface where users can create, modify, and explore visualizations through natural language conversations with an AI assistant.
+Dambo is an intelligent data visualization and analysis platform powered by the **Tambo SDK** from **tambo.co**. By integrating cutting-edge AI capabilities, Dambo transforms raw CSV datasets into interactive charts and actionable insights. It features a dynamic canvas-based interface where users can create, modify, and explore visualizations through natural language conversations, all driven by the robust **Tambo AI** infrastructure.
 
 <div align="center">
   <img src="public/screenshot2.png" alt="Dambo Visualization Interface" width="100%" />
@@ -16,7 +16,7 @@ Dambo is an AI-powered data visualization and analysis platform that transforms 
 | :--- | :--- |
 | **Data Analysis** | • AI-powered profiling & scoring<br>• Missing data & outlier detection<br>• Correlation analysis<br>• ML readiness assessment |
 | **Interactive Canvas** | • Drag-and-drop node-based workspace<br>• Multiple charts per dataset<br>• Pan, zoom, organize freely<br>• Export as PNG/JPEG |
-| **AI-Powered Chat** | • Natural language modifications<br>• Style customization<br>• Per-node & global chat<br>• Powered by Google Gemini AI |
+| **AI-Powered Chat** | • Natural language modifications<br>• Style customization<br>• Per-node & global chat<br>• Powered by Tambo SDK & Gemini AI |
 | **Filtering** | • Natural language filters<br>• Numeric comparisons (>, <, =)<br>• String matching<br>• Persistent filters |
 
 ### Chart Types
@@ -41,7 +41,7 @@ Dambo is an AI-powered data visualization and analysis platform that transforms 
 | Area | Technologies |
 | :--- | :--- |
 | **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Recharts, XYFlow, Framer Motion, Radix UI, shadcn/ui |
-| **Backend** | FastAPI (Python), Pandas, NumPy, Google Generative AI, Docker |
+| **Backend** | FastAPI (Python), Tambo SDK, Pandas, NumPy, Google Generative AI, Docker |
 
 ## Getting Started
 
@@ -188,10 +188,4 @@ docker compose -f server/docker-compose.yml up --build
 bun run lint
 ```
 
-## License
 
-This project is private and proprietary.
-
-## Contributing
-
-This is a private project. For questions or issues, contact the repository owner.
