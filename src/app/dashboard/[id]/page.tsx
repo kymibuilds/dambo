@@ -29,7 +29,7 @@ import { type ChartData, type ChartType } from "@/components/canvas/nodes/DataNo
 import { getProject, renameProject, type Project } from "@/lib/api/projects";
 import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
 import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
-import { extractChartColumnsWithCache, parseChartModification, parseChartGenerationRequest } from "@/lib/gemini/geminiClient";
+import { extractChartColumnsWithCache, parseChartModification, parseChartGenerationRequest, generateChatResponse } from "@/lib/gemini/geminiClient";
 import { useQuickAnalysis } from "@/lib/hooks/useQuickAnalysis";
 import type { QuickAnalysisData } from "@/lib/api/visualizations";
 import { loadCanvasState, saveCanvasState, clearCanvasState, loadChats, saveChats, type ChatItem } from "@/lib/api/persistence";
@@ -1306,154 +1306,47 @@ function ProjectPageContent() {
         }
 
         try {
-            // Build lean context with only essential data for Tambo (avoid payload size issues)
+            // Build lean context about datasets for Gemini
             const datasetsContext = projectFiles.map(f => {
                 const profile = datasetProfiles[f.id];
                 if (profile) {
                     return {
-                        datasetId: f.id,
-                        filename: f.name,
-                        rowCount: profile.shape.row_count,
-                        columnCount: profile.shape.column_count,
-                        columns: profile.columns.slice(0, 30).map(c => ({
-                            name: c.name,
-                            type: c.detected_type,
-                        })),
-                        // Note: Removed numericStats, categoryStats, and samples to reduce payload size
+                        id: f.id,
+                        name: f.name,
+                        columns: profile.columns?.map(c => c.name) || [],
                     };
                 }
-                return { datasetId: f.id, filename: f.name };
+                return { id: f.id, name: f.name, columns: [] };
             });
 
-            const context: Record<string, unknown> = {
-                projectId,
-                projectName: project?.name,
-                datasets: datasetsContext,
-                instructions: `You are a data visualization assistant. 
-                When asked to visualize a column (e.g., "bar chart of city"), you MUST:
-                1. Identify the correct column name from the 'columns' list in the dataset context.
-                2. Call the appropriate tool (e.g., bar_chart) with BOTH 'datasetId' AND 'column'.
-                3. Do NOT omit the 'column' parameter.
-                4. If the user's column name is slightly different (e.g., case mismatch), use the exact name from the dataset.
-                Available datasets: ${datasetsContext.map((d: any) => `${d.filename} (ID: ${d.datasetId}) - Columns: ${d.columns?.map((c: any) => c.name).join(', ')}`).join('\n')}`
-            };
+            // Convert local chat history to format for Gemini
+            // Filter out system messages or non-text content if needed
+            const history = activeChat.messages.map(m => ({
+                role: m.role,
+                content: typeof m.content === 'string' ? m.content : ''
+            })).filter(m => m.content);
 
-            // Add node context if chatting from a specific node
-            if (activeChatId !== 'initial') {
-                const activeNodeChat = localChats.find(c => c.id === activeChatId);
-                if (activeNodeChat) {
-                    // Get current chart data from the canvas
-                    const canvasState = flowCanvasRef.current?.getState();
-                    const currentNode = canvasState?.nodes.find(n => n.id === activeChatId);
-                    const currentChartData = currentNode?.data?.chartData;
+            console.log('[Dashboard] Sending message to Gemini Chat...');
 
-                    // Get available columns from dataset profiles for this dataset
-                    const datasetId = (currentChartData?.props as Record<string, unknown>)?.datasetId as string | undefined;
-                    const datasetProfile = datasetId ? datasetProfiles[datasetId] : null;
-                    const availableColumns = datasetProfile?.columns?.map((c: { name: string }) => c.name) || [];
+            // Call Gemini
+            const response = await generateChatResponse(userMessage, history, datasetsContext);
 
-                    // Truncate available columns for system instruction to avoid context limit errors
-                    const truncatedColumns = availableColumns.slice(0, 50); // Limit to 50 columns
-                    const visibleColumnsStr = truncatedColumns.join(', ') + (availableColumns.length > 50 ? `... and ${availableColumns.length - 50} more` : '');
-
-                    context.activeNode = {
-                        id: activeChatId,
-                        label: activeNodeChat.title,
-                        isSpecificContext: true,
-                        currentChart: currentChartData ? {
-                            type: currentChartData.type,
-                            props: currentChartData.props,
-                        } : null,
-                    };
-
-                    // Get current column being displayed
-                    const currentColumn = (currentChartData?.props as Record<string, unknown>)?.column as string | undefined;
-                    const currentX = (currentChartData?.props as Record<string, unknown>)?.x as string | undefined;
-                    const currentY = (currentChartData?.props as Record<string, unknown>)?.y as string | undefined;
-
-                    // Add instruction for chart modification with available columns
-                    context.systemInstruction = `You are modifying a specific chart node.
-
-CURRENT CHART: ${currentChartData?.type || 'None'}
-CURRENT COLUMN(S): ${currentColumn || currentX || 'Unknown'} ${currentY ? `vs ${currentY}` : ''}
-DATASET ID: ${datasetId || 'Unknown'}
-AVAILABLE COLUMNS: ${datasetId ? visibleColumnsStr : 'Unknown'}
-
-INSTRUCTIONS:
-1. When user asks to change chart type (e.g., "show as pie chart"), keep the SAME column (${currentColumn || currentX || 'the current one'}) and datasetId.
-2. When user asks to filter (e.g., "show count > 100"), add filter prop: { column: "${currentColumn || 'column_name'}", operator: ">", value: 100 }
-3. ALWAYS use exact column names from AVAILABLE COLUMNS list above - never guess!
-4. Always include the datasetId: "${datasetId}"
-
-Current props: ${JSON.stringify(currentChartData?.props || {})}`;
-
-                    console.log('[DEBUG] Added node context with chart:', context.activeNode);
-                    console.log('[DEBUG] Available columns:', availableColumns);
-                }
-            }
-
-            console.log('[DEBUG] Sending to Tambo with context:', JSON.stringify(context, null, 2));
-
-            // Track thread length before sending from node chat
-            // Any new messages after this point belong to this node chat
-            const threadLengthBefore = thread?.messages?.length || 0;
-            const isNodeChat = activeChatId !== 'initial';
-
-            try {
-                console.log('[Dashboard] Sending message to Tambo...', { contextSize: JSON.stringify(context).length });
-                await sendThreadMessage(userMessage, {
-                    additionalContext: context,
-                });
-            } catch (err) {
-                console.error('[Dashboard] Primary sendThreadMessage failed:', err);
-
-                try {
-                    console.log('[Dashboard] Retrying with empty context...');
-                    // Fallback: Absolutley no context to rule out payload issues
-                    await sendThreadMessage(userMessage);
-                } catch (retryErr) {
-                    console.error('[Dashboard] Retry failed:', retryErr);
-                    // Add a visible error message to the chat
-                    setLocalChats(prev => prev.map(c => {
-                        if (c.id === activeChatId) {
-                            return {
-                                ...c,
-                                messages: [...c.messages, {
-                                    role: 'assistant',
-                                    content: `❌ Connection Error: ${(retryErr as Error).message || 'Failed to send message'}. Please try refreshing the page.`
-                                }]
-                            };
-                        }
-                        return c;
-                    }));
-                }
-            }
-
-            // If this was from a node chat, mark any new messages as node-originated
-            // We do this in the sync effect by checking the message indices
-            if (isNodeChat) {
-                // Store the starting index for this node chat's messages
-                // Any Tambo messages with index >= threadLengthBefore belong to this node
-                setTimeout(() => {
-                    const currentMessages = thread?.messages || [];
-                    for (let i = threadLengthBefore; i < currentMessages.length; i++) {
-                        nodeMessageIdsRef.current.add(currentMessages[i].id);
-                    }
-                }, 500);
-            }
-
-            // Add a placeholder response while waiting
+            // Add response to chat
             setLocalChats(prev => prev.map(c => {
                 if (c.id === activeChatId) {
                     return {
                         ...c,
-                        messages: [...c.messages, { role: 'assistant', content: "Processing your request..." }]
+                        messages: [...c.messages, {
+                            role: 'assistant',
+                            content: response.content || "I'm sorry, I couldn't generate a response."
+                        }]
                     };
                 }
                 return c;
             }));
+
         } catch (err) {
-            console.error('Failed to send message:', err);
+            console.error('Failed to get response:', err);
             setLocalChats(prev => prev.map(c => {
                 if (c.id === activeChatId) {
                     return {
@@ -1467,6 +1360,7 @@ Current props: ${JSON.stringify(currentChartData?.props || {})}`;
             setIsWaitingForResponse(false);
         }
     };
+
 
     const handleNodeSelect = (node: Node | null) => {
         if (!node) {

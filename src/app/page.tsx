@@ -118,11 +118,9 @@ export default function Home() {
             <VideoPlayer className="w-full h-full rounded-none">
               <VideoPlayerContent
                 slot="media"
-                src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-                poster="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+                src="/demovideo.mp4"
                 className="w-full h-full object-cover rounded-none"
                 playsInline
-                crossOrigin="anonymous"
               />
               <VideoPlayerControlBar>
                 <VideoPlayerPlayButton />
@@ -160,16 +158,44 @@ export default function Home() {
           <div className="hidden md:block absolute top-1/2 right-0 translate-x-full -translate-y-1/2 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-30"></div>
 
           {/* Screenshot 1 */}
-          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden group">
+            <Image
+              src="/screenshot1.png"
+              alt="Dashboard Screenshot 1"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
 
           {/* Screenshot 2 */}
-          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden group">
+            <Image
+              src="/screenshot2.png"
+              alt="Dashboard Screenshot 2"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
 
           {/* Screenshot 3 */}
-          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden group">
+            <Image
+              src="/screenshot3.png"
+              alt="Dashboard Screenshot 3"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
 
           {/* Screenshot 4 */}
-          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden group">
+            <Image
+              src="/screenshot4.png"
+              alt="Dashboard Screenshot 4"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
         </section>
       </div>
 

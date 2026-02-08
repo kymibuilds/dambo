@@ -520,3 +520,94 @@ If the message is NOT a chart request (e.g., a question, greeting, etc.), return
     }
 }
 
+// ============ GENERAL CHAT RESPONSE GENERATION ============
+
+export interface ChatResponseResult {
+    content: string;
+    error?: string;
+}
+
+/**
+ * Generate a conversational response using Gemini.
+ * This replaces the Tambo streaming functionality for general chat.
+ */
+export async function generateChatResponse(
+    userMessage: string,
+    chatHistory: { role: string; content: string }[],
+    datasetContext: {
+        id: string;
+        name: string;
+        columns: string[];
+    }[]
+): Promise<ChatResponseResult> {
+    if (!apiKey) {
+        return { content: "I'm sorry, but I can't process your request right now because the AI service is not configured." };
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.0-flash',
+        });
+
+        // Construct context about available datasets
+        let contextBlock = "No datasets uploaded yet.";
+        if (datasetContext.length > 0) {
+            contextBlock = "Available Datasets:\\n" + datasetContext.map(d =>
+                `- ${d.name} (Columns: ${d.columns.join(', ')})`
+            ).join('\\n');
+        }
+
+        const systemInstruction = `
+You are Dambo, an intelligent data visualization assistant.
+Your goal is to help users explore their data, create charts, and understand their datasets.
+
+${contextBlock}
+
+Instructions:
+1. Answer questions about the uploaded datasets (columns, potential insights, etc.).
+2. If the user asks for a chart, guide them to ask for specific visualizations (e.g., "Show me a bar chart of City").
+3. Be helpful, concise, and friendly.
+4. If you can't do something, explain what you CAN do (create charts, analyze data).
+5. Format your response in Markdown.
+`;
+
+        // Convert chat history to Gemini format
+        // Limit history to last 10 messages to save context window
+        const recentHistory = chatHistory.slice(-10).map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }],
+        }));
+
+        const chat = model.startChat({
+            history: [
+                {
+                    role: 'user',
+                    parts: [{ text: systemInstruction }]
+                },
+                {
+                    role: 'model',
+                    parts: [{ text: "I understand. I am Dambo, ready to help with data visualization and analysis." }]
+                },
+                ...recentHistory
+            ],
+            generationConfig: {
+                maxOutputTokens: 1000,
+            },
+        });
+
+        console.log('[Gemini Chat] Sending message:', userMessage);
+
+        const result = await chat.sendMessage(userMessage);
+        const responseText = result.response.text();
+
+        return { content: responseText };
+    } catch (error) {
+        console.error('[Gemini Chat] Error:', error);
+        return {
+            content: "I'm having trouble connecting to the AI service right now. Please try again in a moment.",
+            error: error instanceof Error ? error.message : String(error)
+        };
+    }
+}
+
