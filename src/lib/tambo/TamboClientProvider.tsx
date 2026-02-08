@@ -2,6 +2,8 @@
 
 import { TamboProvider } from '@tambo-ai/react';
 import { HistogramChart, BarChart, ScatterChart, CorrelationHeatmap } from '@/components/charts';
+import { DataPrepCard } from '@/components/analysis/DataPrepCard';
+import { FeatureInsightsCard } from '@/components/analysis/FeatureInsightsCard';
 import { z } from 'zod';
 
 const components = [
@@ -41,6 +43,25 @@ const components = [
         component: CorrelationHeatmap,
         propsSchema: z.object({
             datasetId: z.string().describe('The ID of the dataset to visualize'),
+        }),
+    },
+    {
+        name: 'data_prep_card',
+        description: 'Display an actionable list of data preparation tips for ML. Use this when the user asks for data cleaning advice, feature engineering steps, or how to prepare the data for machine learning. Also use it when Gemini provides specific data prep tips.',
+        component: DataPrepCard,
+        propsSchema: z.object({
+            tips: z.array(z.string()).describe('List of actionable data preparation tips (e.g., "Impute missing values in Age", "One-hot encode City")'),
+            severity: z.enum(['info', 'warning', 'critical']).optional().describe('Severity level of the data quality issues addressed'),
+        }),
+    },
+    {
+        name: 'feature_insights_card',
+        description: 'Display insights about feature importance and target variables. Use this when the user asks about which columns are important, what to predict, or which columns to drop.',
+        component: FeatureInsightsCard,
+        propsSchema: z.object({
+            likely_targets: z.array(z.string()).describe('List of columns that look like target variables (e.g., price, label, churn)'),
+            important_features: z.array(z.string()).describe('List of columns that appear to be strong features based on correlation or naming'),
+            drop_candidates: z.array(z.string()).optional().describe('List of columns that should likely be dropped (IDs, high cardinality)'),
         }),
     },
 ];

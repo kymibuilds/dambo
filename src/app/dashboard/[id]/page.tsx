@@ -13,7 +13,8 @@ import {
     FileJson,
     Trash2,
     FileText,
-    Loader2
+    Loader2,
+    Zap
 } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -25,6 +26,8 @@ import { getProject, type Project } from "@/lib/api/projects";
 import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
 import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
 import { extractChartColumnsWithCache } from "@/lib/gemini/geminiClient";
+import { useQuickAnalysis } from "@/lib/hooks/useQuickAnalysis";
+import type { QuickAnalysisData } from "@/lib/api/visualizations";
 
 interface ProjectFile {
     id: string;
@@ -325,6 +328,10 @@ function ProjectPageContent() {
     const [mentionIndex, setMentionIndex] = useState(0);
     const [isUploadExpanded, setIsUploadExpanded] = useState(false);
     const [datasetProfiles, setDatasetProfiles] = useState<Record<string, DatasetProfile>>({});
+
+    // Quick Analysis hook
+    const quickAnalysis = useQuickAnalysis();
+    const [showDatasetSelector, setShowDatasetSelector] = useState(false);
 
     // Fetch project and datasets on mount
     useEffect(() => {
@@ -753,6 +760,203 @@ function ProjectPageContent() {
         }
     };
 
+    // Quick Analysis handler - calls backend and triggers Tambo summary + adds chart nodes
+    const handleQuickAnalysis = () => {
+        if (projectFiles.length === 0) {
+            setLocalChats(prev => prev.map(c =>
+                c.id === 'initial'
+                    ? { ...c, messages: [...c.messages, { role: 'assistant', content: 'Please upload a dataset first before running Quick Analysis.' }] }
+                    : c
+            ));
+            return;
+        }
+
+        // If only one dataset, run directly. Otherwise, show selector.
+        if (projectFiles.length === 1) {
+            runQuickAnalysisForDataset(projectFiles[0].id, projectFiles[0].name);
+        } else {
+            setShowDatasetSelector(true);
+        }
+    };
+
+    // Run quick analysis for a specific dataset
+    const runQuickAnalysisForDataset = async (datasetId: string, datasetName: string) => {
+        setShowDatasetSelector(false);
+
+        // Add a processing message to chat
+        setLocalChats(prev => prev.map(c =>
+            c.id === 'initial'
+                ? { ...c, messages: [...c.messages, { role: 'assistant', content: `⚡ Running Smart Quick Analysis on "${datasetName}"...` }] }
+                : c
+        ));
+
+        const analysisResult = await quickAnalysis.runAnalysis(datasetId);
+
+        if (analysisResult && flowCanvasRef.current) {
+            // Build chart configs
+            const chartConfigs: ChartNodeConfig[] = [];
+
+            if (analysisResult.chart_payloads.histograms && analysisResult.chart_payloads.histograms.length > 0) {
+                analysisResult.chart_payloads.histograms.forEach(hist => {
+                    chartConfigs.push({
+                        label: `Distribution: ${hist.column}`,
+                        chartData: {
+                            type: 'histogram_chart',
+                            props: { datasetId, column: hist.column },
+                        },
+                    });
+                });
+            }
+
+            if (analysisResult.chart_payloads.bars && analysisResult.chart_payloads.bars.length > 0) {
+                analysisResult.chart_payloads.bars.forEach(bar => {
+                    chartConfigs.push({
+                        label: `Categories: ${bar.column}`,
+                        chartData: {
+                            type: 'bar_chart',
+                            props: { datasetId, column: bar.column },
+                        },
+                    });
+                });
+            }
+
+            if (analysisResult.chart_payloads.correlation_heatmap &&
+                analysisResult.chart_payloads.correlation_heatmap.columns.length > 0) {
+                chartConfigs.push({
+                    label: 'Correlation Heatmap',
+                    chartData: {
+                        type: 'correlation_heatmap',
+                        props: { datasetId },
+                    },
+                });
+            }
+
+            // ===== NEW: Add recommended scatter plots =====
+            if (analysisResult.scatter_recommendations && analysisResult.scatter_recommendations.length > 0) {
+                // Add top 2 scatter plots
+                const topScatters = analysisResult.scatter_recommendations.slice(0, 2);
+                for (const rec of topScatters) {
+                    chartConfigs.push({
+                        label: `${rec.x} vs ${rec.y}`,
+                        chartData: {
+                            type: 'scatter_chart',
+                            props: { datasetId, x: rec.x, y: rec.y },
+                        },
+                    });
+                }
+            }
+
+            // Add analysis cluster: parent node with dataset name + child chart nodes
+            if (chartConfigs.length > 0) {
+                flowCanvasRef.current.addAnalysisCluster(datasetName, chartConfigs);
+            }
+
+            // Create enhanced summary context for Tambo with Gemini insights
+            const summaryPrompt = buildSmartAnalysisSummaryPrompt(analysisResult);
+
+            try {
+                await sendThreadMessage(summaryPrompt, {
+                    additionalContext: {
+                        isQuickAnalysis: true,
+                        analysisData: analysisResult,
+                        instructions: `You are a senior data scientist providing a comprehensive quick analysis summary for ML engineers. Based on the provided structured analysis data, write a professional summary (6-10 sentences) covering:
+                        
+                        1. **Dataset Overview**: Size, structure, column types
+                        2. **Data Quality**: Missing data issues, duplicates, outlier concerns (reference the data_quality score)
+                        3. **Key Relationships**: Most interesting correlations and what scatter plots reveal
+                        4. **ML Readiness**: Assessment and what needs attention
+                        5. **Data Preparation Tips**: If gemini_insights is available, include specific actionable tips for:
+                           - Feature engineering suggestions
+                           - Encoding recommendations for categorical columns
+                           - Scaling recommendations for numeric columns
+                           - Columns to potentially drop (IDs, high-cardinality, etc.)
+                        
+                        Tone: professional, analytical, actionable. Use markdown formatting (bold for emphasis, bullet points for lists).
+                        
+                        You MAY use the 'data_prep_card' and 'feature_insights_card' components to display structured insights if they add value.
+                        Do NOT render standard charts (histogram, bar, scatter) in this summary response - they are already displayed on the canvas.`
+                    }
+                });
+            } catch (err) {
+                console.error('[Quick Analysis] Failed to get Tambo summary:', err);
+            }
+        }
+    };
+
+    // Build an enhanced prompt for Tambo to summarize the analysis
+    function buildSmartAnalysisSummaryPrompt(data: QuickAnalysisData): string {
+        const { dataset_overview, strongest_correlations, ml_readiness, outlier_detection, missing_data_insights, scatter_recommendations, data_quality, gemini_insights } = data;
+        const topCorr = strongest_correlations[0];
+        const highMissing = missing_data_insights.columns_above_30_percent_missing;
+        const totalOutlierPct = outlier_detection.length > 0
+            ? (outlier_detection.reduce((sum, o) => sum + o.outlier_percentage, 0) / outlier_detection.length).toFixed(1)
+            : '0';
+
+        let prompt = `Provide a comprehensive analysis summary for ML data preparation:
+
+**Dataset Overview:**
+- Size: ${dataset_overview.row_count} rows × ${dataset_overview.column_count} columns
+- Numeric columns (${dataset_overview.numeric_columns.length}): ${dataset_overview.numeric_columns.slice(0, 5).join(', ')}${dataset_overview.numeric_columns.length > 5 ? '...' : ''}
+- Categorical columns (${dataset_overview.categorical_columns.length}): ${dataset_overview.categorical_columns.slice(0, 5).join(', ')}${dataset_overview.categorical_columns.length > 5 ? '...' : ''}
+- Duplicates: ${dataset_overview.duplicate_rows} rows
+
+**Data Quality:**
+- Score: ${data_quality?.overall_score ?? 'N/A'}/100 (${data_quality?.level ?? 'Unknown'})
+- Columns with >30% missing: ${highMissing.length > 0 ? highMissing.join(', ') : 'None'}
+- Average outlier %: ${totalOutlierPct}%
+
+**Key Relationships:**
+- Strongest correlation: ${topCorr ? `${topCorr.column_a} ↔ ${topCorr.column_b} (${topCorr.correlation?.toFixed(3)})` : 'N/A'}
+- Recommended scatter plots: ${scatter_recommendations?.slice(0, 2).map(r => `${r.x} vs ${r.y} (${r.insight})`).join('; ') || 'None'}
+
+**ML Readiness:**
+- Score: ${ml_readiness.readiness_score}/100 (${ml_readiness.readiness_level})`;
+
+        // Add Gemini insights if available
+        if (gemini_insights) {
+            prompt += `
+
+**AI-Powered Data Preparation Tips:**`;
+
+            if (gemini_insights.data_prep_tips && gemini_insights.data_prep_tips.length > 0) {
+                prompt += `
+- ${gemini_insights.data_prep_tips.slice(0, 3).join('\n- ')}`;
+            }
+
+            if (gemini_insights.encoding_suggestions && gemini_insights.encoding_suggestions.length > 0) {
+                const encodings = gemini_insights.encoding_suggestions.slice(0, 2);
+                prompt += `
+
+**Encoding Suggestions:** ${encodings.map(e => `${e.column} → ${e.method}`).join(', ')}`;
+            }
+
+            if (gemini_insights.feature_importance_hints && gemini_insights.feature_importance_hints.length > 0) {
+                const targets = gemini_insights.feature_importance_hints.filter(h => h.role === 'target');
+                const drops = gemini_insights.feature_importance_hints.filter(h => h.role === 'drop' || h.role === 'id');
+                if (targets.length > 0) {
+                    prompt += `
+**Likely target columns:** ${targets.map(t => t.column).join(', ')}`;
+                }
+                if (drops.length > 0) {
+                    prompt += `
+**Consider dropping:** ${drops.map(d => d.column).join(', ')}`;
+                }
+            }
+
+            if (gemini_insights.overall_assessment) {
+                prompt += `
+
+**Overall Assessment:** ${gemini_insights.overall_assessment}`;
+            }
+        }
+
+        prompt += `
+
+Summarize the above into a professional 6-10 sentence paragraph for a data scientist preparing this data for ML.`;
+
+        return prompt;
+    }
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -960,7 +1164,42 @@ function ProjectPageContent() {
 
                 {/* React Flow Canvas */}
                 <div className="h-full w-full">
-                    <FlowCanvas ref={flowCanvasRef} onNodeSelect={handleNodeSelect} />
+                    <FlowCanvas
+                        ref={flowCanvasRef}
+                        onNodeSelect={handleNodeSelect}
+                        onQuickAnalysis={handleQuickAnalysis}
+                        isQuickAnalysisLoading={quickAnalysis.isLoading}
+                        isQuickAnalysisDisabled={projectFiles.length === 0}
+                    />
+
+                    {/* Dataset Selector Dropdown */}
+                    {showDatasetSelector && (
+                        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl overflow-hidden min-w-[240px]">
+                                <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Select Dataset</span>
+                                    <button
+                                        onClick={() => setShowDatasetSelector(false)}
+                                        className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <div className="max-h-48 overflow-y-auto">
+                                    {projectFiles.map((file) => (
+                                        <button
+                                            key={file.id}
+                                            onClick={() => runQuickAnalysisForDataset(file.id, file.name)}
+                                            className="w-full px-3 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-2"
+                                        >
+                                            <Zap className="w-3.5 h-3.5 text-violet-500" />
+                                            <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">{file.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1039,6 +1278,7 @@ function ProjectPageContent() {
                                 </div>
                             );
                         })}
+
                         <div ref={messagesEndRef} />
                     </div>
 

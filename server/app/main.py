@@ -9,6 +9,7 @@ from app.routes.dataset_visualization import router as dataset_viz_router
 from app.routes.datasets import router as datasets_router
 from app.routes.projects import router as projects_router
 from app.routes.upload import router as upload_router
+from app.routes.quick_analysis import router as quick_analysis_router
 
 
 def init_db():
@@ -49,6 +50,7 @@ app.include_router(datasets_router)
 app.include_router(dataset_profile_router)
 app.include_router(dataset_viz_router)
 app.include_router(upload_router)
+app.include_router(quick_analysis_router)
 
 
 @app.get("/")

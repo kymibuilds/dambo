@@ -14,7 +14,7 @@ import {
     type Node
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus } from 'lucide-react';
+import { Plus, Zap, Loader2 } from 'lucide-react';
 import { DataNode, type DataNodeType, type ChartData } from './nodes/DataNode';
 
 const nodeTypes = {
@@ -34,14 +34,18 @@ export interface FlowCanvasRef {
     addEmptyNode: (label: string) => string;
     addMultipleChartNodes: (configs: ChartNodeConfig[]) => string[];
     addEdgeBetweenNodes: (sourceId: string, targetId: string, animated?: boolean) => void;
+    addAnalysisCluster: (datasetName: string, configs: ChartNodeConfig[]) => { parentId: string; childIds: string[] };
     getNodeCount: () => number;
 }
 
 interface FlowCanvasProps {
     onNodeSelect?: (node: Node | null) => void;
+    onQuickAnalysis?: () => void;
+    isQuickAnalysisLoading?: boolean;
+    isQuickAnalysisDisabled?: boolean;
 }
 
-const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, ref) => {
+const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQuickAnalysis, isQuickAnalysisLoading, isQuickAnalysisDisabled }, ref) => {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -140,14 +144,68 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, r
         return nodes.length;
     }, [nodes]);
 
+    // Add analysis cluster: center parent node with chart nodes radiating outward
+    const addAnalysisCluster = useCallback((datasetName: string, configs: ChartNodeConfig[]): { parentId: string; childIds: string[] } => {
+        const CHART_NODE_WIDTH = 450;
+        const CHART_NODE_HEIGHT = 480;
+        const PARENT_WIDTH = 200;
+        const PARENT_HEIGHT = 80;
+        const RADIUS = 550; // Distance from parent to child nodes
+
+        // Calculate center position based on existing nodes
+        const centerX = nodes.length === 0 ? 600 : Math.max(...nodes.map(n => n.position.x)) + 700;
+        const centerY = nodes.length === 0 ? 400 : 400;
+
+        // Create parent node (dataset name)
+        const parentId = Math.random().toString(36).substring(7);
+        const parentNode: DataNodeType = {
+            id: parentId,
+            position: { x: centerX - PARENT_WIDTH / 2, y: centerY - PARENT_HEIGHT / 2 },
+            data: { label: `📊 ${datasetName}` },
+            type: 'dataNode',
+            style: { width: PARENT_WIDTH, height: PARENT_HEIGHT },
+        };
+
+        // Create chart nodes in a radial layout around the parent
+        const childNodes: DataNodeType[] = configs.map((config, index) => {
+            const angle = (2 * Math.PI * index) / configs.length - Math.PI / 2; // Start from top
+            const childId = Math.random().toString(36).substring(7);
+            return {
+                id: childId,
+                position: {
+                    x: centerX + RADIUS * Math.cos(angle) - CHART_NODE_WIDTH / 2,
+                    y: centerY + RADIUS * Math.sin(angle) - CHART_NODE_HEIGHT / 2,
+                },
+                data: { label: config.label, chartData: config.chartData },
+                type: 'dataNode',
+                style: { width: CHART_NODE_WIDTH, height: CHART_NODE_HEIGHT },
+            };
+        });
+
+        // Add all nodes
+        setNodes((nds) => [...nds, parentNode, ...childNodes]);
+
+        // Create edges from parent to each child
+        const newEdges = childNodes.map(child => ({
+            id: `e-${parentId}-${child.id}`,
+            source: parentId,
+            target: child.id,
+            animated: true,
+        }));
+        setEdges((eds) => [...eds, ...newEdges]);
+
+        return { parentId, childIds: childNodes.map(n => n.id) };
+    }, [nodes, setNodes, setEdges]);
+
     // Expose methods to parent via ref
     useImperativeHandle(ref, () => ({
         addChartNode,
         addEmptyNode,
         addMultipleChartNodes,
         addEdgeBetweenNodes,
+        addAnalysisCluster,
         getNodeCount,
-    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, getNodeCount]);
+    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, addAnalysisCluster, getNodeCount]);
 
     const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
         if (onNodeSelect) {
@@ -180,7 +238,7 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, r
             </ReactFlow>
 
             {/* Top Action Button Overlay */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
                 <button
                     onClick={() => addEmptyNode()}
                     className="h-7 flex items-center gap-2 px-3 rounded-md bg-white/70 dark:bg-zinc-900/70 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all backdrop-blur-sm shadow-sm"
@@ -188,6 +246,20 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect }, r
                     <Plus className="size-3.5" />
                     <span className="text-xs font-medium">New Visualization</span>
                 </button>
+                {onQuickAnalysis && (
+                    <button
+                        onClick={onQuickAnalysis}
+                        disabled={isQuickAnalysisLoading || isQuickAnalysisDisabled}
+                        className="h-7 flex items-center gap-2 px-3 rounded-md bg-zinc-800 hover:bg-zinc-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-700 dark:border-zinc-600 text-white transition-all backdrop-blur-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isQuickAnalysisLoading ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                            <Zap className="size-3.5" />
+                        )}
+                        <span className="text-xs font-medium">Quick Analysis</span>
+                    </button>
+                )}
             </div>
         </div>
     );
