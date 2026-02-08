@@ -138,7 +138,7 @@ export function ScatterChart({ datasetId, x, y, color = 'indigo' }: ScatterChart
                             tick={{ fill: '#52525b', fontSize: 10 }}
                             tickLine={false}
                             axisLine={{ stroke: '#e4e4e7' }}
-                            label={{ value: fixedX, position: 'bottom', offset: 10, fill: '#52525b', fontSize: 10 }}
+                            label={{ value: `${fixedX} →`, position: 'bottom', offset: 10, fill: '#52525b', fontSize: 10 }}
                         />
                         <YAxis
                             type="number"
@@ -147,7 +147,7 @@ export function ScatterChart({ datasetId, x, y, color = 'indigo' }: ScatterChart
                             tick={{ fill: '#52525b', fontSize: 10 }}
                             tickLine={false}
                             axisLine={{ stroke: '#e4e4e7' }}
-                            label={{ value: fixedY, angle: -90, position: 'left', offset: 10, fill: '#52525b', fontSize: 10 }}
+                            label={{ value: `${fixedY} →`, angle: -90, position: 'left', offset: 10, fill: '#52525b', fontSize: 10 }}
                         />
                         <Tooltip
                             contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e4e4e7', color: '#18181b' }}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { fetchHistogram, fetchDatasetProfile } from '@/lib/api/visualizations';
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, LabelList } from 'recharts';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { validateAndFixColumn } from '@/lib/gemini/geminiClient';
 
@@ -139,11 +139,13 @@ export function HistogramChart({ datasetId, column: propColumn, bins = 10, items
                             tick={{ fill: '#52525b', fontSize: 10 }}
                             tickLine={false}
                             axisLine={{ stroke: '#e4e4e7' }}
+                            label={{ value: `${selectedColumn} →`, position: 'insideBottom', offset: -5, fill: '#52525b', fontSize: 12, fontWeight: 500 }}
                         />
                         <YAxis
                             tick={{ fill: '#52525b', fontSize: 10 }}
                             tickLine={false}
                             axisLine={{ stroke: '#e4e4e7' }}
+                            label={{ value: 'Frequency →', angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 30 }}
                         />
                         <Tooltip
                             contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e4e4e7', color: '#18181b' }}
@@ -153,6 +155,7 @@ export function HistogramChart({ datasetId, column: propColumn, bins = 10, items
                             labelFormatter={(label, payload) => payload[0]?.payload.range || label}
                         />
                         <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="count" position="top" fill="#52525b" fontSize={10} offset={5} />
                             {chartData.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={`hsl(217, 91%, ${55 + (index % 5) * 5}%)`} />
                             ))}

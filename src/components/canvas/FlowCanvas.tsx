@@ -192,18 +192,79 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         [setEdges, nodes, setNodes, edges],
     );
 
-    // Calculate position for new nodes based on existing ones
-    const getNewNodePosition = useCallback(() => {
+    // Constants for node dimensions
+    const DEFAULT_NODE_WIDTH = 900;
+    const DEFAULT_NODE_HEIGHT = 600;
+    const GAP = 50; // Gap between nodes
+
+    // Check if a position overlaps with any existing node
+    const doesOverlap = useCallback((x: number, y: number, width: number, height: number, existingNodes: DataNodeType[]): boolean => {
+        for (const node of existingNodes) {
+            const nodeWidth = (node.style?.width as number) || DEFAULT_NODE_WIDTH;
+            const nodeHeight = (node.style?.height as number) || DEFAULT_NODE_HEIGHT;
+
+            const nodeLeft = node.position.x;
+            const nodeRight = node.position.x + nodeWidth;
+            const nodeTop = node.position.y;
+            const nodeBottom = node.position.y + nodeHeight;
+
+            const newLeft = x;
+            const newRight = x + width;
+            const newTop = y;
+            const newBottom = y + height;
+
+            // Check for overlap (with GAP margin)
+            if (!(newRight + GAP <= nodeLeft ||
+                newLeft >= nodeRight + GAP ||
+                newBottom + GAP <= nodeTop ||
+                newTop >= nodeBottom + GAP)) {
+                return true;
+            }
+        }
+        return false;
+    }, []);
+
+    // Calculate position for new nodes based on existing ones - avoids overlap
+    const getNewNodePosition = useCallback((width: number = DEFAULT_NODE_WIDTH, height: number = DEFAULT_NODE_HEIGHT) => {
         if (nodes.length === 0) {
             return { x: 100, y: 100 };
         }
-        // Place new node to the right of the last node
-        const lastNode = nodes[nodes.length - 1];
-        return {
-            x: (lastNode.position?.x || 100) + 350,
-            y: lastNode.position?.y || 100,
-        };
-    }, [nodes]);
+
+        // Find the bounding box of all existing nodes
+        let maxX = 0;
+        let minY = Infinity;
+
+        for (const node of nodes) {
+            const nodeWidth = (node.style?.width as number) || DEFAULT_NODE_WIDTH;
+            maxX = Math.max(maxX, node.position.x + nodeWidth);
+            minY = Math.min(minY, node.position.y);
+        }
+
+        // Try positions: first to the right of existing nodes
+        let candidateX = maxX + GAP;
+        let candidateY = minY;
+
+        // If that position would overlap, try grid-based positions
+        if (doesOverlap(candidateX, candidateY, width, height, nodes)) {
+            // Try a grid-based approach
+            const COLS = 3;
+            const startX = 100;
+            const startY = 100;
+
+            for (let row = 0; row < 100; row++) { // Limit iterations
+                for (let col = 0; col < COLS; col++) {
+                    const testX = startX + col * (DEFAULT_NODE_WIDTH + GAP);
+                    const testY = startY + row * (DEFAULT_NODE_HEIGHT + GAP);
+
+                    if (!doesOverlap(testX, testY, width, height, nodes)) {
+                        return { x: testX, y: testY };
+                    }
+                }
+            }
+        }
+
+        return { x: candidateX, y: candidateY };
+    }, [nodes, doesOverlap]);
 
     const addChartNode = useCallback((label: string, chartData: ChartData): string => {
         const id = Math.random().toString(36).substring(7);
@@ -233,30 +294,40 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         return id;
     }, [setNodes, getNewNodePosition]);
 
-    // Add multiple chart nodes in a grid layout
+    // Add multiple chart nodes in a grid layout - collision-aware, column-major
     const addMultipleChartNodes = useCallback((configs: ChartNodeConfig[]): string[] => {
         if (configs.length === 0) return [];
 
-        const NODE_WIDTH = 900;
-        const NODE_HEIGHT = 600;
-        const HORIZONTAL_GAP = 50;
-        const VERTICAL_GAP = 50;
-        const COLUMNS = 2;
+        const NODE_WIDTH = DEFAULT_NODE_WIDTH;
+        const NODE_HEIGHT = DEFAULT_NODE_HEIGHT;
+        const ROWS = 3; // Stack up to 3 charts vertically before wrapping
 
-        // Find the starting position based on existing nodes
-        const startX = nodes.length === 0 ? 100 : Math.max(...nodes.map(n => n.position.x)) + NODE_WIDTH + HORIZONTAL_GAP;
-        const startY = nodes.length === 0 ? 100 : Math.min(...nodes.map(n => n.position.y));
+        // Find the bounding box of all existing nodes
+        let maxX = 0;
+        let minY = 100;
+
+        if (nodes.length > 0) {
+            for (const node of nodes) {
+                const nodeWidth = (node.style?.width as number) || DEFAULT_NODE_WIDTH;
+                maxX = Math.max(maxX, node.position.x + nodeWidth);
+                minY = Math.min(minY, node.position.y);
+            }
+        }
+
+        const startX = nodes.length === 0 ? 100 : maxX + GAP;
+        const startY = minY;
 
         const newNodes: DataNodeType[] = configs.map((config, index) => {
-            const row = Math.floor(index / COLUMNS);
-            const col = index % COLUMNS;
+            // Column-major: fill rows first, then move to next column
+            const col = Math.floor(index / ROWS);
+            const row = index % ROWS;
             const id = Math.random().toString(36).substring(7);
 
             return {
                 id,
                 position: {
-                    x: startX + col * (NODE_WIDTH + HORIZONTAL_GAP),
-                    y: startY + row * (NODE_HEIGHT + VERTICAL_GAP),
+                    x: startX + col * (NODE_WIDTH + GAP),
+                    y: startY + row * (NODE_HEIGHT + GAP),
                 },
                 data: { label: config.label, chartData: config.chartData },
                 type: 'dataNode',
@@ -302,37 +373,53 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         setEdges(initialEdges);
     }, [setNodes, setEdges]);
 
-    // Add analysis cluster: center parent node with chart nodes radiating outward
+    // Add analysis cluster: center parent node with chart nodes in grid below
     const addAnalysisCluster = useCallback((datasetName: string, configs: ChartNodeConfig[]): { parentId: string; childIds: string[] } => {
-        const CHART_NODE_WIDTH = 900;
-        const CHART_NODE_HEIGHT = 600;
-        const PARENT_WIDTH = 250;
-        const PARENT_HEIGHT = 100;
-        const RADIUS = 800; // Distance from parent to child nodes (increased for larger nodes)
+        const CHART_NODE_WIDTH = DEFAULT_NODE_WIDTH;
+        const CHART_NODE_HEIGHT = DEFAULT_NODE_HEIGHT;
+        const PARENT_WIDTH = 300;
+        const PARENT_HEIGHT = 80;
+        const COLUMNS = 2;
 
-        // Calculate center position based on existing nodes
-        const centerX = nodes.length === 0 ? 600 : Math.max(...nodes.map(n => n.position.x)) + 700;
-        const centerY = nodes.length === 0 ? 400 : 400;
+        // Find the bounding box of all existing nodes
+        let maxX = 0;
+        let minY = 100;
+
+        if (nodes.length > 0) {
+            for (const node of nodes) {
+                const nodeWidth = (node.style?.width as number) || DEFAULT_NODE_WIDTH;
+                maxX = Math.max(maxX, node.position.x + nodeWidth);
+                minY = Math.min(minY, node.position.y);
+            }
+        }
+
+        // Place parent node
+        const parentX = nodes.length === 0 ? 100 : maxX + GAP;
+        const parentY = minY;
 
         // Create parent node (dataset name)
         const parentId = Math.random().toString(36).substring(7);
         const parentNode: DataNodeType = {
             id: parentId,
-            position: { x: centerX - PARENT_WIDTH / 2, y: centerY - PARENT_HEIGHT / 2 },
+            position: { x: parentX, y: parentY },
             data: { label: `📊 ${datasetName}` },
             type: 'dataNode',
             style: { width: PARENT_WIDTH, height: PARENT_HEIGHT },
         };
 
-        // Create chart nodes in a radial layout around the parent
+        // Create chart nodes in a grid layout below and to the right of parent
+        const chartsStartX = parentX;
+        const chartsStartY = parentY + PARENT_HEIGHT + GAP;
+
         const childNodes: DataNodeType[] = configs.map((config, index) => {
-            const angle = (2 * Math.PI * index) / configs.length - Math.PI / 2; // Start from top
+            const row = Math.floor(index / COLUMNS);
+            const col = index % COLUMNS;
             const childId = Math.random().toString(36).substring(7);
             return {
                 id: childId,
                 position: {
-                    x: centerX + RADIUS * Math.cos(angle) - CHART_NODE_WIDTH / 2,
-                    y: centerY + RADIUS * Math.sin(angle) - CHART_NODE_HEIGHT / 2,
+                    x: chartsStartX + col * (CHART_NODE_WIDTH + GAP),
+                    y: chartsStartY + row * (CHART_NODE_HEIGHT + GAP),
                 },
                 data: { label: config.label, chartData: config.chartData },
                 type: 'dataNode',

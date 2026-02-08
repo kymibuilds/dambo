@@ -112,8 +112,12 @@ export function LineChart({ datasetId, dateColumn, valueColumn, groupColumn }: L
                         const date = new Date(value);
                         return `${date.getMonth() + 1}/${date.getDate()}`;
                     }}
+                    label={{ value: `${dateColumn} →`, position: 'insideBottom', offset: -10, fill: '#52525b', fontSize: 12, fontWeight: 500 }}
                 />
-                <YAxis tick={{ fontSize: 11 }} />
+                <YAxis
+                    tick={{ fontSize: 11 }}
+                    label={{ value: `${valueColumn} →`, angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 30 }}
+                />
                 <Tooltip
                     contentStyle={{
                         backgroundColor: '#fff',

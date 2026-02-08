@@ -92,8 +92,12 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
                     angle={-45}
                     textAnchor="end"
                     height={60}
+                    label={{ value: `${categoryColumn} →`, position: 'insideBottom', offset: -5, fill: '#52525b', fontSize: 12, fontWeight: 500 }}
                 />
-                <YAxis tick={{ fontSize: 11 }} />
+                <YAxis
+                    tick={{ fontSize: 11 }}
+                    label={{ value: `${valueColumn || 'Count'} →`, angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 30 }}
+                />
                 <Tooltip
                     contentStyle={{
                         backgroundColor: '#fff',

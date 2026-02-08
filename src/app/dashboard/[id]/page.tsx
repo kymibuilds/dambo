@@ -1397,7 +1397,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
 
                                     try {
                                         const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
-                                        const numericCols = profile.columns?.filter((c: any) => c.type === 'numeric') || [];
+                                        const numericCols = profile.columns?.filter((c: any) => c.detected_type === 'numeric') || [];
 
                                         if (numericCols.length >= 2) {
                                             flowCanvasRef.current.addChartNode('Feature Correlations', {
@@ -1412,7 +1412,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                             });
                                         } else {
                                             // Fallback: show bar chart of first categorical
-                                            const catCol = profile.columns?.find((c: any) => c.type === 'categorical');
+                                            const catCol = profile.columns?.find((c: any) => c.detected_type === 'categorical');
                                             if (catCol) {
                                                 flowCanvasRef.current.addChartNode(`${catCol.name} Counts`, {
                                                     type: 'bar_chart',
@@ -1438,31 +1438,35 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
 
                                         // Get relevant numeric columns (exclude IDs)
                                         const numericCols = (profile.columns || [])
-                                            .filter((c: any) => c.type === 'numeric')
+                                            .filter((c: any) => c.detected_type === 'numeric')
                                             .filter((c: any) => {
                                                 const name = c.name.toLowerCase();
                                                 return !name.includes('id') && !name.includes('index') && name !== 'id';
                                             });
 
                                         if (numericCols.length > 0) {
-                                            // Show top 2 numeric distributions
-                                            numericCols.slice(0, 2).forEach((col: any) => {
-                                                flowCanvasRef.current?.addChartNode(`${col.name} Distribution`, {
-                                                    type: 'histogram_chart',
+                                            // Show top 2 numeric distributions using batch add
+                                            const chartConfigs = numericCols.slice(0, 2).map((col: any) => ({
+                                                label: `${col.name} Distribution`,
+                                                chartData: {
+                                                    type: 'histogram_chart' as const,
                                                     props: { datasetId, column: col.name }
-                                                });
-                                            });
+                                                }
+                                            }));
+                                            flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
                                         } else {
                                             // Fallback: show bar chart of categorical columns
                                             const catCols = (profile.columns || [])
-                                                .filter((c: any) => c.type === 'categorical')
+                                                .filter((c: any) => c.detected_type === 'categorical')
                                                 .slice(0, 2);
-                                            catCols.forEach((col: any) => {
-                                                flowCanvasRef.current?.addChartNode(`${col.name} Counts`, {
-                                                    type: 'bar_chart',
+                                            const chartConfigs = catCols.map((col: any) => ({
+                                                label: `${col.name} Counts`,
+                                                chartData: {
+                                                    type: 'bar_chart' as const,
                                                     props: { datasetId, column: col.name }
-                                                });
-                                            });
+                                                }
+                                            }));
+                                            flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
                                         }
                                     } catch (e) { console.error(e); }
                                 }}
@@ -1480,12 +1484,17 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                     try {
                                         const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
 
-                                        // Get categorical columns with reasonable cardinality
+                                        // Get categorical columns with reasonable cardinality - use category_stats for unique counts
+                                        const getCategoryUniqueCount = (colName: string) => {
+                                            const catStat = profile.category_stats?.find((s: any) => s.column === colName);
+                                            return catStat?.unique_count || 0;
+                                        };
+
                                         const catCols = (profile.columns || [])
-                                            .filter((c: any) => c.type === 'categorical')
+                                            .filter((c: any) => c.detected_type === 'categorical')
                                             .filter((c: any) => {
                                                 const name = c.name.toLowerCase();
-                                                const uniqueCount = c.unique_values || c.nunique || 0;
+                                                const uniqueCount = getCategoryUniqueCount(c.name);
                                                 return !name.includes('id') &&
                                                     !name.endsWith('_id') &&
                                                     name !== 'id' &&
@@ -1494,15 +1503,18 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                             });
 
                                         if (catCols.length > 0) {
-                                            catCols.slice(0, 2).forEach((col: any) => {
-                                                flowCanvasRef.current?.addChartNode(`${col.name} Breakdown`, {
-                                                    type: 'pie_chart',
+                                            // Use batch add for multiple charts
+                                            const chartConfigs = catCols.slice(0, 2).map((col: any) => ({
+                                                label: `${col.name} Breakdown`,
+                                                chartData: {
+                                                    type: 'pie_chart' as const,
                                                     props: { datasetId, column: col.name }
-                                                });
-                                            });
+                                                }
+                                            }));
+                                            flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
                                         } else {
                                             // Fallback: show any categorical as bar chart
-                                            const anyCat = (profile.columns || []).find((c: any) => c.type === 'categorical');
+                                            const anyCat = (profile.columns || []).find((c: any) => c.detected_type === 'categorical');
                                             if (anyCat) {
                                                 flowCanvasRef.current.addChartNode(`${anyCat.name} Breakdown`, {
                                                     type: 'bar_chart',
@@ -1510,7 +1522,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                                 });
                                             } else {
                                                 // Last resort: show first numeric as histogram
-                                                const numCol = (profile.columns || []).find((c: any) => c.type === 'numeric');
+                                                const numCol = (profile.columns || []).find((c: any) => c.detected_type === 'numeric');
                                                 if (numCol) {
                                                     flowCanvasRef.current.addChartNode(`${numCol.name} Distribution`, {
                                                         type: 'histogram_chart',
@@ -1537,7 +1549,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
 
                                         // Get best numeric column for outlier analysis
                                         const numericCols = (profile.columns || [])
-                                            .filter((c: any) => c.type === 'numeric')
+                                            .filter((c: any) => c.detected_type === 'numeric')
                                             .filter((c: any) => {
                                                 const name = c.name.toLowerCase();
                                                 return !name.includes('id') && !name.includes('index') && name !== 'id';
@@ -1550,7 +1562,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                             });
                                         } else {
                                             // Fallback: show any numeric column
-                                            const anyNum = (profile.columns || []).find((c: any) => c.type === 'numeric');
+                                            const anyNum = (profile.columns || []).find((c: any) => c.detected_type === 'numeric');
                                             if (anyNum) {
                                                 flowCanvasRef.current.addChartNode(`${anyNum.name} Outliers`, {
                                                     type: 'boxplot_chart',
@@ -1558,7 +1570,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                                 });
                                             } else {
                                                 // Last resort: show histogram of categorical counts
-                                                const catCol = (profile.columns || []).find((c: any) => c.type === 'categorical');
+                                                const catCol = (profile.columns || []).find((c: any) => c.detected_type === 'categorical');
                                                 if (catCol) {
                                                     flowCanvasRef.current.addChartNode(`${catCol.name} Counts`, {
                                                         type: 'bar_chart',

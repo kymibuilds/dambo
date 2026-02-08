@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, LabelList } from 'recharts';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchBar, fetchDatasetProfile } from '@/lib/api/visualizations';
 import { validateAndFixColumn } from '@/lib/gemini/geminiClient';
@@ -146,10 +146,23 @@ export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_P
                 <ResponsiveContainer width="100%" height="100%">
                     <RechartsBarChart layout="vertical" data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e4e4e7" />
-                        <XAxis type="number" tick={{ fill: '#52525b', fontSize: 11 }} axisLine={{ stroke: '#e4e4e7' }} />
-                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#52525b' }} axisLine={{ stroke: '#e4e4e7' }} />
+                        <XAxis
+                            type="number"
+                            tick={{ fill: '#52525b', fontSize: 11 }}
+                            axisLine={{ stroke: '#e4e4e7' }}
+                            label={{ value: 'Count →', position: 'insideBottom', offset: -5, fill: '#52525b', fontSize: 12, fontWeight: 500 }}
+                        />
+                        <YAxis
+                            dataKey="name"
+                            type="category"
+                            width={100}
+                            tick={{ fontSize: 11, fill: '#52525b' }}
+                            axisLine={{ stroke: '#e4e4e7' }}
+                            label={{ value: `${selectedColumn} →`, angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 40 }}
+                        />
                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ backgroundColor: '#fff', borderColor: '#e4e4e7' }} />
                         <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                            <LabelList dataKey="value" position="right" fill="#52525b" fontSize={11} offset={5} />
                             {chartData.map((_entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
                             ))}
