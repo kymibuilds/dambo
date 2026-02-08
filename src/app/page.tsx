@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, ArrowDown, Github } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ArrowDown, Github, GitMerge, Sparkles, RefreshCcw } from "lucide-react";
 import {
   VideoPlayer,
   VideoPlayerContent,
@@ -246,6 +246,44 @@ export default function Home() {
                 <li>Hit <span className="text-foreground">Quick Analyze</span> to generate a full suite of charts in one click—zero friction</li>
                 <li>Export any chart as <span className="text-foreground">PNG or PDF</span> for reports and presentations</li>
               </ul>
+            </div>
+
+            {/* Powered by Tambo */}
+            <div className="flex flex-col gap-4">
+              <h2 className="text-3xl md:text-4xl font-normal" style={{ fontFamily: 'var(--font-shippori)' }}>
+                Powerful Capabilities
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                <div className="flex flex-col gap-3 p-6 border border-border/50 rounded-xl bg-card/50 hover:bg-card hover:border-border transition-colors group">
+                  <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+                    <GitMerge className="size-6" />
+                  </div>
+                  <h3 className="font-medium text-xl">Fuse & Compare</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Drag one chart node onto another to instantly trigger an AI-powered comparison. Dambo analyzes distinctions and highlights key insights automatically.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 p-6 border border-border/50 rounded-xl bg-card/50 hover:bg-card hover:border-border transition-colors group">
+                  <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+                    <RefreshCcw className="size-6" />
+                  </div>
+                  <h3 className="font-medium text-xl">Instant Transformation</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Need a different perspective? Just say "convert to heatmap" or "show as list". The data remains, but the visualization adapts to your needs instantly.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 p-6 border border-border/50 rounded-xl bg-card/50 hover:bg-card hover:border-border transition-colors group">
+                  <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-primary/10 text-primary mb-2 group-hover:scale-110 transition-transform">
+                    <Sparkles className="size-6" />
+                  </div>
+                  <h3 className="font-medium text-xl">Natural Intelligence</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Skip the configuration menus. Dambo understands your data's context and suggests the best visualizations based on your plain English queries.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Powered by Tambo */}
