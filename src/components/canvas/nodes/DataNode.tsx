@@ -271,7 +271,7 @@ export const DataNode = memo(({ id, data, selected }: NodeProps<DataNodeType>) =
                 {/* Content / Chart Area */}
                 <div className="flex-1 p-2 bg-zinc-50/30 dark:bg-zinc-900/30 flex flex-col min-h-0 rounded-b-xl overflow-auto">
                     {hasChart ? (
-                        <div ref={chartRef} className="w-full h-full bg-white">
+                        <div ref={chartRef} className="w-full h-full bg-white" key={JSON.stringify(data.chartData)}>
                             {renderChart(data.chartData!)}
                         </div>
                     ) : (

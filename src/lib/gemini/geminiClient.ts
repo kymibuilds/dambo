@@ -381,8 +381,12 @@ export async function parseChartModification(
             if (match) {
                 parsed.filter.column = match;
             } else {
-                // Default to current column if filter column invalid, or first available column
-                parsed.filter.column = currentColumn || availableColumns[0];
+                // Default to current column if valid, otherwise use first available column
+                // This handles cases where currentColumn is 'count' or other non-column values
+                const isCurrentColumnValid = currentColumn && availableColumns.some(
+                    c => c.toLowerCase() === currentColumn.toLowerCase()
+                );
+                parsed.filter.column = isCurrentColumnValid ? currentColumn : availableColumns[0];
             }
         }
 

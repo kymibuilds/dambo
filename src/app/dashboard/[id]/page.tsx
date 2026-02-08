@@ -909,6 +909,8 @@ function ProjectPageContent() {
                                 newChartData = {
                                     type: targetType as typeof currentChartData.type,
                                     props: {
+                                        // Preserve existing props (like filter, color) when changing type
+                                        ...(currentChartData.props as Record<string, unknown>),
                                         datasetId,
                                         column: currentColumn || currentX,
                                     }
