@@ -1,0 +1,35 @@
+databases:
+  - name: dambo-db
+    plan: free
+    databaseName: dambo_db
+    user: dambo_user
+
+services:
+  - type: web
+    name: dambo-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: dambo-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: dambo-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: dambo-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: dambo-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: dambo-db
+          property: password
