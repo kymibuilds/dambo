@@ -23,23 +23,23 @@ export default function Home() {
       {/* Main Content strictly centered along a vertical axis */}
       <main className="flex flex-col items-center justify-center gap-10 text-center w-full max-w-5xl mx-auto relative z-10 py-20">
 
-        {/* Mascot */}
-        <div className="flex flex-col items-center">
-          <Image
-            src="/mascot_v2.png"
-            alt="Dambo Mascot"
-            width={120}
-            height={120}
-            className="animate-bounce-subtle mix-blend-multiply dark:mix-blend-normal dark:invert-[0.05]"
-            priority
-          />
-        </div>
+
 
         {/* Headline Group */}
         <div className="flex flex-col items-center gap-6 w-full">
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif tracking-tight leading-[1.1] text-center w-full" style={{ fontFamily: 'var(--font-shippori)' }}>
             <span className="block">visualize your data</span>
-            <span className="block">in real time.</span>
+            <span className="flex flex-wrap items-center justify-center gap-0 md:gap-1">
+              <span>in real time.</span>
+              <Image
+                src="/mascot_v3.png"
+                alt="Dambo Mascot"
+                width={120}
+                height={120}
+                className="animate-bounce-subtle inline-block w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 object-contain mix-blend-multiply dark:mix-blend-normal dark:invert-[0.05] translate-y-2"
+                priority
+              />
+            </span>
           </h1>
 
           {/* Badge Group */}

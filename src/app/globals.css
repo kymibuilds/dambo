@@ -129,6 +129,7 @@
     background: var(--foreground);
     color: var(--background);
   }
+
   .dark ::selection {
     background: var(--foreground);
     color: var(--background);
@@ -149,15 +150,19 @@
     @apply bg-zinc-300 dark:bg-zinc-700 rounded-full;
   }
 }
+
 .animate-bounce-subtle {
   animation: bounce-subtle 4s infinite ease-in-out;
 }
 
 @keyframes bounce-subtle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-4px);
   }
 }
