@@ -40,17 +40,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Dataset Copilot Backend", lifespan=lifespan)
 
 # Add CORS middleware
+# Note: Using wildcard for debugging CORS issues
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://dambo-ai.vercel.app",
-    ],
-    allow_origin_regex=r"https://dambo.*\.vercel\.app",
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for now
+    allow_credentials=False,  # Must be False when using wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
