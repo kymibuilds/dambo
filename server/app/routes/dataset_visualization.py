@@ -44,8 +44,11 @@ def get_histogram_data(
         raise HTTPException(status_code=500, detail=str(e))
 
     try:
+        print(f"DEBUG: Requesting histogram for column '{column}' in dataset '{dataset_id}'")
+        print(f"DEBUG: DF columns: {df.columns.tolist()}")
         result = get_histogram(df, column, bins)
     except ValueError as e:
+        print(f"DEBUG: ValueError in histogram: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
     return result

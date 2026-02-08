@@ -6,42 +6,39 @@ import { HistogramChart, BarChart, ScatterChart, CorrelationHeatmap } from '@/co
 const components = [
     {
         name: 'histogram_chart',
-        description: 'Display a histogram for numeric column distribution',
+        description: 'Display a histogram for a numeric column. You MUST provide the "column" name. You MUST provide "datasetId".',
         component: HistogramChart,
         propsDefinition: {
-            column: { type: 'string', description: 'Column name' },
-            bins: { type: 'array', description: 'Bin edges' },
-            counts: { type: 'array', description: 'Count per bin' },
+            datasetId: { type: 'string', description: 'The ID of the dataset to visualize' },
+            column: { type: 'string', description: 'The name of the numeric column to plot' },
+            bins: { type: 'number', description: 'Number of bins (default: 10)' },
         },
     },
     {
         name: 'bar_chart',
-        description: 'Display a bar chart for categorical data',
+        description: 'Display a bar chart for a categorical column. You MUST provide the "column" name. You MUST provide "datasetId".',
         component: BarChart,
         propsDefinition: {
-            column: { type: 'string', description: 'Column name' },
-            categories: { type: 'array', description: 'Category names' },
-            counts: { type: 'array', description: 'Count per category' },
+            datasetId: { type: 'string', description: 'The ID of the dataset to visualize' },
+            column: { type: 'string', description: 'The name of the categorical column to plot' },
         },
     },
     {
         name: 'scatter_chart',
-        description: 'Display a scatter plot for two numeric columns',
+        description: 'Display a scatter plot of two numeric columns. You MUST provide "x" and "y" columns. You MUST provide "datasetId".',
         component: ScatterChart,
         propsDefinition: {
-            x_label: { type: 'string', description: 'X-axis label' },
-            y_label: { type: 'string', description: 'Y-axis label' },
-            x: { type: 'array', description: 'X values' },
-            y: { type: 'array', description: 'Y values' },
+            datasetId: { type: 'string', description: 'The ID of the dataset to visualize' },
+            x: { type: 'string', description: 'Column for X axis' },
+            y: { type: 'string', description: 'Column for Y axis' },
         },
     },
     {
         name: 'correlation_heatmap',
-        description: 'Display a correlation matrix heatmap',
+        description: 'Display a correlation heatmap for all numeric columns. You MUST provide "datasetId".',
         component: CorrelationHeatmap,
         propsDefinition: {
-            columns: { type: 'array', description: 'Column names' },
-            matrix: { type: 'array', description: '2D correlation matrix' },
+            datasetId: { type: 'string', description: 'The ID of the dataset to visualize' },
         },
     },
 ];

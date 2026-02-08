@@ -49,8 +49,8 @@ function datasetToFile(dataset: Dataset): ProjectFile {
 }
 
 // Helper to extract chart data from rendered component props
-function extractChartData(component: React.ReactElement): ChartData | null {
-    const props = component.props;
+function extractChartData(component: React.ReactElement, defaultDatasetId?: string): ChartData | null {
+    const props = component.props as Record<string, unknown>;
     const type = component.type;
 
     // Try to determine chart type from component name
@@ -69,14 +69,21 @@ function extractChartData(component: React.ReactElement): ChartData | null {
     const chartType = chartTypeMap[componentName];
     if (!chartType) return null;
 
+    // Inject default datasetId if missing
+    const enhancedProps = { ...props };
+    if (!enhancedProps.datasetId && defaultDatasetId) {
+        enhancedProps.datasetId = defaultDatasetId;
+        console.log('[DEBUG] Injected default datasetId:', defaultDatasetId);
+    }
+
     return {
         type: chartType,
-        props: props as Record<string, unknown>,
+        props: enhancedProps,
     };
 }
 
 // Extract all chart data from a message - handles multiple charts in one response
-function extractAllChartData(message: TamboThreadMessage): ChartNodeConfig[] {
+function extractAllChartData(message: TamboThreadMessage, defaultDatasetId?: string): ChartNodeConfig[] {
     const component = message.renderedComponent;
     if (!component || typeof component !== 'object') return [];
 
@@ -92,7 +99,7 @@ function extractAllChartData(message: TamboThreadMessage): ChartNodeConfig[] {
         if (!element || typeof element !== 'object') return;
 
         // Check if this element is a chart
-        const chartData = extractChartData(element);
+        const chartData = extractChartData(element, defaultDatasetId);
         if (chartData) {
             const chartLabels: Record<ChartType, string> = {
                 'histogram_chart': 'Histogram',
@@ -125,6 +132,7 @@ function extractAllChartData(message: TamboThreadMessage): ChartNodeConfig[] {
     extractFromElement(component as React.ReactElement);
     return results;
 }
+
 
 // Inner component that uses the Tambo hook
 function ProjectPageContent() {
@@ -296,7 +304,9 @@ function ProjectPageContent() {
 
             if (msg.role === 'assistant' && msg.renderedComponent) {
                 // Extract all charts from the message (supports multiple charts)
-                const chartConfigs = extractAllChartData(msg);
+                // Use the first project file as default dataset ID if AI doesn't provide one
+                const defaultDatasetId = projectFiles.length > 0 ? projectFiles[0].id : undefined;
+                const chartConfigs = extractAllChartData(msg, defaultDatasetId);
 
                 if (chartConfigs.length > 0 && flowCanvasRef.current) {
                     // Mark message as processed
@@ -354,6 +364,7 @@ function ProjectPageContent() {
                 const profile = datasetProfiles[f.id];
                 if (profile) {
                     return {
+                        datasetId: f.id,
                         filename: f.name,
                         rowCount: profile.shape.row_count,
                         columnCount: profile.shape.column_count,
@@ -367,16 +378,23 @@ function ProjectPageContent() {
                         samples: profile.samples
                     };
                 }
-                return { filename: f.name };
+                return { datasetId: f.id, filename: f.name };
             });
 
             const context: Record<string, unknown> = {
                 projectId,
                 projectName: project?.name,
                 datasets: datasetsContext,
+                instructions: `You are a data visualization assistant. 
+                When asked to visualize a column (e.g., "bar chart of city"), you MUST:
+                1. Identify the correct column name from the 'columns' list in the dataset context.
+                2. Call the appropriate tool (e.g., bar_chart) with BOTH 'datasetId' AND 'column'.
+                3. Do NOT omit the 'column' parameter.
+                4. If the user's column name is slightly different (e.g., case mismatch), use the exact name from the dataset.
+                Available datasets: ${datasetsContext.map((d: any) => `${d.filename} (ID: ${d.datasetId}) - Columns: ${d.columns?.map((c: any) => c.name).join(', ')}`).join('\n')}`
             };
 
-            console.log('[DEBUG] Sending to Tambo with context:', context);
+            console.log('[DEBUG] Sending to Tambo with context:', JSON.stringify(context, null, 2));
 
             await sendThreadMessage(userMessage, {
                 additionalContext: context,

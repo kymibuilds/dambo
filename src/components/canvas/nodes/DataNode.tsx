@@ -27,13 +27,13 @@ function renderChart(chartData: ChartData): ReactNode {
 
     switch (type) {
         case 'histogram_chart':
-            return <HistogramChart {...(props as { column: string; bins: number[]; counts: number[] })} />;
+            return <HistogramChart {...(props as { datasetId: string; column: string; bins?: number })} />;
         case 'bar_chart':
-            return <BarChart {...(props as { column: string; categories: string[]; counts: number[] })} />;
+            return <BarChart {...(props as { datasetId: string; column: string })} />;
         case 'scatter_chart':
-            return <ScatterChart {...(props as { x_label: string; y_label: string; x: number[]; y: number[] })} />;
+            return <ScatterChart {...(props as { datasetId: string; x: string; y: string })} />;
         case 'correlation_heatmap':
-            return <CorrelationHeatmap {...(props as { columns: string[]; matrix: number[][] })} />;
+            return <CorrelationHeatmap {...(props as { datasetId: string })} />;
         default:
             return null;
     }
