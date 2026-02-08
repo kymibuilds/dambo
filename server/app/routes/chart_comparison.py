@@ -1,7 +1,10 @@
 """Chart Comparison API Routes."""
 
 import logging
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Body, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services.chart_comparison import compare_charts
