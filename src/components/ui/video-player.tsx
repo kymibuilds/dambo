@@ -28,8 +28,9 @@ const variables = {
     "--media-range-track-background": "var(--border)",
 } as CSSProperties
 
-export const VideoPlayer = ({ style, ...props }: VideoPlayerProps) => (
+export const VideoPlayer = ({ style, className, ...props }: VideoPlayerProps & { className?: string }) => (
     <MediaController
+        className={cn("block", className)}
         style={{
             ...variables,
             ...style,
@@ -41,8 +42,8 @@ export const VideoPlayer = ({ style, ...props }: VideoPlayerProps) => (
 
 export type VideoPlayerControlBarProps = ComponentProps<typeof MediaControlBar>
 
-export const VideoPlayerControlBar = (props: VideoPlayerControlBarProps) => (
-    <MediaControlBar {...(props as any)} />
+export const VideoPlayerControlBar = ({ className, ...props }: VideoPlayerControlBarProps) => (
+    <MediaControlBar className={cn("w-full", className)} {...(props as any)} />
 )
 
 export type VideoPlayerTimeRangeProps = ComponentProps<typeof MediaTimeRange>
@@ -97,7 +98,7 @@ export type VideoPlayerContentProps = ComponentProps<"video">
 
 export const VideoPlayerContent = ({ className, ...props }: VideoPlayerContentProps) => (
     <video
-        className={cn("mt-0 mb-0", className)}
+        className={cn("mt-0 mb-0 block", className)}
         tabIndex={-1}
         suppressHydrationWarning
         {...(props as any)}

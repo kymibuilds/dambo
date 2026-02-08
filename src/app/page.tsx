@@ -80,7 +80,7 @@ export default function Home() {
             <div className="pt-8 flex flex-col items-center">
               <Link href="/dashboard">
                 <Button
-                  className="rounded-none h-7 px-6 text-xs font-bold tracking-[0.2em] gap-2 bg-zinc-600 hover:bg-zinc-700 text-white"
+                  className="rounded-md h-8 px-6 text-xs font-bold tracking-[0.2em] gap-2 bg-primary text-primary-foreground hover:bg-primary/90 border border-zinc-500/20 shadow-sm transition-all"
                   style={{ fontFamily: 'var(--font-exo2)' }}
                 >
                   DASHBOARD
@@ -198,7 +198,7 @@ export default function Home() {
 
             {/* What is Dambo */}
             <div className="flex flex-col gap-4">
-              <h2 className="text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-instrument)' }}>
+              <h2 className="text-3xl md:text-4xl font-normal" style={{ fontFamily: 'var(--font-shippori)' }}>
                 What is Dambo?
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
@@ -210,7 +210,7 @@ export default function Home() {
 
             {/* How it works */}
             <div className="flex flex-col gap-4">
-              <h2 className="text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-instrument)' }}>
+              <h2 className="text-3xl md:text-4xl font-normal" style={{ fontFamily: 'var(--font-shippori)' }}>
                 How it works
               </h2>
               <ul className="text-muted-foreground text-lg leading-relaxed space-y-3 list-disc list-inside">
@@ -226,7 +226,7 @@ export default function Home() {
 
             {/* Powered by Tambo */}
             <div className="flex flex-col gap-4">
-              <h2 className="text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-instrument)' }}>
+              <h2 className="text-3xl md:text-4xl font-normal" style={{ fontFamily: 'var(--font-shippori)' }}>
                 Powered by Tambo
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
