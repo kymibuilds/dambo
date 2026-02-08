@@ -11,6 +11,7 @@ import {
     Connection,
     ReactFlowProvider,
     BackgroundVariant,
+    useReactFlow,
     type Node,
     type Edge
 } from '@xyflow/react';
@@ -54,6 +55,7 @@ interface FlowCanvasProps {
 const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQuickAnalysis, isQuickAnalysisLoading, isQuickAnalysisDisabled, onStateChange, onClearCanvas }, ref) => {
     const [nodes, setNodes, onNodesChange] = useNodesState<DataNodeType>(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const { setCenter } = useReactFlow();
 
     // Notify parent of state changes for persistence
     useEffect(() => {
@@ -269,16 +271,24 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
     const addChartNode = useCallback((label: string, chartData: ChartData): string => {
         const id = Math.random().toString(36).substring(7);
         const position = getNewNodePosition();
+        const nodeWidth = 900;
+        const nodeHeight = 600;
         const newNode: DataNodeType = {
             id,
             position,
             data: { label, chartData },
             type: 'dataNode',
-            style: { width: 900, height: 600 },
+            style: { width: nodeWidth, height: nodeHeight },
         };
         setNodes((nds) => [...nds, newNode]);
+
+        // Auto-pan to center on the new node
+        setTimeout(() => {
+            setCenter(position.x + nodeWidth / 2, position.y + nodeHeight / 2, { zoom: 0.6, duration: 500 });
+        }, 100);
+
         return id;
-    }, [setNodes, getNewNodePosition]);
+    }, [setNodes, getNewNodePosition, setCenter]);
 
     const addEmptyNode = useCallback((label: string = 'New Visualization'): string => {
         const id = Math.random().toString(36).substring(7);
@@ -294,33 +304,33 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         return id;
     }, [setNodes, getNewNodePosition]);
 
-    // Add multiple chart nodes in a grid layout - collision-aware, column-major
+    // Add multiple chart nodes in a grid layout - row-major (2-3 per row), moving vertically
     const addMultipleChartNodes = useCallback((configs: ChartNodeConfig[]): string[] => {
         if (configs.length === 0) return [];
 
         const NODE_WIDTH = DEFAULT_NODE_WIDTH;
         const NODE_HEIGHT = DEFAULT_NODE_HEIGHT;
-        const ROWS = 3; // Stack up to 3 charts vertically before wrapping
+        const COLS = 2; // 2-3 charts per row, then next row
 
         // Find the bounding box of all existing nodes
-        let maxX = 0;
-        let minY = 100;
+        let maxY = 0;
+        let minX = 100;
 
         if (nodes.length > 0) {
             for (const node of nodes) {
-                const nodeWidth = (node.style?.width as number) || DEFAULT_NODE_WIDTH;
-                maxX = Math.max(maxX, node.position.x + nodeWidth);
-                minY = Math.min(minY, node.position.y);
+                const nodeHeight = (node.style?.height as number) || DEFAULT_NODE_HEIGHT;
+                maxY = Math.max(maxY, node.position.y + nodeHeight);
+                minX = Math.min(minX, node.position.x);
             }
         }
 
-        const startX = nodes.length === 0 ? 100 : maxX + GAP;
-        const startY = minY;
+        const startX = minX;
+        const startY = nodes.length === 0 ? 100 : maxY + GAP;
 
         const newNodes: DataNodeType[] = configs.map((config, index) => {
-            // Column-major: fill rows first, then move to next column
-            const col = Math.floor(index / ROWS);
-            const row = index % ROWS;
+            // Row-major: fill columns first, then move to next row
+            const row = Math.floor(index / COLS);
+            const col = index % COLS;
             const id = Math.random().toString(36).substring(7);
 
             return {
@@ -336,8 +346,21 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         });
 
         setNodes((nds) => [...nds, ...newNodes]);
+
+        // Auto-pan to show the first new node
+        if (newNodes.length > 0) {
+            const firstNode = newNodes[0];
+            setTimeout(() => {
+                setCenter(
+                    firstNode.position.x + NODE_WIDTH / 2,
+                    firstNode.position.y + NODE_HEIGHT / 2,
+                    { zoom: 0.5, duration: 500 }
+                );
+            }, 100);
+        }
+
         return newNodes.map(n => n.id);
-    }, [nodes, setNodes]);
+    }, [nodes, setNodes, setCenter]);
 
     // Add an edge between two nodes
     const addEdgeBetweenNodes = useCallback((sourceId: string, targetId: string, animated: boolean = false): void => {

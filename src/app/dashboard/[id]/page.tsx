@@ -440,6 +440,9 @@ function ProjectPageContent() {
     const quickAnalysis = useQuickAnalysis();
     const [showDatasetSelector, setShowDatasetSelector] = useState(false);
 
+    // Visualization buttons dataset selector
+    const [showVizDatasetSelector, setShowVizDatasetSelector] = useState<'correlations' | 'distributions' | 'categories' | 'outliers' | null>(null);
+
     // Fetch project and datasets on mount
     useEffect(() => {
         async function fetchProjectData() {
@@ -1096,6 +1099,138 @@ function ProjectPageContent() {
         }
     };
 
+    // Visualization handlers for each button type
+    const runVisualization = async (type: 'correlations' | 'distributions' | 'categories' | 'outliers', datasetId: string) => {
+        setShowVizDatasetSelector(null);
+        if (!flowCanvasRef.current) return;
+
+        // Get dataset name for labeling
+        const datasetFile = projectFiles.find(f => f.id === datasetId);
+        const datasetName = datasetFile?.name || 'Dataset';
+
+        try {
+            const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
+
+            if (type === 'correlations') {
+                const numericCols = profile.columns?.filter((c: any) => c.detected_type === 'numeric') || [];
+                if (numericCols.length >= 2) {
+                    flowCanvasRef.current.addChartNode(`${datasetName} - Feature Correlations`, {
+                        type: 'correlation_heatmap',
+                        props: { datasetId }
+                    });
+                } else if (numericCols.length === 1) {
+                    flowCanvasRef.current.addChartNode(`${datasetName} - ${numericCols[0].name} Distribution`, {
+                        type: 'histogram_chart',
+                        props: { datasetId, column: numericCols[0].name }
+                    });
+                } else {
+                    const catCol = profile.columns?.find((c: any) => c.detected_type === 'categorical');
+                    if (catCol) {
+                        flowCanvasRef.current.addChartNode(`${datasetName} - ${catCol.name} Counts`, {
+                            type: 'bar_chart',
+                            props: { datasetId, column: catCol.name }
+                        });
+                    }
+                }
+            } else if (type === 'distributions') {
+                const numericCols = (profile.columns || [])
+                    .filter((c: any) => c.detected_type === 'numeric')
+                    .filter((c: any) => {
+                        const name = c.name.toLowerCase();
+                        return !name.includes('id') && !name.includes('index') && name !== 'id';
+                    });
+                if (numericCols.length > 0) {
+                    const chartConfigs = numericCols.slice(0, 2).map((col: any) => ({
+                        label: `${datasetName} - ${col.name} Distribution`,
+                        chartData: { type: 'histogram_chart' as const, props: { datasetId, column: col.name } }
+                    }));
+                    flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
+                } else {
+                    const catCols = (profile.columns || []).filter((c: any) => c.detected_type === 'categorical').slice(0, 2);
+                    const chartConfigs = catCols.map((col: any) => ({
+                        label: `${datasetName} - ${col.name} Counts`,
+                        chartData: { type: 'bar_chart' as const, props: { datasetId, column: col.name } }
+                    }));
+                    flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
+                }
+            } else if (type === 'categories') {
+                const getCategoryUniqueCount = (colName: string) => {
+                    const catStat = profile.category_stats?.find((s: any) => s.column === colName);
+                    return catStat?.unique_count || 0;
+                };
+                const catCols = (profile.columns || [])
+                    .filter((c: any) => c.detected_type === 'categorical')
+                    .filter((c: any) => {
+                        const name = c.name.toLowerCase();
+                        const uniqueCount = getCategoryUniqueCount(c.name);
+                        return !name.includes('id') && !name.endsWith('_id') && name !== 'id' && uniqueCount >= 2 && uniqueCount <= 25;
+                    });
+                if (catCols.length > 0) {
+                    const chartConfigs = catCols.slice(0, 2).map((col: any) => ({
+                        label: `${datasetName} - ${col.name} Breakdown`,
+                        chartData: { type: 'pie_chart' as const, props: { datasetId, column: col.name } }
+                    }));
+                    flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
+                } else {
+                    const anyCat = (profile.columns || []).find((c: any) => c.detected_type === 'categorical');
+                    if (anyCat) {
+                        flowCanvasRef.current.addChartNode(`${datasetName} - ${anyCat.name} Breakdown`, {
+                            type: 'bar_chart',
+                            props: { datasetId, column: anyCat.name }
+                        });
+                    } else {
+                        const numCol = (profile.columns || []).find((c: any) => c.detected_type === 'numeric');
+                        if (numCol) {
+                            flowCanvasRef.current.addChartNode(`${datasetName} - ${numCol.name} Distribution`, {
+                                type: 'histogram_chart',
+                                props: { datasetId, column: numCol.name }
+                            });
+                        }
+                    }
+                }
+            } else if (type === 'outliers') {
+                const numericCols = (profile.columns || [])
+                    .filter((c: any) => c.detected_type === 'numeric')
+                    .filter((c: any) => {
+                        const name = c.name.toLowerCase();
+                        return !name.includes('id') && !name.includes('index') && name !== 'id';
+                    });
+                if (numericCols.length > 0) {
+                    flowCanvasRef.current.addChartNode(`${datasetName} - ${numericCols[0].name} Outliers`, {
+                        type: 'boxplot_chart',
+                        props: { datasetId, column: numericCols[0].name }
+                    });
+                } else {
+                    const anyNum = (profile.columns || []).find((c: any) => c.detected_type === 'numeric');
+                    if (anyNum) {
+                        flowCanvasRef.current.addChartNode(`${datasetName} - ${anyNum.name} Outliers`, {
+                            type: 'boxplot_chart',
+                            props: { datasetId, column: anyNum.name }
+                        });
+                    } else {
+                        const catCol = (profile.columns || []).find((c: any) => c.detected_type === 'categorical');
+                        if (catCol) {
+                            flowCanvasRef.current.addChartNode(`${datasetName} - ${catCol.name} Counts`, {
+                                type: 'bar_chart',
+                                props: { datasetId, column: catCol.name }
+                            });
+                        }
+                    }
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    // Handle visualization button click - show selector if multiple datasets, otherwise run directly
+    const handleVizButtonClick = (type: 'correlations' | 'distributions' | 'categories' | 'outliers') => {
+        if (projectFiles.length === 0) return;
+        if (projectFiles.length === 1) {
+            runVisualization(type, projectFiles[0].id);
+        } else {
+            setShowVizDatasetSelector(type);
+        }
+    };
+
     // Build an enhanced prompt for Tambo to summarize the analysis
     function buildSmartAnalysisSummaryPrompt(data: QuickAnalysisData): string {
         const { dataset_overview, strongest_correlations, ml_readiness, outlier_detection, missing_data_insights, scatter_recommendations, data_quality, gemini_insights } = data;
@@ -1391,37 +1526,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                     {projectFiles.length > 0 && (
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2">
                             <button
-                                onClick={async () => {
-                                    const datasetId = projectFiles[0]?.id;
-                                    if (!datasetId || !flowCanvasRef.current) return;
-
-                                    try {
-                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
-                                        const numericCols = profile.columns?.filter((c: any) => c.detected_type === 'numeric') || [];
-
-                                        if (numericCols.length >= 2) {
-                                            flowCanvasRef.current.addChartNode('Feature Correlations', {
-                                                type: 'correlation_heatmap',
-                                                props: { datasetId }
-                                            });
-                                        } else if (numericCols.length === 1) {
-                                            // Fallback: show histogram if only 1 numeric column
-                                            flowCanvasRef.current.addChartNode(`${numericCols[0].name} Distribution`, {
-                                                type: 'histogram_chart',
-                                                props: { datasetId, column: numericCols[0].name }
-                                            });
-                                        } else {
-                                            // Fallback: show bar chart of first categorical
-                                            const catCol = profile.columns?.find((c: any) => c.detected_type === 'categorical');
-                                            if (catCol) {
-                                                flowCanvasRef.current.addChartNode(`${catCol.name} Counts`, {
-                                                    type: 'bar_chart',
-                                                    props: { datasetId, column: catCol.name }
-                                                });
-                                            }
-                                        }
-                                    } catch (e) { console.error(e); }
-                                }}
+                                onClick={() => handleVizButtonClick('correlations')}
                                 className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
                                 title="Show correlations between numeric features"
                             >
@@ -1429,47 +1534,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                 Correlations
                             </button>
                             <button
-                                onClick={async () => {
-                                    const datasetId = projectFiles[0]?.id;
-                                    if (!datasetId || !flowCanvasRef.current) return;
-
-                                    try {
-                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
-
-                                        // Get relevant numeric columns (exclude IDs)
-                                        const numericCols = (profile.columns || [])
-                                            .filter((c: any) => c.detected_type === 'numeric')
-                                            .filter((c: any) => {
-                                                const name = c.name.toLowerCase();
-                                                return !name.includes('id') && !name.includes('index') && name !== 'id';
-                                            });
-
-                                        if (numericCols.length > 0) {
-                                            // Show top 2 numeric distributions using batch add
-                                            const chartConfigs = numericCols.slice(0, 2).map((col: any) => ({
-                                                label: `${col.name} Distribution`,
-                                                chartData: {
-                                                    type: 'histogram_chart' as const,
-                                                    props: { datasetId, column: col.name }
-                                                }
-                                            }));
-                                            flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
-                                        } else {
-                                            // Fallback: show bar chart of categorical columns
-                                            const catCols = (profile.columns || [])
-                                                .filter((c: any) => c.detected_type === 'categorical')
-                                                .slice(0, 2);
-                                            const chartConfigs = catCols.map((col: any) => ({
-                                                label: `${col.name} Counts`,
-                                                chartData: {
-                                                    type: 'bar_chart' as const,
-                                                    props: { datasetId, column: col.name }
-                                                }
-                                            }));
-                                            flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
-                                        }
-                                    } catch (e) { console.error(e); }
-                                }}
+                                onClick={() => handleVizButtonClick('distributions')}
                                 className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
                                 title="Show distributions of key features"
                             >
@@ -1477,62 +1542,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                 Distributions
                             </button>
                             <button
-                                onClick={async () => {
-                                    const datasetId = projectFiles[0]?.id;
-                                    if (!datasetId || !flowCanvasRef.current) return;
-
-                                    try {
-                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
-
-                                        // Get categorical columns with reasonable cardinality - use category_stats for unique counts
-                                        const getCategoryUniqueCount = (colName: string) => {
-                                            const catStat = profile.category_stats?.find((s: any) => s.column === colName);
-                                            return catStat?.unique_count || 0;
-                                        };
-
-                                        const catCols = (profile.columns || [])
-                                            .filter((c: any) => c.detected_type === 'categorical')
-                                            .filter((c: any) => {
-                                                const name = c.name.toLowerCase();
-                                                const uniqueCount = getCategoryUniqueCount(c.name);
-                                                return !name.includes('id') &&
-                                                    !name.endsWith('_id') &&
-                                                    name !== 'id' &&
-                                                    uniqueCount >= 2 &&
-                                                    uniqueCount <= 25;
-                                            });
-
-                                        if (catCols.length > 0) {
-                                            // Use batch add for multiple charts
-                                            const chartConfigs = catCols.slice(0, 2).map((col: any) => ({
-                                                label: `${col.name} Breakdown`,
-                                                chartData: {
-                                                    type: 'pie_chart' as const,
-                                                    props: { datasetId, column: col.name }
-                                                }
-                                            }));
-                                            flowCanvasRef.current?.addMultipleChartNodes(chartConfigs);
-                                        } else {
-                                            // Fallback: show any categorical as bar chart
-                                            const anyCat = (profile.columns || []).find((c: any) => c.detected_type === 'categorical');
-                                            if (anyCat) {
-                                                flowCanvasRef.current.addChartNode(`${anyCat.name} Breakdown`, {
-                                                    type: 'bar_chart',
-                                                    props: { datasetId, column: anyCat.name }
-                                                });
-                                            } else {
-                                                // Last resort: show first numeric as histogram
-                                                const numCol = (profile.columns || []).find((c: any) => c.detected_type === 'numeric');
-                                                if (numCol) {
-                                                    flowCanvasRef.current.addChartNode(`${numCol.name} Distribution`, {
-                                                        type: 'histogram_chart',
-                                                        props: { datasetId, column: numCol.name }
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    } catch (e) { console.error(e); }
-                                }}
+                                onClick={() => handleVizButtonClick('categories')}
                                 className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
                                 title="Show category breakdowns"
                             >
@@ -1540,53 +1550,44 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                 Categories
                             </button>
                             <button
-                                onClick={async () => {
-                                    const datasetId = projectFiles[0]?.id;
-                                    if (!datasetId || !flowCanvasRef.current) return;
-
-                                    try {
-                                        const profile = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/datasets/${datasetId}/profile`).then(r => r.json());
-
-                                        // Get best numeric column for outlier analysis
-                                        const numericCols = (profile.columns || [])
-                                            .filter((c: any) => c.detected_type === 'numeric')
-                                            .filter((c: any) => {
-                                                const name = c.name.toLowerCase();
-                                                return !name.includes('id') && !name.includes('index') && name !== 'id';
-                                            });
-
-                                        if (numericCols.length > 0) {
-                                            flowCanvasRef.current.addChartNode(`${numericCols[0].name} Outliers`, {
-                                                type: 'boxplot_chart',
-                                                props: { datasetId, column: numericCols[0].name }
-                                            });
-                                        } else {
-                                            // Fallback: show any numeric column
-                                            const anyNum = (profile.columns || []).find((c: any) => c.detected_type === 'numeric');
-                                            if (anyNum) {
-                                                flowCanvasRef.current.addChartNode(`${anyNum.name} Outliers`, {
-                                                    type: 'boxplot_chart',
-                                                    props: { datasetId, column: anyNum.name }
-                                                });
-                                            } else {
-                                                // Last resort: show histogram of categorical counts
-                                                const catCol = (profile.columns || []).find((c: any) => c.detected_type === 'categorical');
-                                                if (catCol) {
-                                                    flowCanvasRef.current.addChartNode(`${catCol.name} Counts`, {
-                                                        type: 'bar_chart',
-                                                        props: { datasetId, column: catCol.name }
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    } catch (e) { console.error(e); }
-                                }}
+                                onClick={() => handleVizButtonClick('outliers')}
                                 className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 transition-all text-xs font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5"
                                 title="Show outliers and statistical distribution"
                             >
                                 <span className="text-amber-500">📦</span>
                                 Outliers
                             </button>
+                        </div>
+                    )}
+
+                    {/* Visualization Dataset Selector Dropdown */}
+                    {showVizDatasetSelector && (
+                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl overflow-hidden min-w-[240px]">
+                                <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                        Select Dataset for {showVizDatasetSelector.charAt(0).toUpperCase() + showVizDatasetSelector.slice(1)}
+                                    </span>
+                                    <button
+                                        onClick={() => setShowVizDatasetSelector(null)}
+                                        className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <div className="max-h-48 overflow-y-auto">
+                                    {projectFiles.map((file) => (
+                                        <button
+                                            key={file.id}
+                                            onClick={() => runVisualization(showVizDatasetSelector, file.id)}
+                                            className="w-full px-3 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-2"
+                                        >
+                                            <span className="text-sm">📊</span>
+                                            <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">{file.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
