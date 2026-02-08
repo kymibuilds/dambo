@@ -54,36 +54,38 @@ export function ScatterChart({ datasetId, x, y }: ScatterChartProps) {
     const chartData = data.x.map((val, i) => ({ x: val, y: data.y[i] }));
 
     return (
-        <div className="w-full h-72 bg-zinc-900/50 rounded-lg p-4 border border-zinc-800">
-            <h3 className="text-sm font-medium text-zinc-300 mb-4 text-center">{x} vs {y}</h3>
-            <ResponsiveContainer width="100%" height="100%">
-                <RechartsScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                    <XAxis
-                        type="number"
-                        dataKey="x"
-                        name={x}
-                        tick={{ fill: '#71717a', fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                        label={{ value: x, position: 'bottom', offset: 0, fill: '#71717a', fontSize: 10 }}
-                    />
-                    <YAxis
-                        type="number"
-                        dataKey="y"
-                        name={y}
-                        tick={{ fill: '#71717a', fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                        label={{ value: y, angle: -90, position: 'left', offset: 0, fill: '#71717a', fontSize: 10 }}
-                    />
-                    <Tooltip
-                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#e4e4e7' }}
-                        itemStyle={{ color: '#e4e4e7' }}
-                        cursor={{ strokeDasharray: '3 3' }}
-                    />
-                    <Scatter name={`${x} vs ${y}`} data={chartData} fill="#8884d8" />
-                </RechartsScatterChart>
-            </ResponsiveContainer>
+        <div className="w-full min-h-[288px] bg-white rounded-lg p-4 border border-zinc-200 flex flex-col">
+            <h3 className="text-sm font-medium text-zinc-700 mb-2 text-center flex-shrink-0">{x} vs {y}</h3>
+            <div className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={200}>
+                    <RechartsScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 40 }}>
+                        <XAxis
+                            type="number"
+                            dataKey="x"
+                            name={x}
+                            tick={{ fill: '#52525b', fontSize: 10 }}
+                            tickLine={false}
+                            axisLine={{ stroke: '#e4e4e7' }}
+                            label={{ value: x, position: 'bottom', offset: 10, fill: '#52525b', fontSize: 10 }}
+                        />
+                        <YAxis
+                            type="number"
+                            dataKey="y"
+                            name={y}
+                            tick={{ fill: '#52525b', fontSize: 10 }}
+                            tickLine={false}
+                            axisLine={{ stroke: '#e4e4e7' }}
+                            label={{ value: y, angle: -90, position: 'left', offset: 10, fill: '#52525b', fontSize: 10 }}
+                        />
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e4e4e7', color: '#18181b' }}
+                            itemStyle={{ color: '#18181b' }}
+                            cursor={{ strokeDasharray: '3 3' }}
+                        />
+                        <Scatter name={`${x} vs ${y}`} data={chartData} fill="#6366f1" />
+                    </RechartsScatterChart>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 }

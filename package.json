@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tambo-ai/react": "^0.74.1",
     "@types/three": "^0.182.0",
     "@xyflow/react": "^12.10.0",

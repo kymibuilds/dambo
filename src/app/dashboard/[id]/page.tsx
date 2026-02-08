@@ -24,6 +24,7 @@ import { type ChartData, type ChartType } from "@/components/canvas/nodes/DataNo
 import { getProject, type Project } from "@/lib/api/projects";
 import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
 import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
+import { extractChartColumnsWithCache } from "@/lib/gemini/geminiClient";
 
 interface ProjectFile {
     id: string;
@@ -471,61 +472,125 @@ function ProjectPageContent() {
         }
 
         // Check for new rendered components and add them to canvas
-        tamboMessages.forEach(msg => {
-            // Skip if already processed to avoid duplicate nodes
-            if (processedMessageIds.current.has(msg.id)) return;
+        // Using async IIFE since useEffect callback can't be async directly
+        (async () => {
+            for (const msg of tamboMessages) {
+                // Skip if already processed to avoid duplicate nodes
+                if (processedMessageIds.current.has(msg.id)) continue;
 
-            if (msg.role === 'assistant' && msg.renderedComponent) {
-                // Extract all charts from the message (supports multiple charts)
-                // Use the first project file as default dataset ID if AI doesn't provide one
-                const defaultDatasetId = projectFiles.length > 0 ? projectFiles[0].id : undefined;
+                if (msg.role === 'assistant' && msg.renderedComponent) {
+                    // Extract all charts from the message (supports multiple charts)
+                    // Use the first project file as default dataset ID if AI doesn't provide one
+                    const defaultDatasetId = projectFiles.length > 0 ? projectFiles[0].id : undefined;
 
-                // Find the last user message for fallback column extraction
-                const userMessages = tamboMessages.filter(m => m.role === 'user');
-                const lastUserMessage = userMessages.length > 0
-                    ? (typeof userMessages[userMessages.length - 1].content === 'string'
-                        ? userMessages[userMessages.length - 1].content
-                        : JSON.stringify(userMessages[userMessages.length - 1].content))
-                    : undefined;
+                    // Find the last user message for Gemini column extraction
+                    const userMessages = tamboMessages.filter(m => m.role === 'user');
+                    const lastUserMessage = userMessages.length > 0
+                        ? (typeof userMessages[userMessages.length - 1].content === 'string'
+                            ? userMessages[userMessages.length - 1].content
+                            : JSON.stringify(userMessages[userMessages.length - 1].content))
+                        : undefined;
 
-                // Get all available column names from dataset profiles
-                const availableColumns: string[] = [];
-                Object.values(datasetProfiles).forEach((profile: any) => {
-                    if (profile?.columns) {
-                        profile.columns.forEach((col: any) => {
-                            if (col.name && !availableColumns.includes(col.name)) {
-                                availableColumns.push(col.name);
+                    // Get all available column names from dataset profiles
+                    const availableColumns: string[] = [];
+                    Object.values(datasetProfiles).forEach((profile: any) => {
+                        if (profile?.columns) {
+                            profile.columns.forEach((col: any) => {
+                                if (col.name && !availableColumns.includes(col.name)) {
+                                    availableColumns.push(col.name);
+                                }
+                            });
+                        }
+                    });
+
+                    console.log('[DEBUG] Processing chart with userMessage:', lastUserMessage, 'availableColumns:', availableColumns);
+
+                    let chartConfigs = extractAllChartData(msg, defaultDatasetId, lastUserMessage as string | undefined, availableColumns);
+
+                    // Use Gemini to enhance column extraction if we have invalid columns
+                    if (chartConfigs.length > 0 && lastUserMessage && availableColumns.length > 0) {
+                        const enhancedConfigs: ChartNodeConfig[] = [];
+
+                        for (const config of chartConfigs) {
+                            const chartType = config.chartData.type;
+                            const props = config.chartData.props as Record<string, unknown>;
+
+                            // Check if we need Gemini help (missing or invalid columns)
+                            const needsGemini = (
+                                (chartType === 'scatter_chart' && (!props.x || !props.y)) ||
+                                ((chartType === 'bar_chart' || chartType === 'histogram_chart') && !props.column)
+                            );
+
+                            if (needsGemini) {
+                                console.log('[Gemini] Attempting extraction for:', chartType);
+                                try {
+                                    const geminiResult = await extractChartColumnsWithCache(
+                                        lastUserMessage as string,
+                                        availableColumns,
+                                        chartType
+                                    );
+
+                                    if (geminiResult) {
+                                        const enhancedProps = { ...props };
+
+                                        if (chartType === 'scatter_chart') {
+                                            if (geminiResult.x && !props.x) {
+                                                enhancedProps.x = geminiResult.x;
+                                                console.log('[Gemini] Injected x:', geminiResult.x);
+                                            }
+                                            if (geminiResult.y && !props.y) {
+                                                enhancedProps.y = geminiResult.y;
+                                                console.log('[Gemini] Injected y:', geminiResult.y);
+                                            }
+                                        } else if (geminiResult.column && !props.column) {
+                                            enhancedProps.column = geminiResult.column;
+                                            console.log('[Gemini] Injected column:', geminiResult.column);
+                                        }
+
+                                        enhancedConfigs.push({
+                                            ...config,
+                                            chartData: {
+                                                ...config.chartData,
+                                                props: enhancedProps,
+                                            },
+                                        });
+                                        continue;
+                                    }
+                                } catch (error) {
+                                    console.error('[Gemini] Extraction failed:', error);
+                                }
                             }
-                        });
+
+                            // Use original config if Gemini not needed or failed
+                            enhancedConfigs.push(config);
+                        }
+
+                        chartConfigs = enhancedConfigs;
                     }
-                });
 
-                console.log('[DEBUG] Processing chart with userMessage:', lastUserMessage, 'availableColumns:', availableColumns);
+                    if (chartConfigs.length > 0 && flowCanvasRef.current) {
+                        // Mark message as processed
+                        processedMessageIds.current.add(msg.id);
 
-                const chartConfigs = extractAllChartData(msg, defaultDatasetId, lastUserMessage as string | undefined, availableColumns);
+                        if (chartConfigs.length === 1) {
+                            // Single chart - use simple addChartNode
+                            flowCanvasRef.current.addChartNode(
+                                chartConfigs[0].label,
+                                chartConfigs[0].chartData
+                            );
+                        } else {
+                            // Multiple charts - use grid layout and connect with edges
+                            const nodeIds = flowCanvasRef.current.addMultipleChartNodes(chartConfigs);
 
-                if (chartConfigs.length > 0 && flowCanvasRef.current) {
-                    // Mark message as processed
-                    processedMessageIds.current.add(msg.id);
-
-                    if (chartConfigs.length === 1) {
-                        // Single chart - use simple addChartNode
-                        flowCanvasRef.current.addChartNode(
-                            chartConfigs[0].label,
-                            chartConfigs[0].chartData
-                        );
-                    } else {
-                        // Multiple charts - use grid layout and connect with edges
-                        const nodeIds = flowCanvasRef.current.addMultipleChartNodes(chartConfigs);
-
-                        // Create edges between nodes (chain them together)
-                        for (let i = 0; i < nodeIds.length - 1; i++) {
-                            flowCanvasRef.current.addEdgeBetweenNodes(nodeIds[i], nodeIds[i + 1], true);
+                            // Create edges between nodes (chain them together)
+                            for (let i = 0; i < nodeIds.length - 1; i++) {
+                                flowCanvasRef.current.addEdgeBetweenNodes(nodeIds[i], nodeIds[i + 1], true);
+                            }
                         }
                     }
                 }
             }
-        });
+        })();
     }, [thread?.messages, datasetProfiles, projectFiles]);
 
     const scrollToBottom = useCallback(() => {
