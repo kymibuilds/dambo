@@ -174,27 +174,27 @@ export function QuickAnalysisPanel({ data, datasetId, isLoading }: QuickAnalysis
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Histogram */}
-                    {chart_payloads.histogram && (
+                    {chart_payloads.histograms?.[0] && (
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
                             <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wide">
-                                Distribution: {chart_payloads.histogram.column}
+                                Distribution: {chart_payloads.histograms[0].column}
                             </h4>
                             <HistogramChart
                                 datasetId={datasetId}
-                                column={chart_payloads.histogram.column}
+                                column={chart_payloads.histograms[0].column}
                             />
                         </div>
                     )}
 
                     {/* Bar Chart */}
-                    {chart_payloads.bar && (
+                    {chart_payloads.bars?.[0] && (
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
                             <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wide">
-                                Categories: {chart_payloads.bar.column}
+                                Categories: {chart_payloads.bars[0].column}
                             </h4>
                             <BarChart
                                 datasetId={datasetId}
-                                column={chart_payloads.bar.column}
+                                column={chart_payloads.bars[0].column}
                             />
                         </div>
                     )}
