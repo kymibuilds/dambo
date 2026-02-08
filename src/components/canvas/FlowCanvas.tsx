@@ -463,8 +463,17 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         }));
         setEdges((eds) => [...eds, ...newEdges]);
 
+        // Auto-pan to the parent node so user sees the generated analysis
+        setTimeout(() => {
+            setCenter(
+                parentX + PARENT_WIDTH / 2,
+                parentY + PARENT_HEIGHT / 2,
+                { zoom: 0.4, duration: 500 }
+            );
+        }, 100);
+
         return { parentId, childIds: childNodes.map(n => n.id) };
-    }, [nodes, setNodes, setEdges]);
+    }, [nodes, setNodes, setEdges, setCenter]);
 
     // Update an existing node's chart data (for smart node chat)
     const updateNodeChartData = useCallback((nodeId: string, label: string, chartData: ChartData): boolean => {
