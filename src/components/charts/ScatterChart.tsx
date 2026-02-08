@@ -20,14 +20,17 @@ const COLOR_MAP: Record<string, string> = {
     teal: '#14b8a6',
 };
 
+import { ChartFilter } from '@/lib/api/visualizations';
+
 interface ScatterChartProps {
     datasetId?: string;
     x?: string;
     y?: string;
     color?: string; // Color name (red, blue, etc.) or hex code
+    filter?: ChartFilter;
 }
 
-export function ScatterChart({ datasetId, x, y, color = 'indigo' }: ScatterChartProps) {
+export function ScatterChart({ datasetId, x, y, color = 'indigo', filter }: ScatterChartProps) {
     const [data, setData] = useState<ScatterData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -78,6 +81,7 @@ export function ScatterChart({ datasetId, x, y, color = 'indigo' }: ScatterChart
                         setFixedX(fixed);
                     } else {
                         setError(`X column "${x}" not found or not numeric. Available numeric columns: ${numericCols.slice(0, 5).join(', ')}...`);
+                        setLoading(false); // Added this line for early exit
                         return;
                     }
                 } else {
@@ -96,24 +100,26 @@ export function ScatterChart({ datasetId, x, y, color = 'indigo' }: ScatterChart
                         setFixedY(fixed);
                     } else {
                         setError(`Y column "${y}" not found or not numeric. Available numeric columns: ${numericCols.slice(0, 5).join(', ')}...`);
+                        setLoading(false); // Added this line for early exit
                         return;
                     }
                 } else {
                     setFixedY(y);
                 }
 
-                const res = await fetchScatter(datasetId!, xToUse, yToUse);
-                setData(res);
-                setError(null);
-            } catch (err) {
-                console.error('[DEBUG] ScatterChart error:', err);
-                setError(`Failed to load scatter plot: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            } finally {
+                // Now data is validated, fetch the scatter data
+                const result = await fetchScatter(datasetId!, xToUse, yToUse, filter);
+                setData(result);
+                setLoading(false);
+
+            } catch (err: any) {
+                console.error(err);
+                setError(err.message || `Failed to load data (${datasetId})`);
                 setLoading(false);
             }
         }
         load();
-    }, [datasetId, x, y]);
+    }, [datasetId, x, y, filter]); // Added filter to dep array
 
     // Simple data transform
     const chartData = useMemo(() => {

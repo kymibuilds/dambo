@@ -9,14 +9,20 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // Color palette for stacked bars
 const STACK_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F', '#FFBB28', '#FF8042'];
 
+
+import { ChartFilter } from '@/lib/api/visualizations';
+
+// ...
+
 interface StackedBarChartProps {
     datasetId?: string;
     categoryColumn?: string;
     stackColumn?: string;
     valueColumn?: string;
+    filter?: ChartFilter;
 }
 
-export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueColumn }: StackedBarChartProps) {
+export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueColumn, filter }: StackedBarChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,8 +30,7 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
     useEffect(() => {
         async function load() {
             if (!datasetId || !categoryColumn || !stackColumn) {
-                setError('Missing required parameters');
-                setLoading(false);
+                // validation...
                 return;
             }
 
@@ -36,6 +41,12 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
                 let url = `${API_BASE}/datasets/${datasetId}/stacked-bar?category_column=${encodeURIComponent(categoryColumn)}&stack_column=${encodeURIComponent(stackColumn)}`;
                 if (valueColumn) {
                     url += `&value_column=${encodeURIComponent(valueColumn)}`;
+                }
+
+                if (filter) {
+                    url += `&filter_column=${encodeURIComponent(filter.column)}`;
+                    url += `&filter_operator=${encodeURIComponent(filter.operator)}`;
+                    url += `&filter_value=${encodeURIComponent(String(filter.value))}`;
                 }
 
                 const res = await fetch(url);
@@ -53,7 +64,7 @@ export function StackedBarChart({ datasetId, categoryColumn, stackColumn, valueC
             }
         }
         load();
-    }, [datasetId, categoryColumn, stackColumn, valueColumn]);
+    }, [datasetId, categoryColumn, stackColumn, valueColumn, filter]);
 
     if (loading) {
         return (

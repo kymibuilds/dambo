@@ -24,8 +24,22 @@ export interface CorrelationData {
     matrix: (number | null)[][];
 }
 
-export async function fetchHistogram(datasetId: string, column: string): Promise<HistogramData> {
-    const url = `${API_BASE}/datasets/${datasetId}/histogram?column=${encodeURIComponent(column)}`;
+
+export interface ChartFilter {
+    column: string;
+    operator: string;
+    value: string | number;
+}
+
+function appendFilterParams(url: string, filter?: ChartFilter): string {
+    if (!filter) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}filter_column=${encodeURIComponent(filter.column)}&filter_operator=${encodeURIComponent(filter.operator)}&filter_value=${encodeURIComponent(String(filter.value))}`;
+}
+
+export async function fetchHistogram(datasetId: string, column: string, filter?: ChartFilter): Promise<HistogramData> {
+    let url = `${API_BASE}/datasets/${datasetId}/histogram?column=${encodeURIComponent(column)}`;
+    url = appendFilterParams(url, filter);
     const res = await fetch(url);
     if (!res.ok) {
         const errorText = await res.text();
@@ -34,8 +48,10 @@ export async function fetchHistogram(datasetId: string, column: string): Promise
     return res.json();
 }
 
-export async function fetchBar(datasetId: string, column: string): Promise<BarData> {
-    const res = await fetch(`${API_BASE}/datasets/${datasetId}/bar?column=${encodeURIComponent(column)}`);
+export async function fetchBar(datasetId: string, column: string, filter?: ChartFilter): Promise<BarData> {
+    let url = `${API_BASE}/datasets/${datasetId}/bar?column=${encodeURIComponent(column)}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
     if (!res.ok) {
         const errorText = await res.text();
         throw new Error(`Failed to fetch bar chart: ${res.statusText} - ${errorText}`);
@@ -43,8 +59,9 @@ export async function fetchBar(datasetId: string, column: string): Promise<BarDa
     return res.json();
 }
 
-export async function fetchScatter(datasetId: string, x: string, y: string): Promise<ScatterData> {
-    const url = `${API_BASE}/datasets/${datasetId}/scatter?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}`;
+export async function fetchScatter(datasetId: string, x: string, y: string, filter?: ChartFilter): Promise<ScatterData> {
+    let url = `${API_BASE}/datasets/${datasetId}/scatter?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}`;
+    url = appendFilterParams(url, filter);
     console.log('[DEBUG] fetchScatter URL:', url);
     const res = await fetch(url);
     if (!res.ok) {
@@ -55,8 +72,10 @@ export async function fetchScatter(datasetId: string, x: string, y: string): Pro
     return res.json();
 }
 
-export async function fetchCorrelation(datasetId: string): Promise<CorrelationData> {
-    const res = await fetch(`${API_BASE}/datasets/${datasetId}/correlation`);
+export async function fetchCorrelation(datasetId: string, filter?: ChartFilter): Promise<CorrelationData> {
+    let url = `${API_BASE}/datasets/${datasetId}/correlation`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Failed to fetch correlation: ${res.statusText}`);
     return res.json();
 }
@@ -64,6 +83,64 @@ export async function fetchCorrelation(datasetId: string): Promise<CorrelationDa
 export async function fetchDatasetProfile(datasetId: string): Promise<any> {
     const res = await fetch(`${API_BASE}/datasets/${datasetId}/profile`);
     if (!res.ok) throw new Error(`Failed to fetch profile: ${res.statusText}`);
+    return res.json();
+}
+
+// ... (Rest of the file remains unchanged, but need to check if new charts need updates too)
+
+// New Chart Fetchers
+// I need to add filter support to these too, viewing the file showed they exist but are not in the replace block above if I cut it off.
+// Let me verify the file content again or just assume they are there and I should replace them too.
+// The previous view_file showed lines 1-190.
+// I'll replace the whole file content related to fetchers.
+
+export async function fetchLineChart(datasetId: string, dateColumn: string, valueColumn: string, groupColumn?: string, filter?: ChartFilter): Promise<any> {
+    let url = `${API_BASE}/datasets/${datasetId}/line?date_column=${encodeURIComponent(dateColumn)}&value_column=${encodeURIComponent(valueColumn)}`;
+    if (groupColumn) url += `&group_column=${encodeURIComponent(groupColumn)}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch line chart: ${res.statusText}`);
+    return res.json();
+}
+
+export async function fetchPieChart(datasetId: string, column: string, limit: number = 10, filter?: ChartFilter): Promise<any> {
+    let url = `${API_BASE}/datasets/${datasetId}/pie?column=${encodeURIComponent(column)}&limit=${limit}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch pie chart: ${res.statusText}`);
+    return res.json();
+}
+
+export async function fetchAreaChart(datasetId: string, dateColumn: string, valueColumn: string, stackColumn: string, filter?: ChartFilter): Promise<any> {
+    let url = `${API_BASE}/datasets/${datasetId}/area?date_column=${encodeURIComponent(dateColumn)}&value_column=${encodeURIComponent(valueColumn)}&stack_column=${encodeURIComponent(stackColumn)}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch area chart: ${res.statusText}`);
+    return res.json();
+}
+
+export async function fetchBoxPlot(datasetId: string, column: string, filter?: ChartFilter): Promise<any> {
+    let url = `${API_BASE}/datasets/${datasetId}/boxplot?column=${encodeURIComponent(column)}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch boxplot: ${res.statusText}`);
+    return res.json();
+}
+
+export async function fetchTreemap(datasetId: string, groupColumns: string, valueColumn: string, filter?: ChartFilter): Promise<any> {
+    let url = `${API_BASE}/datasets/${datasetId}/treemap?group_columns=${encodeURIComponent(groupColumns)}&value_column=${encodeURIComponent(valueColumn)}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch treemap: ${res.statusText}`);
+    return res.json();
+}
+
+export async function fetchStackedBar(datasetId: string, categoryColumn: string, stackColumn: string, valueColumn?: string, filter?: ChartFilter): Promise<any> {
+    let url = `${API_BASE}/datasets/${datasetId}/stacked-bar?category_column=${encodeURIComponent(categoryColumn)}&stack_column=${encodeURIComponent(stackColumn)}`;
+    if (valueColumn) url += `&value_column=${encodeURIComponent(valueColumn)}`;
+    url = appendFilterParams(url, filter);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch stacked bar: ${res.statusText}`);
     return res.json();
 }
 

@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchCorrelation, type CorrelationData } from '@/lib/api/visualizations';
+import { fetchCorrelation, type CorrelationData, ChartFilter } from '@/lib/api/visualizations';
 import { Loader2 } from 'lucide-react';
 
 interface CorrelationHeatmapProps {
     datasetId: string;
+    filter?: ChartFilter;
 }
 
 // Returns a gradient color based on correlation value
@@ -34,7 +35,7 @@ function getTextColor(value: number | null): string {
     return 'text-gray-700 dark:text-zinc-200';
 }
 
-export function CorrelationHeatmap({ datasetId }: CorrelationHeatmapProps) {
+export function CorrelationHeatmap({ datasetId, filter }: CorrelationHeatmapProps) {
     const [data, setData] = useState<CorrelationData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export function CorrelationHeatmap({ datasetId }: CorrelationHeatmapProps) {
         async function load() {
             try {
                 setLoading(true);
-                const res = await fetchCorrelation(datasetId);
+                const res = await fetchCorrelation(datasetId, filter);
                 setData(res);
                 setError(null);
             } catch (err) {
@@ -54,7 +55,7 @@ export function CorrelationHeatmap({ datasetId }: CorrelationHeatmapProps) {
             }
         }
         load();
-    }, [datasetId]);
+    }, [datasetId, filter]);
 
     if (loading) {
         return (

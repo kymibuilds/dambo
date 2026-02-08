@@ -37,6 +37,7 @@ export interface FlowCanvasRef {
     addMultipleChartNodes: (configs: ChartNodeConfig[]) => string[];
     addEdgeBetweenNodes: (sourceId: string, targetId: string, animated?: boolean) => void;
     addAnalysisCluster: (datasetName: string, configs: ChartNodeConfig[]) => { parentId: string; childIds: string[] };
+    updateNodeChartData: (nodeId: string, label: string, chartData: ChartData) => boolean;
     getNodeCount: () => number;
     getState: () => { nodes: DataNodeType[]; edges: Edge[] };
     clearCanvas: () => void;
@@ -465,6 +466,35 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         return { parentId, childIds: childNodes.map(n => n.id) };
     }, [nodes, setNodes, setEdges]);
 
+    // Update an existing node's chart data (for smart node chat)
+    const updateNodeChartData = useCallback((nodeId: string, label: string, chartData: ChartData): boolean => {
+        const existingNode = nodes.find(n => n.id === nodeId);
+        if (!existingNode) return false;
+
+        setNodes((nds) => nds.map(n => {
+            if (n.id === nodeId) {
+                return {
+                    ...n,
+                    data: { ...n.data, label, chartData }
+                };
+            }
+            return n;
+        }));
+
+        // Auto-pan to the updated node
+        const nodeWidth = (existingNode.style?.width as number) || DEFAULT_NODE_WIDTH;
+        const nodeHeight = (existingNode.style?.height as number) || DEFAULT_NODE_HEIGHT;
+        setTimeout(() => {
+            setCenter(
+                existingNode.position.x + nodeWidth / 2,
+                existingNode.position.y + nodeHeight / 2,
+                { zoom: 0.6, duration: 500 }
+            );
+        }, 100);
+
+        return true;
+    }, [nodes, setNodes, setCenter]);
+
     // Expose methods to parent via ref
     useImperativeHandle(ref, () => ({
         addChartNode,
@@ -472,11 +502,12 @@ const FlowMain = forwardRef<FlowCanvasRef, FlowCanvasProps>(({ onNodeSelect, onQ
         addMultipleChartNodes,
         addEdgeBetweenNodes,
         addAnalysisCluster,
+        updateNodeChartData,
         getNodeCount,
         getState,
         clearCanvas,
         setInitialState,
-    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, addAnalysisCluster, getNodeCount, getState, clearCanvas, setInitialState]);
+    }), [addChartNode, addEmptyNode, addMultipleChartNodes, addEdgeBetweenNodes, addAnalysisCluster, updateNodeChartData, getNodeCount, getState, clearCanvas, setInitialState]);
 
     const onSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
         if (onNodeSelect) {

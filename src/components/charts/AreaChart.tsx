@@ -9,14 +9,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // Color palette for stacked areas
 const AREA_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F', '#FFBB28', '#FF8042'];
 
+
+import { ChartFilter } from '@/lib/api/visualizations';
+
 interface AreaChartProps {
     datasetId?: string;
     dateColumn?: string;
     valueColumn?: string;
     stackColumn?: string;
+    filter?: ChartFilter;
+    color?: string;
 }
 
-export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn }: AreaChartProps) {
+export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn, filter, color }: AreaChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,8 +29,7 @@ export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn }: A
     useEffect(() => {
         async function load() {
             if (!datasetId || !dateColumn || !valueColumn || !stackColumn) {
-                setError('Missing required parameters');
-                setLoading(false);
+                // validation...
                 return;
             }
 
@@ -33,7 +37,13 @@ export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn }: A
                 setLoading(true);
                 setError(null);
 
-                const url = `${API_BASE}/datasets/${datasetId}/area?date_column=${encodeURIComponent(dateColumn)}&value_column=${encodeURIComponent(valueColumn)}&stack_column=${encodeURIComponent(stackColumn)}`;
+                let url = `${API_BASE}/datasets/${datasetId}/area?date_column=${encodeURIComponent(dateColumn)}&value_column=${encodeURIComponent(valueColumn)}&stack_column=${encodeURIComponent(stackColumn)}`;
+
+                if (filter) {
+                    url += `&filter_column=${encodeURIComponent(filter.column)}`;
+                    url += `&filter_operator=${encodeURIComponent(filter.operator)}`;
+                    url += `&filter_value=${encodeURIComponent(String(filter.value))}`;
+                }
 
                 const res = await fetch(url);
                 if (!res.ok) {
@@ -50,7 +60,7 @@ export function AreaChart({ datasetId, dateColumn, valueColumn, stackColumn }: A
             }
         }
         load();
-    }, [datasetId, dateColumn, valueColumn, stackColumn]);
+    }, [datasetId, dateColumn, valueColumn, stackColumn, filter]);
 
     if (loading) {
         return (

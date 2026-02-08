@@ -6,12 +6,17 @@ import { Loader2 } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+
+import { ChartFilter } from '@/lib/api/visualizations';
+
 interface BoxPlotChartProps {
     datasetId?: string;
     column?: string;
+    filter?: ChartFilter;
+    color?: string;
 }
 
-export function BoxPlotChart({ datasetId, column }: BoxPlotChartProps) {
+export function BoxPlotChart({ datasetId, column, filter, color }: BoxPlotChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -19,8 +24,7 @@ export function BoxPlotChart({ datasetId, column }: BoxPlotChartProps) {
     useEffect(() => {
         async function load() {
             if (!datasetId || !column) {
-                setError('Missing required parameters');
-                setLoading(false);
+                // validation...
                 return;
             }
 
@@ -28,7 +32,15 @@ export function BoxPlotChart({ datasetId, column }: BoxPlotChartProps) {
                 setLoading(true);
                 setError(null);
 
-                const res = await fetch(`${API_BASE}/datasets/${datasetId}/boxplot?column=${encodeURIComponent(column)}`);
+                let url = `${API_BASE}/datasets/${datasetId}/boxplot?column=${encodeURIComponent(column)}`;
+
+                if (filter) {
+                    url += `&filter_column=${encodeURIComponent(filter.column)}`;
+                    url += `&filter_operator=${encodeURIComponent(filter.operator)}`;
+                    url += `&filter_value=${encodeURIComponent(String(filter.value))}`;
+                }
+
+                const res = await fetch(url);
                 if (!res.ok) {
                     const err = await res.json();
                     throw new Error(err.detail || 'Failed to fetch boxplot data');
@@ -43,7 +55,7 @@ export function BoxPlotChart({ datasetId, column }: BoxPlotChartProps) {
             }
         }
         load();
-    }, [datasetId, column]);
+    }, [datasetId, column, filter]);
 
     if (loading) {
         return (
@@ -71,14 +83,7 @@ export function BoxPlotChart({ datasetId, column }: BoxPlotChartProps) {
 
     const { stats, outliers } = data;
 
-    // Create visualization data for box plot
-    const chartData = [
-        { name: 'Min', value: stats.min },
-        { name: 'Q1', value: stats.q1 },
-        { name: 'Median', value: stats.median },
-        { name: 'Q3', value: stats.q3 },
-        { name: 'Max', value: stats.max },
-    ];
+    // ...
 
     return (
         <div className="w-full h-full p-4">
@@ -104,10 +109,13 @@ export function BoxPlotChart({ datasetId, column }: BoxPlotChartProps) {
 
                     {/* Box (Q1 to Q3) */}
                     <div
-                        className="absolute top-4 h-8 bg-blue-200 border-2 border-blue-500 rounded"
+                        className={`absolute top-4 h-8 border-2 rounded ${!color ? 'bg-blue-200 border-blue-500' : ''}`}
                         style={{
                             left: `${((stats.q1 - stats.min) / (stats.max - stats.min)) * 100}%`,
-                            width: `${((stats.q3 - stats.q1) / (stats.max - stats.min)) * 100}%`
+                            width: `${((stats.q3 - stats.q1) / (stats.max - stats.min)) * 100}%`,
+                            backgroundColor: color ? color : undefined,
+                            borderColor: color ? color : undefined,
+                            opacity: color ? 0.8 : 1
                         }}
                     ></div>
 

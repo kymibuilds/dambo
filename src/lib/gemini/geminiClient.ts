@@ -260,3 +260,129 @@ function fuzzyMatchColumn(search: string, columns: string[]): string | null {
     return null;
 }
 
+// ============ CHART MODIFICATION PARSING ============
+
+export interface ChartModificationResult {
+    action: 'change_type' | 'change_column' | 'add_filter' | 'change_both' | 'unknown';
+    newChartType?: string;
+    newColumn?: string;
+    filter?: {
+        column: string;
+        operator: '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains';
+        value: number | string;
+    };
+    explanation?: string;
+}
+
+/**
+ * Parse a user's chart modification request using Gemini.
+ * Used in node personal chat to understand what changes the user wants.
+ */
+export async function parseChartModification(
+    userMessage: string,
+    currentChartType: string,
+    currentColumn: string | undefined,
+    availableColumns: string[],
+    datasetId: string
+): Promise<ChartModificationResult> {
+    // Default result for when Gemini can't be used
+    const defaultResult: ChartModificationResult = { action: 'unknown' };
+
+    if (!apiKey) {
+        console.warn('[Gemini] No API key for chart modification parsing');
+        return defaultResult;
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.0-flash',
+            generationConfig: {
+                responseMimeType: 'application/json',
+            },
+        });
+
+        const prompt = `
+    You are an expert data visualization assistant. Your goal is to understand how the user wants to modify their current chart.
+    
+    Current State:
+    - Chart Type: ${currentChartType}
+    - Current Column: ${currentColumn || 'None'}
+    - Available Columns: ${JSON.stringify(availableColumns)}
+    - User Request: "${userMessage}"
+    
+    Determine the user's intent:
+    1. Change Chart Type (e.g., "make it a pie chart", "show as bar")
+       - Output action: "change_type"
+       - valid types: bar_chart, pie_chart, line_chart, scatter_chart, histogram_chart, boxplot_chart, area_chart, treemap_chart
+       
+    2. Change Column/Variable (e.g., "show Age instead", "change to Salary")
+       - Output action: "change_column"
+       - Match the user's requested column to one of the Available Columns.
+       
+    3. Add/Update Filter (e.g., "show count > 100", "only where City is New York", "filter values below 50")
+       - Output action: "add_filter"
+       - Extract filter details: column, operator, value
+       
+    4. Change Both Type and Column (e.g., "show histogram of Age", "plot Salary as line chart")
+       - Output action: "change_both"
+       
+    5. Change Style/Color (e.g., "make it red", "change color to #ff0000", "use purple theme")
+       - Output action: "change_style"
+       - Extract color: hex code or standard color name (e.g. "red", "blue", "#FF5733")
+
+    6. Unknown/Unclear
+       - If the request is not related to chart modification or is unintelligible.
+       - Output action: "unknown"
+
+    Return a JSON object with:
+    - action: string
+    - newChartType: string (optional)
+    - newColumn: string (optional)
+    - filter: { column, operator, value } (optional)
+    - color: string (optional)
+    - explanation: short description of what you did (e.g., "Changed chart to Pie Chart")
+    
+    Response format:
+    {
+      "action": "change_type",
+      "newChartType": "pie_chart",
+      "explanation": "Switched to pie chart view"
+    }
+    `;
+
+        console.log('[Gemini] Parsing chart modification:', userMessage);
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+
+        console.log('[Gemini] Modification parse result:', responseText);
+
+        const parsed = JSON.parse(responseText) as ChartModificationResult;
+
+        // Basic validation
+        if (parsed.action === 'change_column' || parsed.action === 'change_both') {
+            if (parsed.newColumn && !availableColumns.includes(parsed.newColumn)) {
+                // Try to fuzzy match
+                const match = availableColumns.find(c => c.toLowerCase() === parsed.newColumn?.toLowerCase());
+                if (match) parsed.newColumn = match;
+            }
+        }
+
+        // Validate filter column if present
+        if (parsed.filter?.column) {
+            const match = availableColumns.find(c => c.toLowerCase() === parsed.filter!.column.toLowerCase());
+            if (match) {
+                parsed.filter.column = match;
+            } else {
+                // Default to current column if filter column invalid, or first available column
+                parsed.filter.column = currentColumn || availableColumns[0];
+            }
+        }
+
+        return parsed;
+    } catch (error) {
+        console.error('[Gemini] Chart modification parse error:', error);
+        return defaultResult;
+    }
+}

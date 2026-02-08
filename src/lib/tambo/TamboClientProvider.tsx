@@ -26,6 +26,11 @@ const components = [
             datasetId: z.string().describe('The ID of the dataset to visualize'),
             column: z.string().describe('The name of the numeric column to plot (e.g., Salary, Age, Experience_Years). REQUIRED.'),
             bins: z.number().optional().describe('Number of bins (default: 10)'),
+            filter: z.object({
+                column: z.string().describe('Column to filter on'),
+                operator: z.enum(['>', '<', '>=', '<=', '==', '!=', 'contains']).describe('Comparison operator'),
+                value: z.union([z.string(), z.number()]).describe('Value to compare against'),
+            }).optional().describe('Optional filter to apply to data (e.g., show only Age > 30)'),
         }),
     },
     {
@@ -35,6 +40,11 @@ const components = [
         propsSchema: z.object({
             datasetId: z.string().describe('The ID of the dataset to visualize'),
             column: z.string().describe('The name of the categorical column to plot (e.g., City, Department, Employment_Type). REQUIRED.'),
+            filter: z.object({
+                column: z.string().describe('Column to filter on'),
+                operator: z.enum(['>', '<', '>=', '<=', '==', '!=', 'contains']).describe('Comparison operator'),
+                value: z.union([z.string(), z.number()]).describe('Value to compare against'),
+            }).optional().describe('Optional filter to apply to data'),
         }),
     },
     {
@@ -46,6 +56,11 @@ const components = [
             x: z.string().describe('Column for X axis (e.g., Age, Experience_Years). MUST be numeric. REQUIRED.'),
             y: z.string().describe('Column for Y axis (e.g., Salary, Performance_Score). MUST be numeric. REQUIRED.'),
             color: z.string().optional().describe('Dot color. Options: red, blue, green, purple, orange, pink, yellow, cyan, indigo, teal. Default: indigo'),
+            filter: z.object({
+                column: z.string().describe('Column to filter on'),
+                operator: z.enum(['>', '<', '>=', '<=', '==', '!=', 'contains']).describe('Comparison operator'),
+                value: z.union([z.string(), z.number()]).describe('Value to compare against'),
+            }).optional().describe('Optional filter to apply to data'),
         }),
     },
     {
@@ -77,6 +92,11 @@ const components = [
             column: z.string().describe('The categorical column to show breakdown for (e.g., product_category, region). REQUIRED.'),
             limit: z.number().optional().describe('Maximum number of slices (default: 10, groups rest as "Other").'),
             donut: z.boolean().optional().describe('Set to true for donut chart style (hollow center).'),
+            filter: z.object({
+                column: z.string().describe('Column to filter on'),
+                operator: z.enum(['>', '<', '>=', '<=', '==', '!=', 'contains']).describe('Comparison operator'),
+                value: z.union([z.string(), z.number()]).describe('Value to compare against'),
+            }).optional().describe('Optional filter to apply to data'),
         }),
     },
     {
@@ -97,6 +117,11 @@ const components = [
         propsSchema: z.object({
             datasetId: z.string().describe('The ID of the dataset to visualize'),
             column: z.string().describe('The numeric column to analyze (e.g., sales_amount, customer_age). REQUIRED.'),
+            filter: z.object({
+                column: z.string().describe('Column to filter on'),
+                operator: z.enum(['>', '<', '>=', '<=', '==', '!=', 'contains']).describe('Comparison operator'),
+                value: z.union([z.string(), z.number()]).describe('Value to compare against'),
+            }).optional().describe('Optional filter to apply to data'),
         }),
     },
     {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Treemap as RechartsTreemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { ChartFilter } from '@/lib/api/visualizations';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -13,6 +14,7 @@ interface TreemapChartProps {
     datasetId?: string;
     groupColumns?: string; // comma-separated
     valueColumn?: string;
+    filter?: ChartFilter;
 }
 
 // Custom content component for treemap cells
@@ -62,7 +64,7 @@ const CustomizedContent = (props: any) => {
     );
 };
 
-export function TreemapChart({ datasetId, groupColumns, valueColumn }: TreemapChartProps) {
+export function TreemapChart({ datasetId, groupColumns, valueColumn, filter }: TreemapChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -70,8 +72,7 @@ export function TreemapChart({ datasetId, groupColumns, valueColumn }: TreemapCh
     useEffect(() => {
         async function load() {
             if (!datasetId || !groupColumns || !valueColumn) {
-                setError('Missing required parameters');
-                setLoading(false);
+                // validation...
                 return;
             }
 
@@ -79,7 +80,13 @@ export function TreemapChart({ datasetId, groupColumns, valueColumn }: TreemapCh
                 setLoading(true);
                 setError(null);
 
-                const url = `${API_BASE}/datasets/${datasetId}/treemap?group_columns=${encodeURIComponent(groupColumns)}&value_column=${encodeURIComponent(valueColumn)}`;
+                let url = `${API_BASE}/datasets/${datasetId}/treemap?group_columns=${encodeURIComponent(groupColumns)}&value_column=${encodeURIComponent(valueColumn)}`;
+
+                if (filter) {
+                    url += `&filter_column=${encodeURIComponent(filter.column)}`;
+                    url += `&filter_operator=${encodeURIComponent(filter.operator)}`;
+                    url += `&filter_value=${encodeURIComponent(String(filter.value))}`;
+                }
 
                 const res = await fetch(url);
                 if (!res.ok) {
@@ -96,7 +103,7 @@ export function TreemapChart({ datasetId, groupColumns, valueColumn }: TreemapCh
             }
         }
         load();
-    }, [datasetId, groupColumns, valueColumn]);
+    }, [datasetId, groupColumns, valueColumn, filter]);
 
     if (loading) {
         return (

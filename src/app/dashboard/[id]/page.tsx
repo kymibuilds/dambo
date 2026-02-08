@@ -25,7 +25,7 @@ import { type ChartData, type ChartType } from "@/components/canvas/nodes/DataNo
 import { getProject, type Project } from "@/lib/api/projects";
 import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
 import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
-import { extractChartColumnsWithCache } from "@/lib/gemini/geminiClient";
+import { extractChartColumnsWithCache, parseChartModification } from "@/lib/gemini/geminiClient";
 import { useQuickAnalysis } from "@/lib/hooks/useQuickAnalysis";
 import type { QuickAnalysisData } from "@/lib/api/visualizations";
 import { loadCanvasState, saveCanvasState, clearCanvasState, loadChats, saveChats, type ChatItem } from "@/lib/api/persistence";
@@ -707,8 +707,30 @@ function ProjectPageContent() {
                         // Mark message as processed
                         processedMessageIds.current.add(msg.id);
 
-                        if (chartConfigs.length === 1) {
-                            // Single chart - use simple addChartNode
+                        // Check if this message came from a node chat using pendingChatIdRef
+                        // (nodeMessageIdsRef has timing issues - it's set 500ms after send)
+                        const pendingNodeId = pendingChatIdRef.current;
+                        const isFromNodeChat = pendingNodeId && pendingNodeId !== 'initial';
+
+                        if (isFromNodeChat && chartConfigs.length === 1) {
+                            // Update the existing node instead of adding a new one
+                            const success = flowCanvasRef.current.updateNodeChartData(
+                                pendingNodeId,
+                                chartConfigs[0].label,
+                                chartConfigs[0].chartData
+                            );
+                            if (success) {
+                                console.log('[Node Chat] Updated existing node:', pendingNodeId);
+                            } else {
+                                // Fallback: add as new node if update failed
+                                console.log('[Node Chat] Update failed, adding new node');
+                                flowCanvasRef.current.addChartNode(
+                                    chartConfigs[0].label,
+                                    chartConfigs[0].chartData
+                                );
+                            }
+                        } else if (chartConfigs.length === 1) {
+                            // Single chart from general chat - use simple addChartNode
                             flowCanvasRef.current.addChartNode(
                                 chartConfigs[0].label,
                                 chartConfigs[0].chartData
@@ -757,6 +779,181 @@ function ProjectPageContent() {
             return c;
         }));
 
+        // ============ GEMINI-POWERED NODE CHAT ============
+        // If chatting from a node, use Gemini to parse and execute chart modifications directly
+        if (activeChatId !== 'initial' && flowCanvasRef.current) {
+            const canvasState = flowCanvasRef.current.getState();
+            const currentNode = canvasState.nodes.find(n => n.id === activeChatId);
+            const currentChartData = currentNode?.data?.chartData;
+
+            if (currentChartData) {
+                const datasetId = (currentChartData.props as Record<string, unknown>).datasetId as string;
+                const currentColumn = (currentChartData.props as Record<string, unknown>).column as string | undefined;
+                const currentX = (currentChartData.props as Record<string, unknown>).x as string | undefined;
+
+                // Get available columns
+                const datasetProfile = datasetProfiles[datasetId];
+                const availableColumns = datasetProfile?.columns?.map((c: { name: string }) => c.name) || [];
+
+                if (availableColumns.length > 0) {
+                    try {
+                        // Use Gemini to understand what the user wants
+                        const modification = await parseChartModification(
+                            userMessage,
+                            currentChartData.type,
+                            currentColumn || currentX,
+                            availableColumns,
+                            datasetId
+                        );
+
+                        console.log('[Gemini Node Chat] Parsed modification:', modification);
+
+                        // Handle the modification directly
+                        if (modification.action !== 'unknown') {
+                            let newChartData = { ...currentChartData };
+                            let newLabel = currentNode?.data?.label || 'Chart';
+
+                            // Apply the modification
+                            if (modification.action === 'change_type' && modification.newChartType) {
+                                // Check for incompatible chart types
+                                const simpleCharts = ['bar_chart', 'pie_chart', 'histogram_chart', 'boxplot_chart'];
+                                const complexCharts = ['line_chart', 'area_chart', 'scatter_chart'];
+
+                                const targetType = modification.newChartType;
+
+                                if (complexCharts.includes(targetType)) {
+                                    // Can't convert from simple to complex charts without proper columns
+                                    setLocalChats(prev => prev.map(c => {
+                                        if (c.id === activeChatId) {
+                                            return {
+                                                ...c,
+                                                messages: [...c.messages, {
+                                                    role: 'assistant',
+                                                    content: `⚠️ Cannot convert to ${targetType.replace('_chart', '')} chart. This chart type requires different columns (date/value columns for line charts, x/y columns for scatter charts). Try: bar, pie, histogram, or boxplot instead.`
+                                                }]
+                                            };
+                                        }
+                                        return c;
+                                    }));
+                                    setIsWaitingForResponse(false);
+                                    return;
+                                }
+
+                                newChartData = {
+                                    type: targetType as typeof currentChartData.type,
+                                    props: {
+                                        datasetId,
+                                        column: currentColumn || currentX,
+                                    }
+                                };
+                                newLabel = `${currentColumn || currentX} (${targetType.replace('_chart', '')})`;
+                            } else if (modification.action === 'change_column' && modification.newColumn) {
+                                newChartData = {
+                                    type: currentChartData.type,
+                                    props: {
+                                        ...(currentChartData.props as Record<string, unknown>),
+                                        column: modification.newColumn,
+                                    }
+                                };
+                                newLabel = `${modification.newColumn} Distribution`;
+                            } else if (modification.action === 'add_filter' && modification.filter) {
+                                newChartData = {
+                                    type: currentChartData.type,
+                                    props: {
+                                        ...(currentChartData.props as Record<string, unknown>),
+                                        filter: modification.filter,
+                                    }
+                                };
+                                newLabel = `${currentColumn || currentX} (filtered: ${modification.filter.operator} ${modification.filter.value})`;
+                            } else if (modification.action === 'change_style' && modification.color) {
+                                newChartData = {
+                                    type: currentChartData.type,
+                                    props: {
+                                        ...(currentChartData.props as Record<string, unknown>),
+                                        color: modification.color,
+                                    }
+                                };
+                                // Don't change label for style changes
+                            } else if (modification.action === 'change_both') {
+                                const simpleCharts = ['bar_chart', 'pie_chart', 'histogram_chart', 'boxplot_chart'];
+                                const targetType = modification.newChartType || currentChartData.type;
+
+                                if (!simpleCharts.includes(targetType)) {
+                                    setLocalChats(prev => prev.map(c => {
+                                        if (c.id === activeChatId) {
+                                            return {
+                                                ...c,
+                                                messages: [...c.messages, {
+                                                    role: 'assistant',
+                                                    content: `⚠️ Cannot convert to ${targetType.replace('_chart', '')} chart from the current data. Try: bar, pie, histogram, or boxplot.`
+                                                }]
+                                            };
+                                        }
+                                        return c;
+                                    }));
+                                    setIsWaitingForResponse(false);
+                                    return;
+                                }
+
+                                newChartData = {
+                                    type: targetType as typeof currentChartData.type,
+                                    props: {
+                                        datasetId,
+                                        column: modification.newColumn || currentColumn,
+                                    }
+                                };
+                                newLabel = `${modification.newColumn || currentColumn} (${targetType.replace('_chart', '')})`;
+                            }
+
+                            // Update the node
+                            const success = flowCanvasRef.current.updateNodeChartData(
+                                activeChatId,
+                                newLabel,
+                                newChartData
+                            );
+
+                            // Add response to chat
+                            const responseMessage = success
+                                ? `✅ ${modification.explanation || 'Chart updated successfully!'}`
+                                : `❌ Failed to update chart. Please try again.`;
+
+                            setLocalChats(prev => prev.map(c => {
+                                if (c.id === activeChatId) {
+                                    return {
+                                        ...c,
+                                        messages: [...c.messages, { role: 'assistant', content: responseMessage }]
+                                    };
+                                }
+                                return c;
+                            }));
+
+                            setIsWaitingForResponse(false);
+                            return; // Don't send to Tambo - we handled it directly
+                        } else {
+                            // Handle 'unknown' action - likely a style change or unsupported request
+                            setLocalChats(prev => prev.map(c => {
+                                if (c.id === activeChatId) {
+                                    return {
+                                        ...c,
+                                        messages: [...c.messages, {
+                                            role: 'assistant',
+                                            content: `💡 I can help you with:\n• **Change chart type**: "show as pie chart", "make it a bar chart"\n• **Change column**: "show Age instead", "change to Department"\n• **Add filter**: "show count > 100", "filter values above 50"\n• **Change style**: "make it red", "change color to blue"`
+                                        }]
+                                    };
+                                }
+                                return c;
+                            }));
+                            setIsWaitingForResponse(false);
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('[Gemini Node Chat] Error:', error);
+                        // Fall through to Tambo if Gemini fails
+                    }
+                }
+            }
+        }
+
         try {
             // Build rich context with dataset profiles for the AI
             const datasetsContext = projectFiles.map(f => {
@@ -797,12 +994,49 @@ function ProjectPageContent() {
             if (activeChatId !== 'initial') {
                 const activeNodeChat = localChats.find(c => c.id === activeChatId);
                 if (activeNodeChat) {
+                    // Get current chart data from the canvas
+                    const canvasState = flowCanvasRef.current?.getState();
+                    const currentNode = canvasState?.nodes.find(n => n.id === activeChatId);
+                    const currentChartData = currentNode?.data?.chartData;
+
+                    // Get available columns from dataset profiles for this dataset
+                    const datasetId = (currentChartData?.props as Record<string, unknown>)?.datasetId as string | undefined;
+                    const datasetProfile = datasetId ? datasetProfiles[datasetId] : null;
+                    const availableColumns = datasetProfile?.columns?.map((c: { name: string }) => c.name) || [];
+
                     context.activeNode = {
                         id: activeChatId,
                         label: activeNodeChat.title,
-                        isSpecificContext: true
+                        isSpecificContext: true,
+                        currentChart: currentChartData ? {
+                            type: currentChartData.type,
+                            props: currentChartData.props,
+                        } : null,
                     };
-                    console.log('[DEBUG] Added node context:', context.activeNode);
+
+                    // Get current column being displayed
+                    const currentColumn = (currentChartData?.props as Record<string, unknown>)?.column as string | undefined;
+                    const currentX = (currentChartData?.props as Record<string, unknown>)?.x as string | undefined;
+                    const currentY = (currentChartData?.props as Record<string, unknown>)?.y as string | undefined;
+
+                    // Add instruction for chart modification with available columns
+                    context.systemInstruction = `You are modifying a specific chart node.
+
+CURRENT CHART: ${currentChartData?.type || 'None'}
+CURRENT COLUMN(S): ${currentColumn || currentX || 'Unknown'} ${currentY ? `vs ${currentY}` : ''}
+DATASET ID: ${datasetId || 'Unknown'}
+AVAILABLE COLUMNS: ${availableColumns.join(', ') || 'Unknown'}
+
+INSTRUCTIONS:
+1. When user asks to change chart type (e.g., "show as pie chart"), keep the SAME column (${currentColumn || currentX || 'the current one'}) and datasetId.
+2. When user asks to filter (e.g., "show count > 100"), add filter prop: { column: "${currentColumn || 'column_name'}", operator: ">", value: 100 }
+3. ALWAYS use exact column names from AVAILABLE COLUMNS list above - never guess!
+4. Always include the datasetId: "${datasetId}"
+
+Current props: ${JSON.stringify(currentChartData?.props || {})}`;
+
+                    console.log('[DEBUG] Added node context with chart:', context.activeNode);
+                    console.log('[DEBUG] Available columns:', availableColumns);
                 }
             }
 

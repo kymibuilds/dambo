@@ -19,18 +19,71 @@ def _make_serializable(value: Any) -> Any:
     return value
 
 
-def get_histogram(df: pd.DataFrame, column: str, bins: int = 10) -> dict:
+
+def apply_filter(df: pd.DataFrame, column: str = None, operator: str = None, value: Any = None) -> pd.DataFrame:
+    """
+    Apply a filter to the DataFrame.
+    """
+    if not column or not operator or value is None:
+        return df
+
+    if column not in df.columns:
+        # If filter column doesn't exist, ignore it (or could raise error)
+        return df
+
+    try:
+        series = df[column]
+        
+        # Handle numeric comparison
+        if pd.api.types.is_numeric_dtype(series):
+            num_value = float(value)
+            if operator == '>':
+                return df[series > num_value]
+            elif operator == '<':
+                return df[series < num_value]
+            elif operator == '>=':
+                return df[series >= num_value]
+            elif operator == '<=':
+                return df[series <= num_value]
+            elif operator == '==':
+                return df[series == num_value]
+            elif operator == '!=':
+                return df[series != num_value]
+        
+        # Handle string comparison
+        else:
+            str_value = str(value)
+            if operator == '==':
+                return df[series == str_value]
+            elif operator == '!=':
+                return df[series != str_value]
+            elif operator == 'contains':
+                return df[series.astype(str).str.contains(str_value, case=False, na=False)]
+            
+    except Exception as e:
+        print(f"Filter application failed: {e}")
+        return df
+
+    return df
+
+
+def get_histogram(df: pd.DataFrame, column: str, bins: int = 10, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute histogram data for a numeric column.
     Returns bins and counts for chart rendering.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if column not in df.columns:
         raise ValueError(f"Column not found: {column}")
 
     series = df[column].dropna()
 
     if not pd.api.types.is_numeric_dtype(series):
-        raise ValueError(f"Column '{column}' is not numeric")
+        # Try converting to numeric
+        series = pd.to_numeric(series, errors='coerce').dropna()
+        if len(series) == 0:
+            raise ValueError(f"Column '{column}' is not numeric")
 
     if len(series) == 0:
         return {
@@ -48,11 +101,13 @@ def get_histogram(df: pd.DataFrame, column: str, bins: int = 10) -> dict:
     }
 
 
-def get_bar_counts(df: pd.DataFrame, column: str) -> dict:
+def get_bar_counts(df: pd.DataFrame, column: str, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute value counts for a categorical column.
     Returns categories and counts for bar chart rendering.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if column not in df.columns:
         raise ValueError(f"Column not found: {column}")
 
@@ -66,23 +121,25 @@ def get_bar_counts(df: pd.DataFrame, column: str) -> dict:
     }
 
 
-def get_scatter(df: pd.DataFrame, x: str, y: str) -> dict:
+def get_scatter(df: pd.DataFrame, x: str, y: str, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Extract x and y values for scatter plot.
     Both columns must be numeric.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if x not in df.columns:
         raise ValueError(f"Column not found: {x}")
     if y not in df.columns:
         raise ValueError(f"Column not found: {y}")
 
-    if not pd.api.types.is_numeric_dtype(df[x]):
-        raise ValueError(f"Column '{x}' is not numeric")
-    if not pd.api.types.is_numeric_dtype(df[y]):
-        raise ValueError(f"Column '{y}' is not numeric")
-
     # Drop rows where either column has NaN
     clean_df = df[[x, y]].dropna()
+    
+    # Ensure numeric
+    clean_df[x] = pd.to_numeric(clean_df[x], errors='coerce')
+    clean_df[y] = pd.to_numeric(clean_df[y], errors='coerce')
+    clean_df = clean_df.dropna()
 
     return {
         "x_label": x,
@@ -92,11 +149,13 @@ def get_scatter(df: pd.DataFrame, x: str, y: str) -> dict:
     }
 
 
-def get_correlation(df: pd.DataFrame) -> dict:
+def get_correlation(df: pd.DataFrame, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute correlation matrix for numeric columns.
     Returns column names and correlation matrix.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     # Select only numeric columns
     numeric_df = df.select_dtypes(include=[np.number])
 
@@ -119,11 +178,13 @@ def get_correlation(df: pd.DataFrame) -> dict:
     }
 
 
-def get_line_data(df: pd.DataFrame, date_col: str, value_col: str, group_col: str = None) -> dict:
+def get_line_data(df: pd.DataFrame, date_col: str, value_col: str, group_col: str = None, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute line chart data for time series.
     Groups by date and optionally by a category column.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if date_col not in df.columns:
         raise ValueError(f"Column not found: {date_col}")
     if value_col not in df.columns:
@@ -160,11 +221,13 @@ def get_line_data(df: pd.DataFrame, date_col: str, value_col: str, group_col: st
         return {"date_column": date_col, "value_column": value_col, "data": data}
 
 
-def get_pie_data(df: pd.DataFrame, column: str, limit: int = 10) -> dict:
+def get_pie_data(df: pd.DataFrame, column: str, limit: int = 10, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute pie/donut chart data for categorical breakdown.
     Returns top N categories with 'Other' for rest.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if column not in df.columns:
         raise ValueError(f"Column not found: {column}")
 
@@ -187,11 +250,13 @@ def get_pie_data(df: pd.DataFrame, column: str, limit: int = 10) -> dict:
     }
 
 
-def get_area_data(df: pd.DataFrame, date_col: str, value_col: str, stack_col: str) -> dict:
+def get_area_data(df: pd.DataFrame, date_col: str, value_col: str, stack_col: str, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute stacked area chart data.
     Groups by date and stack column for cumulative display.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if date_col not in df.columns:
         raise ValueError(f"Column not found: {date_col}")
     if value_col not in df.columns:
@@ -231,17 +296,22 @@ def get_area_data(df: pd.DataFrame, date_col: str, value_col: str, stack_col: st
     }
 
 
-def get_boxplot(df: pd.DataFrame, column: str) -> dict:
+def get_boxplot(df: pd.DataFrame, column: str, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute box plot statistics: min, q1, median, q3, max, and outliers.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if column not in df.columns:
         raise ValueError(f"Column not found: {column}")
 
     series = df[column].dropna()
 
     if not pd.api.types.is_numeric_dtype(series):
-        raise ValueError(f"Column '{column}' is not numeric")
+        # Try convert
+        series = pd.to_numeric(series, errors='coerce').dropna()
+        if len(series) == 0:
+            raise ValueError(f"Column '{column}' is not numeric")
 
     if len(series) == 0:
         return {"column": column, "stats": None, "outliers": []}
@@ -268,11 +338,13 @@ def get_boxplot(df: pd.DataFrame, column: str) -> dict:
     }
 
 
-def get_treemap_data(df: pd.DataFrame, group_cols: list, value_col: str) -> dict:
+def get_treemap_data(df: pd.DataFrame, group_cols: list, value_col: str, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute treemap data for hierarchical visualization.
     Supports multiple grouping levels.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     for col in group_cols:
         if col not in df.columns:
             raise ValueError(f"Column not found: {col}")
@@ -298,11 +370,13 @@ def get_treemap_data(df: pd.DataFrame, group_cols: list, value_col: str) -> dict
     }
 
 
-def get_stacked_bar(df: pd.DataFrame, category_col: str, stack_col: str, value_col: str = None) -> dict:
+def get_stacked_bar(df: pd.DataFrame, category_col: str, stack_col: str, value_col: str = None, filter_column: str = None, filter_operator: str = None, filter_value: Any = None) -> dict:
     """
     Compute stacked bar chart data.
     Groups by category and stacks by another dimension.
     """
+    df = apply_filter(df, filter_column, filter_operator, filter_value)
+    
     if category_col not in df.columns:
         raise ValueError(f"Column not found: {category_col}")
     if stack_col not in df.columns:

@@ -6,15 +6,20 @@ import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchBar, fetchDatasetProfile } from '@/lib/api/visualizations';
 import { validateAndFixColumn } from '@/lib/gemini/geminiClient';
 
+
+import { ChartFilter } from '@/lib/api/visualizations';
+
 interface SimpleBarChartProps {
     datasetId?: string;
     column?: string;
     itemsPerPage?: number;
+    filter?: ChartFilter;
+    color?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_PER_PAGE }: SimpleBarChartProps) {
+export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_PER_PAGE, filter, color }: SimpleBarChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -26,9 +31,10 @@ export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_P
         if (propColumn) setSelectedColumn(propColumn);
     }, [propColumn]);
 
+    // Reset pagination when column OR filter changes
     useEffect(() => {
         setCurrentPage(0);
-    }, [selectedColumn]);
+    }, [selectedColumn, filter]);
 
     useEffect(() => {
         let mounted = true;
@@ -48,35 +54,43 @@ export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_P
                     setError(null);
                 }
 
+                // If no column selected, try to get profile to show list
+                if (!selectedColumn || selectedColumn === 'undefined') {
+                    const profile = await fetchDatasetProfile(datasetId);
+                    const cols = profile.columns.map((c: any) => c.name);
+                    if (mounted) {
+                        setAvailableColumns(cols);
+                        setLoading(false);
+                    }
+                    return;
+                }
+
                 const profile = await fetchDatasetProfile(datasetId);
                 const cols = profile.columns.map((c: any) => c.name);
                 if (mounted) setAvailableColumns(cols);
 
-                if (selectedColumn && selectedColumn !== 'undefined') {
-                    let columnToUse = selectedColumn;
-                    const isValidColumn = cols.some((c: string) => c.toLowerCase() === selectedColumn.toLowerCase());
+                let columnToUse = selectedColumn;
+                const isValidColumn = cols.some((c: string) => c.toLowerCase() === selectedColumn.toLowerCase());
 
-                    if (!isValidColumn) {
-                        console.log('[BarChart] Invalid column, asking Gemini to fix:', selectedColumn);
-                        const fixedColumn = await validateAndFixColumn(selectedColumn, cols, 'bar_chart');
-                        if (fixedColumn) {
-                            console.log('[BarChart] Gemini fixed column:', selectedColumn, '->', fixedColumn);
-                            columnToUse = fixedColumn;
-                            if (mounted) setSelectedColumn(fixedColumn);
-                        } else {
-                            if (mounted) {
-                                setError(`Column "${selectedColumn}" not found. Available: ${cols.slice(0, 5).join(', ')}...`);
-                                setData(null);
-                            }
-                            return;
+                if (!isValidColumn) {
+                    console.log('[BarChart] Invalid column, asking Gemini to fix:', selectedColumn);
+                    const fixedColumn = await validateAndFixColumn(selectedColumn, cols, 'bar_chart');
+                    if (fixedColumn) {
+                        console.log('[BarChart] Gemini fixed column:', selectedColumn, '->', fixedColumn);
+                        columnToUse = fixedColumn;
+                        if (mounted) setSelectedColumn(fixedColumn);
+                    } else {
+                        if (mounted) {
+                            setError(`Column "${selectedColumn}" not found. Available: ${cols.slice(0, 5).join(', ')}...`);
+                            setData(null);
                         }
+                        return;
                     }
-
-                    const result = await fetchBar(datasetId, columnToUse);
-                    if (mounted) setData(result);
-                } else {
-                    if (mounted) setData(null);
                 }
+
+                const result = await fetchBar(datasetId, columnToUse, filter);
+                if (mounted) setData(result);
+
             } catch (err: any) {
                 console.error(err);
                 if (mounted) setError(err.message || `Failed to load data (${datasetId})`);
@@ -89,7 +103,7 @@ export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_P
         return () => {
             mounted = false;
         };
-    }, [datasetId, selectedColumn]);
+    }, [datasetId, selectedColumn, filter]);
 
     const { chartData, totalItems, totalPages, startIndex, endIndex } = useMemo(() => {
         const allData = data?.categories?.map((cat: string, i: number) => ({
@@ -128,7 +142,7 @@ export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_P
                 <select
                     className="p-2 border rounded-md shadow-sm bg-white text-sm min-w-[200px]"
                     onChange={(e) => setSelectedColumn(e.target.value)}
-                    defaultValue=""
+                    value={selectedColumn || ''}
                 >
                     <option value="" disabled>Select a column...</option>
                     {availableColumns.map(col => (
@@ -161,12 +175,13 @@ export function BarChart({ datasetId, column: propColumn, itemsPerPage = ITEMS_P
                             label={{ value: `${selectedColumn} →`, angle: -90, position: 'insideLeft', fill: '#52525b', fontSize: 12, fontWeight: 500, dy: 40 }}
                         />
                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ backgroundColor: '#fff', borderColor: '#e4e4e7' }} />
-                        <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                        <Bar dataKey="value" fill={color || "#3b82f6"} radius={[0, 4, 4, 0]}>
                             <LabelList dataKey="value" position="right" fill="#52525b" fontSize={11} offset={5} />
                             {chartData.map((_entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                                <Cell key={`cell-${index}`} fill={color || BAR_COLORS[index % BAR_COLORS.length]} />
                             ))}
                         </Bar>
+
                     </RechartsBarChart>
                 </ResponsiveContainer>
             </div>

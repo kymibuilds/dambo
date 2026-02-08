@@ -9,14 +9,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // Vibrant color palette for pie segments
 const PIE_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00C49F', '#FFBB28', '#FF8042', '#a855f7', '#ec4899', '#0ea5e9'];
 
+
+import { ChartFilter } from '@/lib/api/visualizations';
+
 interface PieChartProps {
     datasetId?: string;
     column?: string;
     limit?: number;
     donut?: boolean;
+    filter?: ChartFilter;
+    color?: string; // Ignored for Pie
 }
 
-export function PieChart({ datasetId, column, limit = 10, donut = false }: PieChartProps) {
+export function PieChart({ datasetId, column, limit = 10, donut = false, filter }: PieChartProps) {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,8 +29,7 @@ export function PieChart({ datasetId, column, limit = 10, donut = false }: PieCh
     useEffect(() => {
         async function load() {
             if (!datasetId || !column) {
-                setError('Missing required parameters');
-                setLoading(false);
+                // validation...
                 return;
             }
 
@@ -33,7 +37,15 @@ export function PieChart({ datasetId, column, limit = 10, donut = false }: PieCh
                 setLoading(true);
                 setError(null);
 
-                const res = await fetch(`${API_BASE}/datasets/${datasetId}/pie?column=${encodeURIComponent(column)}&limit=${limit}`);
+                let url = `${API_BASE}/datasets/${datasetId}/pie?column=${encodeURIComponent(column)}&limit=${limit}`;
+
+                if (filter) {
+                    url += `&filter_column=${encodeURIComponent(filter.column)}`;
+                    url += `&filter_operator=${encodeURIComponent(filter.operator)}`;
+                    url += `&filter_value=${encodeURIComponent(String(filter.value))}`;
+                }
+
+                const res = await fetch(url);
                 if (!res.ok) {
                     const err = await res.json();
                     throw new Error(err.detail || 'Failed to fetch pie data');
@@ -48,7 +60,7 @@ export function PieChart({ datasetId, column, limit = 10, donut = false }: PieCh
             }
         }
         load();
-    }, [datasetId, column, limit]);
+    }, [datasetId, column, limit, filter]);
 
     if (loading) {
         return (
