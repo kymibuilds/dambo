@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.project import Project
 from app.db.session import get_db
-from app.schemas.project import ProjectCreate, ProjectResponse
+from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.services.id_generator import generate_unique_id
 
 router = APIRouter()
@@ -46,3 +46,18 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
     if not project:
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return project
+
+
+@router.patch("/projects/{project_id}", response_model=ProjectResponse)
+def rename_project(project_id: str, project_data: ProjectUpdate, db: Session = Depends(get_db)):
+    """Rename a project by project_id."""
+    project = db.query(Project).filter(Project.project_id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    
+    project.name = project_data.name
+    db.commit()
+    db.refresh(project)
+    
+    return project
+

@@ -7,6 +7,10 @@ class ProjectCreate(BaseModel):
     name: str
 
 
+class ProjectUpdate(BaseModel):
+    name: str
+
+
 class ProjectResponse(BaseModel):
     project_id: str
     name: str

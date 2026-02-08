@@ -26,7 +26,7 @@ import remarkGfm from "remark-gfm";
 import { type Node } from '@xyflow/react';
 import FlowCanvas, { type FlowCanvasRef, type ChartNodeConfig } from "@/components/canvas/FlowCanvas";
 import { type ChartData, type ChartType } from "@/components/canvas/nodes/DataNode";
-import { getProject, type Project } from "@/lib/api/projects";
+import { getProject, renameProject, type Project } from "@/lib/api/projects";
 import { listDatasets, uploadDataset, getDatasetProfile, type Dataset, type DatasetProfile } from "@/lib/api/datasets";
 import { useTamboThread, TamboThreadProvider, type TamboThreadMessage } from "@tambo-ai/react";
 import { extractChartColumnsWithCache, parseChartModification, parseChartGenerationRequest } from "@/lib/gemini/geminiClient";
@@ -626,6 +626,27 @@ function ProjectPageContent() {
     // Editable project name state
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedName, setEditedName] = useState('');
+
+    // Handler to save project name to backend
+    const handleSaveProjectName = useCallback(async () => {
+        const trimmedName = editedName.trim();
+        if (!trimmedName || !project || trimmedName === project.name) {
+            setIsEditingName(false);
+            return;
+        }
+
+        // Optimistic update
+        setProject({ ...project, name: trimmedName });
+        setIsEditingName(false);
+
+        try {
+            await renameProject(projectId, trimmedName);
+        } catch (error) {
+            console.error('Failed to rename project:', error);
+            // Revert on error
+            setProject(project);
+        }
+    }, [editedName, project, projectId]);
 
     // Fetch project and datasets on mount
     useEffect(() => {
@@ -2194,18 +2215,10 @@ Current props: ${JSON.stringify(currentChartData?.props || {})}`;
                                         type="text"
                                         value={editedName}
                                         onChange={(e) => setEditedName(e.target.value)}
-                                        onBlur={() => {
-                                            if (editedName.trim() && project) {
-                                                setProject({ ...project, name: editedName.trim() });
-                                            }
-                                            setIsEditingName(false);
-                                        }}
+                                        onBlur={handleSaveProjectName}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
-                                                if (editedName.trim() && project) {
-                                                    setProject({ ...project, name: editedName.trim() });
-                                                }
-                                                setIsEditingName(false);
+                                                handleSaveProjectName();
                                             } else if (e.key === 'Escape') {
                                                 setEditedName(project?.name || activeChat.title);
                                                 setIsEditingName(false);

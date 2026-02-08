@@ -61,3 +61,26 @@ export async function getProject(projectId: string): Promise<Project> {
 
     return res.json();
 }
+
+/**
+ * Rename a project
+ */
+export async function renameProject(projectId: string, newName: string): Promise<Project> {
+    const res = await fetch(`${API_BASE}/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newName }),
+    });
+
+    if (!res.ok) {
+        if (res.status === 404) {
+            throw new Error(`Project not found: ${projectId}`);
+        }
+        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(error.detail || 'Failed to rename project');
+    }
+
+    return res.json();
+}
