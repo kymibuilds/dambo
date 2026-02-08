@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Shippori_Mincho } from "next/font/google";
+import { DM_Sans, Shippori_Mincho, Instrument_Serif, Exo_2 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TamboClientProvider } from "@/lib/tambo/TamboClientProvider";
@@ -13,6 +13,20 @@ const shipporiMincho = Shippori_Mincho({
   variable: "--font-shippori",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
+const exo2 = Exo_2({
+  variable: "--font-exo2",
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -41,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${dmSans.variable} ${shipporiMincho.variable} antialiased font-sans`}
+        className={`${dmSans.variable} ${shipporiMincho.variable} ${instrumentSerif.variable} ${exo2.variable} antialiased font-sans`}
       >
         <ThemeProvider
           attribute="class"
