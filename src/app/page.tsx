@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ThemeToggleButton1 } from "@/components/ui/theme-toggle-buttons";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, ArrowDown } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ArrowDown, Github } from "lucide-react";
 import {
   VideoPlayer,
   VideoPlayerContent,
@@ -18,14 +18,14 @@ export default function Home() {
   return (
     <div className="min-h-screen relative bg-background overflow-x-hidden">
       {/* Horizontal Separator Border - stretched across the page */}
-      <div className="absolute top-14 md:top-16 left-0 right-0 h-3 md:h-4 border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+      <div className="absolute top-14 md:top-16 left-0 right-0 h-3 md:h-4 border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
 
       {/* Main Container 1 (Hero) */}
       <div className="w-[85%] md:w-[70%] min-h-[90vh] mx-auto relative flex flex-col">
         {/* Left Border */}
-        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
         {/* Right Border */}
-        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
 
         {/* Top Intersection Squares */}
         <div className="absolute top-14 md:top-16 left-0 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-10"></div>
@@ -99,7 +99,7 @@ export default function Home() {
       </div>
 
       {/* Middle Full-Width Separator */}
-      <div className="relative h-3 md:h-4 w-full border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0">
+      <div className="relative h-3 md:h-4 w-full border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0">
         <div className="w-[85%] md:w-[70%] mx-auto h-full relative">
           {/* Intersection Squares for Middle Separator */}
           <div className="absolute top-[-1px] left-0 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-10"></div>
@@ -110,9 +110,9 @@ export default function Home() {
       {/* Main Container 2a (Video) */}
       <div className="w-[85%] md:w-[70%] mx-auto relative flex flex-col">
         {/* Left Border */}
-        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
         {/* Right Border */}
-        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
 
         {/* Video Player Section - Margins matching border widths */}
         <section className="w-auto mx-3 md:mx-4 relative z-20">
@@ -139,7 +139,7 @@ export default function Home() {
       </div>
 
       {/* Full Width Separator 1 */}
-      <div className="relative h-3 md:h-4 w-full border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0">
+      <div className="relative h-3 md:h-4 w-full border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0">
         <div className="w-[85%] md:w-[70%] mx-auto h-full relative">
           <div className="absolute top-[-1px] left-0 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-10"></div>
           <div className="absolute top-[-1px] right-0 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-10"></div>
@@ -149,11 +149,11 @@ export default function Home() {
       {/* Main Container 2b (Screenshots) */}
       <div className="w-[85%] md:w-[70%] mx-auto relative flex flex-col">
         {/* Left Border */}
-        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
         {/* Right Border */}
-        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
 
-        <section className="w-auto mx-3 md:mx-4 relative z-20 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)]">
+        <section className="w-auto mx-3 md:mx-4 relative z-20 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)]">
           {/* Intersection Squares */}
           <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-30"></div>
           <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-30"></div>
@@ -162,21 +162,21 @@ export default function Home() {
           <div className="hidden md:block absolute top-1/2 right-0 translate-x-full -translate-y-1/2 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-30"></div>
 
           {/* Screenshot 1 */}
-          <div className="aspect-video bg-secondary relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
 
           {/* Screenshot 2 */}
-          <div className="aspect-video bg-secondary relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
 
           {/* Screenshot 3 */}
-          <div className="aspect-video bg-secondary relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
 
           {/* Screenshot 4 */}
-          <div className="aspect-video bg-secondary relative overflow-hidden"></div>
+          <div className="aspect-video bg-secondary border border-border relative overflow-hidden"></div>
         </section>
       </div>
 
       {/* Full Width Separator 2 */}
-      <div className="relative h-3 md:h-4 w-full border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0">
+      <div className="relative h-3 md:h-4 w-full border-y border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0">
         <div className="w-[85%] md:w-[70%] mx-auto h-full relative">
           <div className="absolute top-[-1px] left-0 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-10"></div>
           <div className="absolute top-[-1px] right-0 w-3 md:w-4 h-3 md:h-4 bg-background border border-border z-10"></div>
@@ -186,38 +186,78 @@ export default function Home() {
       {/* Main Container 2c (Features Content) */}
       <div className="w-[85%] md:w-[70%] mx-auto relative flex flex-col pb-20">
         {/* Left Border */}
-        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
         {/* Right Border */}
-        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0,var(--border)_1px,transparent_0,transparent_3px)] z-0"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-3 md:w-4 border-x border-border bg-[image:repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_0_4px)] z-0"></div>
 
         {/* Content Wrapper */}
         <div className="flex-1 flex flex-col relative z-20 px-4 md:px-8 py-12 gap-20">
 
-          {/* Features Section */}
-          <section className="w-full grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-            {[
-              {
-                title: "Real-time Analytics",
-                description: "Process and visualize data streams instantly as they arrive in your system."
-              },
-              {
-                title: "Interactive Charts",
-                description: "Drill down into specifics with highly responsive and customizable visualization tools."
-              },
-              {
-                title: "Team Collaboration",
-                description: "Share insights and export reports seamlessly with your entire organization."
-              }
-            ].map((feature, i) => (
-              <div key={i} className="flex flex-col gap-4 p-6 border border-border/50 bg-secondary/5 hover:bg-secondary/10 transition-colors group/card">
-                <div className="size-10 rounded bg-foreground/5 flex items-center justify-center border border-border/20 group-hover/card:bg-foreground/10 transition-colors">
-                  <span className="font-mono text-lg font-bold">{i + 1}</span>
-                </div>
-                <h3 className="text-xl font-medium" style={{ fontFamily: 'var(--font-exo2)' }}>{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
+          {/* About Section */}
+          <section className="w-full flex flex-col gap-16 text-left">
+
+            {/* What is Dambo */}
+            <div className="flex flex-col gap-4">
+              <h2 className="text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-instrument)' }}>
+                What is Dambo?
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Dambo is a conversational data visualization tool. Upload a CSV, describe what
+                you want to see in plain English, and watch your charts appear on an infinite
+                canvas. No configuration dialogs. No dropdown menus. Just type.
+              </p>
+            </div>
+
+            {/* How it works */}
+            <div className="flex flex-col gap-4">
+              <h2 className="text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-instrument)' }}>
+                How it works
+              </h2>
+              <ul className="text-muted-foreground text-lg leading-relaxed space-y-3 list-disc list-inside">
+                <li>Upload your dataset—CSV files are profiled automatically, or pull directly from <span className="text-foreground">Kaggle</span> via API integration</li>
+                <li>Ask for a visualization in natural language: <span className="text-foreground">&quot;show me a histogram of salary&quot;</span> or <span className="text-foreground">&quot;scatter plot of age vs experience&quot;</span></li>
+                <li>Charts appear as draggable nodes on an infinite canvas—resize, reposition, and arrange freely</li>
+                <li><span className="text-foreground">Fuse two nodes together</span> to generate AI-powered comparison insights automatically</li>
+                <li>Refine any chart on the fly: <span className="text-foreground">&quot;change to pie chart&quot;</span>, <span className="text-foreground">&quot;filter where city is London&quot;</span>, or switch columns instantly</li>
+                <li>Hit <span className="text-foreground">Quick Analyze</span> to generate a full suite of charts in one click—zero friction</li>
+                <li>Export any chart as <span className="text-foreground">PNG or PDF</span> for reports and presentations</li>
+              </ul>
+            </div>
+
+            {/* Powered by Tambo */}
+            <div className="flex flex-col gap-4">
+              <h2 className="text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-instrument)' }}>
+                Powered by Tambo
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Under the hood, Dambo uses Tambo—an AI framework that turns natural language
+                into React components. Each chart type is registered with a schema describing
+                its required props. When you send a message, Tambo interprets your intent,
+                selects the right chart component, extracts column names from your request,
+                and renders the visualization in real-time.
+              </p>
+              <ul className="text-muted-foreground text-lg leading-relaxed space-y-3 list-disc list-inside">
+                <li>10+ chart types: histogram, bar, scatter, line, pie, area, box plot, heatmap, treemap, stacked bar</li>
+                <li>Gemini integration for intelligent column extraction and chart modification parsing</li>
+                <li>Per-node chat allows conversational refinement of individual visualizations</li>
+              </ul>
+            </div>
+
           </section>
+
+          {/* Footer */}
+          <footer className="w-full pt-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-muted-foreground border-t border-border/50">
+            <p>Made with <span className="text-red-500 animate-pulse">❤️</span> by <a href="https://github.com/kymibuilds" className="hover:text-foreground transition-colors underline underline-offset-4">kymibuilds</a></p>
+            <a
+              href="https://github.com/kymibuilds/dambo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-foreground transition-colors group"
+            >
+              <Github className="size-4" />
+              <span>Source Code</span>
+            </a>
+          </footer>
         </div>
       </div>
     </div>

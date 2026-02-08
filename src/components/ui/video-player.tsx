@@ -34,6 +34,7 @@ export const VideoPlayer = ({ style, ...props }: VideoPlayerProps) => (
             ...variables,
             ...style,
         }}
+        suppressHydrationWarning
         {...(props as any)}
     />
 )
@@ -95,5 +96,10 @@ export const VideoPlayerMuteButton = ({ className, ...props }: VideoPlayerMuteBu
 export type VideoPlayerContentProps = ComponentProps<"video">
 
 export const VideoPlayerContent = ({ className, ...props }: VideoPlayerContentProps) => (
-    <video className={cn("mt-0 mb-0", className)} {...(props as any)} />
+    <video
+        className={cn("mt-0 mb-0", className)}
+        tabIndex={-1}
+        suppressHydrationWarning
+        {...(props as any)}
+    />
 )
