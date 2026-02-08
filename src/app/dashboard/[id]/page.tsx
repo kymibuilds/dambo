@@ -144,6 +144,7 @@ function ProjectPageContent() {
     const flowCanvasRef = useRef<FlowCanvasRef>(null);
     // Track processed message IDs to avoid duplicate node creation
     const processedMessageIds = useRef<Set<string>>(new Set());
+    const pendingChatIdRef = useRef<string | null>(null);
 
     // Get Tambo thread context
     const {
@@ -283,7 +284,8 @@ function ProjectPageContent() {
             content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
         }));
 
-        if (newMessages.length > 0 && activeChatId === 'initial') {
+        // Always sync the 'initial' (General) chat with the full thread history
+        if (newMessages.length > 0) {
             setLocalChats(prev => prev.map(c =>
                 c.id === 'initial'
                     ? {
@@ -295,6 +297,32 @@ function ProjectPageContent() {
                     }
                     : c
             ));
+        }
+
+        // Handle specific node chat updates (streaming response)
+        const pendingChatId = pendingChatIdRef.current;
+        if (pendingChatId && pendingChatId !== 'initial') {
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+                setLocalChats(prev => prev.map(c => {
+                    if (c.id === pendingChatId) {
+                        const msgs = [...c.messages];
+                        const lastLocal = msgs[msgs.length - 1];
+
+                        // Check if the last local message is an assistant message (placeholder or streaming update)
+                        if (lastLocal?.role === 'assistant') {
+                            // Update the existing message (streaming)
+                            msgs[msgs.length - 1] = lastMessage;
+                        } else {
+                            // Append the new response
+                            msgs.push(lastMessage);
+                        }
+
+                        return { ...c, messages: msgs };
+                    }
+                    return c;
+                }));
+            }
         }
 
         // Check for new rendered components and add them to canvas
@@ -330,7 +358,7 @@ function ProjectPageContent() {
                 }
             }
         });
-    }, [thread?.messages, activeChatId]);
+    }, [thread?.messages]);
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -346,6 +374,9 @@ function ProjectPageContent() {
         const userMessage = message;
         setMessage("");
         setIsWaitingForResponse(true);
+
+        // Track which chat initiated this request
+        pendingChatIdRef.current = activeChatId;
 
         // Add user message to local chat immediately
         setLocalChats(prev => prev.map(c => {
@@ -393,6 +424,19 @@ function ProjectPageContent() {
                 4. If the user's column name is slightly different (e.g., case mismatch), use the exact name from the dataset.
                 Available datasets: ${datasetsContext.map((d: any) => `${d.filename} (ID: ${d.datasetId}) - Columns: ${d.columns?.map((c: any) => c.name).join(', ')}`).join('\n')}`
             };
+
+            // Add node context if chatting from a specific node
+            if (activeChatId !== 'initial') {
+                const activeNodeChat = localChats.find(c => c.id === activeChatId);
+                if (activeNodeChat) {
+                    context.activeNode = {
+                        id: activeChatId,
+                        label: activeNodeChat.title,
+                        isSpecificContext: true
+                    };
+                    console.log('[DEBUG] Added node context:', context.activeNode);
+                }
+            }
 
             console.log('[DEBUG] Sending to Tambo with context:', JSON.stringify(context, null, 2));
 

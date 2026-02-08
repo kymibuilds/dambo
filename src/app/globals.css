@@ -124,6 +124,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  ::selection {
+    background: var(--foreground);
+    color: var(--background);
+  }
+  .dark ::selection {
+    background: var(--foreground);
+    color: var(--background);
+  }
 }
 
 @layer utilities {
@@ -138,5 +147,17 @@
 
   .scrollbar-minimal::-webkit-scrollbar-thumb {
     @apply bg-zinc-300 dark:bg-zinc-700 rounded-full;
+  }
+}
+.animate-bounce-subtle {
+  animation: bounce-subtle 4s infinite ease-in-out;
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
   }
 }

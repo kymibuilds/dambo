@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Bar, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { Loader2 } from 'lucide-react';
 import { fetchBar, fetchDatasetProfile } from '@/lib/api/visualizations';
@@ -23,38 +23,60 @@ export function BarChart({ datasetId, column: propColumn }: SimpleBarChartProps)
     }, [propColumn]);
 
     useEffect(() => {
+        let mounted = true;
+
         async function load() {
             if (!datasetId) {
-                setError('Missing dataset ID');
-                setLoading(false);
+                if (mounted) {
+                    setError('Missing dataset ID');
+                    setLoading(false);
+                }
                 return;
             }
 
             try {
-                setLoading(true);
-                setError(null);
+                if (mounted) {
+                    setLoading(true);
+                    setError(null);
+                }
 
                 // Case 1: Column is selected (either via prop or UI)
                 if (selectedColumn && selectedColumn !== 'undefined') {
                     const result = await fetchBar(datasetId, selectedColumn);
-                    setData(result);
+                    if (mounted) setData(result);
                 }
                 // Case 2: No column selected - fetch metadata to show selection UI
                 else {
                     const profile = await fetchDatasetProfile(datasetId);
                     const cols = profile.columns.map((c: any) => c.name);
-                    setAvailableColumns(cols);
-                    setData(null); // No chart data yet
+                    if (mounted) {
+                        setAvailableColumns(cols);
+                        setData(null); // No chart data yet
+                    }
                 }
             } catch (err: any) {
                 console.error(err);
-                setError(err.message || `Failed to load data (${datasetId})`);
+                if (mounted) setError(err.message || `Failed to load data (${datasetId})`);
             } finally {
-                setLoading(false);
+                if (mounted) setLoading(false);
             }
         }
         load();
+
+        return () => {
+            mounted = false;
+        };
     }, [datasetId, selectedColumn]);
+
+    // Memoize chart data to prevent unnecessary re-renders
+    const chartData = useMemo(() => {
+        return data?.categories?.map((cat: string, i: number) => ({
+            name: cat,
+            value: data.counts[i]
+        })) || [];
+    }, [data]);
+
+    const BAR_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1'];
 
     if (loading) return <div className="h-64 flex items-center justify-center text-zinc-500"><Loader2 className="animate-spin mr-2" />Loading...</div>;
 
@@ -84,14 +106,14 @@ export function BarChart({ datasetId, column: propColumn }: SimpleBarChartProps)
     return (
         <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart layout="vertical" data={data.categories.map((cat: string, i: number) => ({ name: cat, value: data.counts[i] }))}>
+                <RechartsBarChart layout="vertical" data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                    <Tooltip />
+                    <Tooltip cursor={{ fill: 'transparent' }} />
                     <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]}>
-                        {data.categories.map((entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1'][index % 5]} />
+                        {chartData.map((_entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
                         ))}
                     </Bar>
                 </RechartsBarChart>
