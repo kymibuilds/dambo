@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus, X, Pencil, LayoutGrid, List, Loader2 } from "lucide-react";
+import { Plus, X, Pencil, LayoutGrid, List, Loader2, Database } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,7 @@ export default function DashboardPage() {
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState("");
+    const [showKaggleNotice, setShowKaggleNotice] = useState(false);
 
     // Fetch projects on mount
     useEffect(() => {
@@ -279,14 +280,61 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 ) : (
-                    <Button
-                        variant="outline"
-                        onClick={() => setIsAddingDataset(true)}
-                        className={`rounded-xl border border-zinc-300/80 bg-white text-zinc-950 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.08)] dark:border-zinc-800/50 dark:bg-zinc-950 dark:text-zinc-50 p-6 flex flex-col items-center justify-center border-dashed hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors ${viewMode === 'grid' ? 'h-[200px]' : 'min-h-[60px] py-4 flex-row gap-4'}`}
-                    >
-                        <Plus className={viewMode === 'grid' ? "h-6 w-6 mb-2 text-zinc-400" : "h-4 w-4 text-zinc-400"} />
-                        <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-shippori)' }}>Add new project</span>
-                    </Button>
+                    <>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsAddingDataset(true)}
+                            className={`rounded-xl border border-zinc-300/80 bg-white text-zinc-950 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.08)] dark:border-zinc-800/50 dark:bg-zinc-950 dark:text-zinc-50 p-6 flex flex-col items-center justify-center border-dashed hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors ${viewMode === 'grid' ? 'h-[200px]' : 'min-h-[60px] py-4 flex-row gap-4'}`}
+                        >
+                            <Plus className={viewMode === 'grid' ? "h-6 w-6 mb-2 text-zinc-400" : "h-4 w-4 text-zinc-400"} />
+                            <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-shippori)' }}>Add new project</span>
+                        </Button>
+
+                        {/* Add from Kaggle button */}
+                        <div className="relative">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowKaggleNotice(true)}
+                                className={`rounded-xl border border-zinc-300/80 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 text-zinc-950 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.08)] dark:border-cyan-800/30 dark:text-zinc-50 p-6 flex flex-col items-center justify-center border-dashed hover:from-cyan-100 hover:to-blue-100 dark:hover:from-cyan-900/40 dark:hover:to-blue-900/40 transition-all ${viewMode === 'grid' ? 'h-[200px]' : 'min-h-[60px] py-4 flex-row gap-4'}`}
+                            >
+                                <div className={`relative ${viewMode === 'grid' ? 'mb-2' : ''}`}>
+                                    <Database className={`${viewMode === 'grid' ? 'h-6 w-6' : 'h-4 w-4'} text-cyan-500 dark:text-cyan-400`} />
+                                </div>
+                                <span className="text-sm font-medium text-cyan-700 dark:text-cyan-300" style={{ fontFamily: 'var(--font-shippori)' }}>Add from Kaggle</span>
+                                <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 ${viewMode === 'grid' ? 'mt-2' : 'ml-2'}`}>Coming Soon</span>
+                            </Button>
+
+                            {/* Coming Soon Notice Popup */}
+                            {showKaggleNotice && (
+                                <div className="absolute inset-0 flex items-center justify-center z-10">
+                                    <div
+                                        className="fixed inset-0 bg-black/20 dark:bg-black/40"
+                                        onClick={() => setShowKaggleNotice(false)}
+                                    />
+                                    <div className="relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xl p-6 max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="flex flex-col items-center text-center gap-4">
+                                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/50 dark:to-blue-900/50 flex items-center justify-center">
+                                                <Database className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100" style={{ fontFamily: 'var(--font-shippori)' }}>Kaggle Integration</h4>
+                                                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                                    We're working on Kaggle API integration to let you import datasets directly. Stay tuned!
+                                                </p>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => setShowKaggleNotice(false)}
+                                                className="w-full"
+                                            >
+                                                Got it
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div >
