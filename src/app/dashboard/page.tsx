@@ -122,6 +122,13 @@ export default function DashboardPage() {
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage your datasets and projects here.</p>
                     </div>
                 </div>
+                <div className="mt-2 p-3 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30">
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                        <span className="font-semibold">Note:</span> The datasets shown below are reference examples for a quick overview of the project.
+                        You can upload your own CSV files to create fully functional visualizations.
+                        <span className="italic"> Kaggle API integration coming soon!</span>
+                    </p>
+                </div>
                 <div className="flex justify-end -mt-4">
                     <div className="flex items-center gap-0.5 p-0.5 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
                         <Button
@@ -282,6 +289,6 @@ export default function DashboardPage() {
                     </Button>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

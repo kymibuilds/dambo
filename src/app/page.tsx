@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ThemeToggleButton1 } from "@/components/ui/theme-toggle-buttons";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, ArrowDown, Github } from "lucide-react";
 import {
@@ -40,7 +39,6 @@ export default function Home() {
             >
               dambo.
             </span>
-            <ThemeToggleButton1 className="size-6" />
           </header>
 
           <main className="flex-1 flex flex-col items-center justify-center text-center gap-10 pt-12 pb-14 md:pb-16 px-4 md:px-8">

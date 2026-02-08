@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Shippori_Mincho, Instrument_Serif, Exo_2 } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import { TamboClientProvider } from "@/lib/tambo/TamboClientProvider";
 
 const dmSans = DM_Sans({
@@ -53,20 +52,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body
         className={`${dmSans.variable} ${shipporiMincho.variable} ${instrumentSerif.variable} ${exo2.variable} antialiased font-sans`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <TamboClientProvider>
-            {children}
-          </TamboClientProvider>
-        </ThemeProvider>
+        <TamboClientProvider>
+          {children}
+        </TamboClientProvider>
       </body>
     </html>
   );
