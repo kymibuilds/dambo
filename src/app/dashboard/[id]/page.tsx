@@ -14,7 +14,11 @@ import {
     Trash2,
     FileText,
     Loader2,
-    Zap
+    Zap,
+    Download,
+    AlertTriangle,
+    CheckCircle,
+    Info
 } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -31,12 +35,64 @@ import type { QuickAnalysisData } from "@/lib/api/visualizations";
 import { loadCanvasState, saveCanvasState, clearCanvasState, loadChats, saveChats, type ChatItem } from "@/lib/api/persistence";
 import type { Edge } from '@xyflow/react';
 import type { DataNodeType } from "@/components/canvas/nodes/DataNode";
+import {
+    HistogramChart,
+    BarChart,
+    ScatterChart,
+    CorrelationHeatmap,
+    LineChart,
+    PieChart,
+    AreaChart,
+    BoxPlotChart,
+    TreemapChart,
+    StackedBarChart
+} from '@/components/charts';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 
 interface ProjectFile {
     id: string;
     name: string;
     type: string;
     size: string;
+}
+
+// Structured summary data for the Data Quality Report
+interface DataQualitySummary {
+    datasetName: string;
+    chartConfigs?: any[]; // Array of chart configurations
+    overview: {
+        rowCount: number;
+        columnCount: number;
+        numericColumns: string[];
+        categoricalColumns: string[];
+        datetimeColumns: string[];
+    };
+    qualityScore: {
+        score: number;
+        level: string;
+    };
+    missingData: Array<{
+        column: string;
+        count: number;
+        percentage: number;
+    }>;
+    outliers: Array<{
+        column: string;
+        count: number;
+        percentage: number;
+    }>;
+    duplicateRows: number;
+    issues: Array<{
+        type: string;
+        severity: 'info' | 'warning' | 'critical';
+        message: string;
+        affectedColumns: string[];
+    }>;
+    chartPayloads: {
+        histograms: any[];
+        bars: any[];
+    };
 }
 
 function formatFileSize(bytes: number): string {
@@ -442,6 +498,134 @@ function ProjectPageContent() {
 
     // Visualization buttons dataset selector
     const [showVizDatasetSelector, setShowVizDatasetSelector] = useState<'correlations' | 'distributions' | 'categories' | 'outliers' | null>(null);
+
+    // Summary popup state
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+    const [summaryData, setSummaryData] = useState<DataQualitySummary | null>(null);
+    const summaryReportRef = useRef<HTMLDivElement>(null);
+
+    const exportSummaryAsPDF = useCallback(async () => {
+        if (!summaryReportRef.current || !summaryData) return;
+
+        try {
+            const clone = summaryReportRef.current.cloneNode(true) as HTMLElement;
+            const scrollableContainer = clone.querySelector('.overflow-y-auto') as HTMLElement;
+
+            // Position carefully - "visible" but not affecting layout or scroll
+            // opacity: 0 and z-index: -9999 ensures it's hidden.
+            // fixed positioning at 0,0 ensures it's in viewport so html-to-image can see it.
+            clone.style.position = 'fixed';
+            clone.style.top = '0';
+            clone.style.left = '0';
+            // Set a fixed width that fits A4 nicely (approx 800px is good for A4 @ 72dpi, but higher res is better)
+            clone.style.width = '1000px';
+            clone.style.height = 'auto';
+            clone.style.maxHeight = 'none';
+            clone.style.overflow = 'visible';
+            clone.style.zIndex = '-9999';
+            clone.style.opacity = '0';
+            clone.style.pointerEvents = 'none';
+            clone.style.background = '#ffffff'; // Ensure background is opaque
+
+            if (scrollableContainer) {
+                scrollableContainer.style.overflow = 'visible';
+                scrollableContainer.style.height = 'auto';
+                scrollableContainer.style.flex = 'none';
+                scrollableContainer.style.maxHeight = 'none';
+            }
+
+            document.body.appendChild(clone);
+
+            // Wait for images/fonts
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const dataUrl = await toPng(clone, {
+                cacheBust: true,
+                backgroundColor: '#ffffff',
+                pixelRatio: 2, // High quality
+            });
+
+            document.body.removeChild(clone);
+
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            // Load the full captured image
+            const img = new Image();
+            img.src = dataUrl;
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            const margin = 10;
+            const contentWidth = pdfWidth - (margin * 2);
+            const contentHeight = pdfHeight - (margin * 2);
+
+            // Calculate scaler to fit width
+            const scale = contentWidth / img.width;
+            const scaledImgHeight = img.height * scale;
+
+            let heightLeft = scaledImgHeight;
+            let currentSourceY = 0; // Position in source image (pixels)
+
+            // We need to slice the source image effectively. 
+            // Since we can't easily instruct addImage to crop, we use a temporary canvas to slice.
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Page height in source image pixels
+            // contentHeight (mm) -> pixels? No, we know the scale.
+            // contentHeight = N mm. 
+            // We placed the image with width = contentWidth (mm).
+            // So the 'height' of one page in source pixels is:
+            // pageSourceHeight = contentHeight / scale
+            const pageSourceHeight = contentHeight / scale;
+
+            canvas.width = img.width;
+            canvas.height = pageSourceHeight; // This is the max height matching one page
+
+            let pageParams = {
+                sourceY: 0,
+                pageNumber: 1
+            };
+
+            while (heightLeft > 0) {
+                // Clear canvas
+                canvas.height = Math.min(pageSourceHeight, heightLeft / scale); // Resize for last chunk
+                ctx?.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw slice
+                // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+                const sourceH = Math.min(pageSourceHeight, heightLeft / scale);
+                ctx?.drawImage(img, 0, pageParams.sourceY, img.width, sourceH, 0, 0, img.width, sourceH);
+
+                const sliceData = canvas.toDataURL('image/png');
+
+                if (pageParams.pageNumber > 1) {
+                    pdf.addPage();
+                }
+
+                // Add slice to PDF
+                // The slice is sized to match contentWidth
+                // Calculate actual height in PDF units for this slice
+                const slicePdfHeight = sourceH * scale;
+
+                pdf.addImage(sliceData, 'PNG', margin, margin, contentWidth, slicePdfHeight);
+
+                heightLeft -= slicePdfHeight;
+                pageParams.sourceY += sourceH;
+                pageParams.pageNumber++;
+            }
+
+            pdf.save(`${summaryData.datasetName.replace(/\s+/g, '_')}_Analysis_Report.pdf`);
+
+        } catch (error) {
+            console.error('Error exporting PDF:', error);
+        }
+    }, [summaryData]);
+
+    // Editable project name state
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editedName, setEditedName] = useState('');
 
     // Fetch project and datasets on mount
     useEffect(() => {
@@ -1075,6 +1259,10 @@ function ProjectPageContent() {
                     const datasetProfile = datasetId ? datasetProfiles[datasetId] : null;
                     const availableColumns = datasetProfile?.columns?.map((c: { name: string }) => c.name) || [];
 
+                    // Truncate available columns for system instruction to avoid context limit errors
+                    const truncatedColumns = availableColumns.slice(0, 50); // Limit to 50 columns
+                    const visibleColumnsStr = truncatedColumns.join(', ') + (availableColumns.length > 50 ? `... and ${availableColumns.length - 50} more` : '');
+
                     context.activeNode = {
                         id: activeChatId,
                         label: activeNodeChat.title,
@@ -1096,7 +1284,7 @@ function ProjectPageContent() {
 CURRENT CHART: ${currentChartData?.type || 'None'}
 CURRENT COLUMN(S): ${currentColumn || currentX || 'Unknown'} ${currentY ? `vs ${currentY}` : ''}
 DATASET ID: ${datasetId || 'Unknown'}
-AVAILABLE COLUMNS: ${availableColumns.join(', ') || 'Unknown'}
+AVAILABLE COLUMNS: ${datasetId ? visibleColumnsStr : 'Unknown'}
 
 INSTRUCTIONS:
 1. When user asks to change chart type (e.g., "show as pie chart"), keep the SAME column (${currentColumn || currentX || 'the current one'}) and datasetId.
@@ -1118,9 +1306,35 @@ Current props: ${JSON.stringify(currentChartData?.props || {})}`;
             const threadLengthBefore = thread?.messages?.length || 0;
             const isNodeChat = activeChatId !== 'initial';
 
-            await sendThreadMessage(userMessage, {
-                additionalContext: context,
-            });
+            try {
+                console.log('[Dashboard] Sending message to Tambo...', { contextSize: JSON.stringify(context).length });
+                await sendThreadMessage(userMessage, {
+                    additionalContext: context,
+                });
+            } catch (err) {
+                console.error('[Dashboard] Primary sendThreadMessage failed:', err);
+
+                try {
+                    console.log('[Dashboard] Retrying with empty context...');
+                    // Fallback: Absolutley no context to rule out payload issues
+                    await sendThreadMessage(userMessage);
+                } catch (retryErr) {
+                    console.error('[Dashboard] Retry failed:', retryErr);
+                    // Add a visible error message to the chat
+                    setLocalChats(prev => prev.map(c => {
+                        if (c.id === activeChatId) {
+                            return {
+                                ...c,
+                                messages: [...c.messages, {
+                                    role: 'assistant',
+                                    content: `❌ Connection Error: ${(retryErr as Error).message || 'Failed to send message'}. Please try refreshing the page.`
+                                }]
+                            };
+                        }
+                        return c;
+                    }));
+                }
+            }
 
             // If this was from a node chat, mark any new messages as node-originated
             // We do this in the sync effect by checking the message indices
@@ -1372,35 +1586,21 @@ Current props: ${JSON.stringify(currentChartData?.props || {})}`;
                 flowCanvasRef.current.addAnalysisCluster(datasetName, chartConfigs);
             }
 
-            // Create enhanced summary context for Tambo with Gemini insights
-            const summaryPrompt = buildSmartAnalysisSummaryPrompt(analysisResult);
+            // Store structured summary data for the report modal
+            const summary = buildDataQualitySummary(analysisResult, datasetName, chartConfigs);
+            setSummaryData(summary);
 
-            try {
-                await sendThreadMessage(summaryPrompt, {
-                    additionalContext: {
-                        isQuickAnalysis: true,
-                        analysisData: analysisResult,
-                        instructions: `You are a senior data scientist providing a comprehensive quick analysis summary for ML engineers. Based on the provided structured analysis data, write a professional summary (6-10 sentences) covering:
-                        
-                        1. **Dataset Overview**: Size, structure, column types
-                        2. **Data Quality**: Missing data issues, duplicates, outlier concerns (reference the data_quality score)
-                        3. **Key Relationships**: Most interesting correlations and what scatter plots reveal
-                        4. **ML Readiness**: Assessment and what needs attention
-                        5. **Data Preparation Tips**: If gemini_insights is available, include specific actionable tips for:
-                           - Feature engineering suggestions
-                           - Encoding recommendations for categorical columns
-                           - Scaling recommendations for numeric columns
-                           - Columns to potentially drop (IDs, high-cardinality, etc.)
-                        
-                        Tone: professional, analytical, actionable. Use markdown formatting (bold for emphasis, bullet points for lists).
-                        
-                        You MAY use the 'data_prep_card' and 'feature_insights_card' components to display structured insights if they add value.
-                        Do NOT render standard charts (histogram, bar, scatter) in this summary response - they are already displayed on the canvas.`
-                    }
-                });
-            } catch (err) {
-                console.error('[Quick Analysis] Failed to get Tambo summary:', err);
-            }
+            // Add a brief notification message with View Summary trigger
+            const notificationMessage = {
+                role: 'assistant',
+                content: `Quick analysis complete for **${datasetName}**! Charts have been added to the canvas. Click "View Summary" below to see detailed insights.`,
+                hasSummary: true,
+            };
+            setLocalChats(prev => prev.map(c =>
+                c.id === activeChatId
+                    ? { ...c, messages: [...c.messages, notificationMessage] }
+                    : c
+            ));
         }
     };
 
@@ -1536,78 +1736,52 @@ Current props: ${JSON.stringify(currentChartData?.props || {})}`;
         }
     };
 
-    // Build an enhanced prompt for Tambo to summarize the analysis
-    function buildSmartAnalysisSummaryPrompt(data: QuickAnalysisData): string {
-        const { dataset_overview, strongest_correlations, ml_readiness, outlier_detection, missing_data_insights, scatter_recommendations, data_quality, gemini_insights } = data;
-        const topCorr = strongest_correlations[0];
-        const highMissing = missing_data_insights.columns_above_30_percent_missing;
-        const totalOutlierPct = outlier_detection.length > 0
-            ? (outlier_detection.reduce((sum, o) => sum + o.outlier_percentage, 0) / outlier_detection.length).toFixed(1)
-            : '0';
+    // Build structured data quality summary for the report modal
+    function buildDataQualitySummary(data: QuickAnalysisData, datasetName: string, chartConfigs: any[] = []): DataQualitySummary {
+        const { dataset_overview, missing_data_insights, outlier_detection, data_quality, chart_payloads } = data;
 
-        let prompt = `Provide a comprehensive analysis summary for ML data preparation:
-
-**Dataset Overview:**
-- Size: ${dataset_overview.row_count} rows × ${dataset_overview.column_count} columns
-- Numeric columns (${dataset_overview.numeric_columns.length}): ${dataset_overview.numeric_columns.slice(0, 5).join(', ')}${dataset_overview.numeric_columns.length > 5 ? '...' : ''}
-- Categorical columns (${dataset_overview.categorical_columns.length}): ${dataset_overview.categorical_columns.slice(0, 5).join(', ')}${dataset_overview.categorical_columns.length > 5 ? '...' : ''}
-- Duplicates: ${dataset_overview.duplicate_rows} rows
-
-**Data Quality:**
-- Score: ${data_quality?.overall_score ?? 'N/A'}/100 (${data_quality?.level ?? 'Unknown'})
-- Columns with >30% missing: ${highMissing.length > 0 ? highMissing.join(', ') : 'None'}
-- Average outlier %: ${totalOutlierPct}%
-
-**Key Relationships:**
-- Strongest correlation: ${topCorr ? `${topCorr.column_a} ↔ ${topCorr.column_b} (${topCorr.correlation?.toFixed(3)})` : 'N/A'}
-- Recommended scatter plots: ${scatter_recommendations?.slice(0, 2).map(r => `${r.x} vs ${r.y} (${r.insight})`).join('; ') || 'None'}
-
-**ML Readiness:**
-- Score: ${ml_readiness.readiness_score}/100 (${ml_readiness.readiness_level})`;
-
-        // Add Gemini insights if available
-        if (gemini_insights) {
-            prompt += `
-
-**AI-Powered Data Preparation Tips:**`;
-
-            if (gemini_insights.data_prep_tips && gemini_insights.data_prep_tips.length > 0) {
-                prompt += `
-- ${gemini_insights.data_prep_tips.slice(0, 3).join('\n- ')}`;
-            }
-
-            if (gemini_insights.encoding_suggestions && gemini_insights.encoding_suggestions.length > 0) {
-                const encodings = gemini_insights.encoding_suggestions.slice(0, 2);
-                prompt += `
-
-**Encoding Suggestions:** ${encodings.map(e => `${e.column} → ${e.method}`).join(', ')}`;
-            }
-
-            if (gemini_insights.feature_importance_hints && gemini_insights.feature_importance_hints.length > 0) {
-                const targets = gemini_insights.feature_importance_hints.filter(h => h.role === 'target');
-                const drops = gemini_insights.feature_importance_hints.filter(h => h.role === 'drop' || h.role === 'id');
-                if (targets.length > 0) {
-                    prompt += `
-**Likely target columns:** ${targets.map(t => t.column).join(', ')}`;
-                }
-                if (drops.length > 0) {
-                    prompt += `
-**Consider dropping:** ${drops.map(d => d.column).join(', ')}`;
-                }
-            }
-
-            if (gemini_insights.overall_assessment) {
-                prompt += `
-
-**Overall Assessment:** ${gemini_insights.overall_assessment}`;
-            }
-        }
-
-        prompt += `
-
-Summarize the above into a professional 6-10 sentence paragraph for a data scientist preparing this data for ML.`;
-
-        return prompt;
+        return {
+            datasetName,
+            chartConfigs, // Store chart configurations for visualization
+            overview: {
+                rowCount: dataset_overview.row_count,
+                columnCount: dataset_overview.column_count,
+                numericColumns: dataset_overview.numeric_columns,
+                categoricalColumns: dataset_overview.categorical_columns,
+                datetimeColumns: dataset_overview.datetime_columns || [],
+            },
+            qualityScore: {
+                score: data_quality?.overall_score ?? 0,
+                level: data_quality?.level ?? 'Unknown',
+            },
+            missingData: missing_data_insights.columns
+                .filter(c => c.missing_percentage > 0)
+                .sort((a, b) => b.missing_percentage - a.missing_percentage)
+                .map(c => ({
+                    column: c.column,
+                    count: c.missing_count,
+                    percentage: c.missing_percentage,
+                })),
+            outliers: outlier_detection
+                .filter(o => o.outlier_percentage > 0)
+                .sort((a, b) => b.outlier_percentage - a.outlier_percentage)
+                .map(o => ({
+                    column: o.column,
+                    count: o.outlier_count,
+                    percentage: o.outlier_percentage,
+                })),
+            duplicateRows: dataset_overview.duplicate_rows,
+            issues: data_quality?.issues?.map(issue => ({
+                type: issue.type,
+                severity: issue.severity,
+                message: issue.message,
+                affectedColumns: issue.affected_columns,
+            })) || [],
+            chartPayloads: {
+                histograms: chart_payloads?.histograms || [],
+                bars: chart_payloads?.bars || [],
+            },
+        };
     }
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1943,9 +2117,43 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                     <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
-                                    {project?.name || activeChat.title}
-                                </h3>
+                                {isEditingName ? (
+                                    <input
+                                        type="text"
+                                        value={editedName}
+                                        onChange={(e) => setEditedName(e.target.value)}
+                                        onBlur={() => {
+                                            if (editedName.trim() && project) {
+                                                setProject({ ...project, name: editedName.trim() });
+                                            }
+                                            setIsEditingName(false);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                if (editedName.trim() && project) {
+                                                    setProject({ ...project, name: editedName.trim() });
+                                                }
+                                                setIsEditingName(false);
+                                            } else if (e.key === 'Escape') {
+                                                setEditedName(project?.name || activeChat.title);
+                                                setIsEditingName(false);
+                                            }
+                                        }}
+                                        autoFocus
+                                        className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded px-2 py-0.5 outline-none focus:ring-2 focus:ring-violet-400 max-w-[180px]"
+                                    />
+                                ) : (
+                                    <h3
+                                        className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                                        onClick={() => {
+                                            setEditedName(project?.name || activeChat.title);
+                                            setIsEditingName(true);
+                                        }}
+                                        title="Click to rename project"
+                                    >
+                                        {project?.name || activeChat.title}
+                                    </h3>
+                                )}
                                 {isWaitingForResponse && (
                                     <Loader2 className="size-3.5 animate-spin text-blue-500" />
                                 )}
@@ -1965,7 +2173,7 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
 
                     {/* Messages Area */}
                     <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 scrollbar-none scroll-smooth">
-                        {activeChat.messages.map((msg: { role: string, content: string }, i: number) => {
+                        {activeChat.messages.map((msg: { role: string, content: string, hasSummary?: boolean }, i: number) => {
                             // Helper to parse potential JSON content from the AI
                             const getContent = (content: string) => {
                                 try {
@@ -1999,6 +2207,16 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                                             </div>
                                         )}
                                     </div>
+                                    {/* View Summary Button */}
+                                    {msg.hasSummary && summaryData && (
+                                        <button
+                                            onClick={() => setShowSummaryModal(true)}
+                                            className="mt-1.5 px-3 py-1 text-[11px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-700 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors flex items-center gap-1.5"
+                                        >
+                                            <FileText className="size-3" />
+                                            View Summary
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}
@@ -2099,7 +2317,219 @@ Summarize the above into a professional 6-10 sentence paragraph for a data scien
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Summary Modal - Full Page Overlay */}
+            {showSummaryModal && summaryData && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div
+                        ref={summaryReportRef}
+                        className="bg-white dark:bg-zinc-950 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 w-[85%] h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+                    >
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white dark:bg-zinc-950">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-zinc-100 dark:bg-zinc-900 rounded-lg">
+                                    <FileText className="size-5 text-zinc-900 dark:text-zinc-100" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
+                                        Data Analysis Report
+                                    </h3>
+                                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                        {summaryData.datasetName} • Generated on {new Date().toLocaleDateString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={exportSummaryAsPDF}
+                                    className="gap-2"
+                                >
+                                    <Download className="size-4" />
+                                    Export PDF
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setShowSummaryModal(false)}
+                                >
+                                    <X className="size-5" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto p-8 bg-zinc-50/50 dark:bg-zinc-950/50">
+                            <div className="max-w-5xl mx-auto space-y-8">
+
+                                {/* 1. Dataset Overview */}
+                                <section>
+                                    <h4 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">Dataset Overview</h4>
+                                    <div className="grid grid-cols-4 gap-4">
+                                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                            <div className="text-zinc-500 text-xs mb-1">Total Rows</div>
+                                            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+                                                {summaryData.overview.rowCount.toLocaleString()}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                            <div className="text-zinc-500 text-xs mb-1">Total Columns</div>
+                                            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+                                                {summaryData.overview.columnCount}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                            <div className="text-zinc-500 text-xs mb-1">Duplicate Rows</div>
+                                            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+                                                {summaryData.duplicateRows.toLocaleString()}
+                                            </div>
+                                            <div className="text-xs text-zinc-400 mt-1">
+                                                {((summaryData.duplicateRows / summaryData.overview.rowCount) * 100).toFixed(1)}% of total
+                                            </div>
+                                        </div>
+                                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                            <div className="text-zinc-500 text-xs mb-1">Column Types</div>
+                                            <div className="flex flex-col gap-1 mt-1">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-zinc-500">Numeric</span>
+                                                    <span className="font-medium">{summaryData.overview.numericColumns.length}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-zinc-500">Categorical</span>
+                                                    <span className="font-medium">{summaryData.overview.categoricalColumns.length}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* 2. Visual Analysis (Charts) */}
+                                {summaryData.chartConfigs && summaryData.chartConfigs.length > 0 && (
+                                    <section>
+                                        <h4 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">Visual Analysis</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {summaryData.chartConfigs.map((config, idx) => (
+                                                <div key={idx} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+                                                    <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                                                        <h5 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                                            {config.label}
+                                                        </h5>
+                                                    </div>
+                                                    <div className="p-4 h-[300px]">
+                                                        {(() => {
+                                                            const { type, props } = config.chartData;
+                                                            switch (type) {
+                                                                case 'histogram_chart': return <HistogramChart {...(props as any)} />;
+                                                                case 'bar_chart': return <BarChart {...(props as any)} />;
+                                                                case 'scatter_chart': return <ScatterChart {...(props as any)} />;
+                                                                case 'correlation_heatmap': return <CorrelationHeatmap {...(props as any)} />;
+                                                                case 'line_chart': return <LineChart {...(props as any)} />;
+                                                                case 'pie_chart': return <PieChart {...(props as any)} />;
+                                                                case 'area_chart': return <AreaChart {...(props as any)} />;
+                                                                case 'boxplot_chart': return <BoxPlotChart {...(props as any)} />;
+                                                                case 'treemap_chart': return <TreemapChart {...(props as any)} />;
+                                                                case 'stacked_bar_chart': return <StackedBarChart {...(props as any)} />;
+                                                                default: return <div className="flex items-center justify-center h-full text-zinc-400">Chart type not supported</div>;
+                                                            }
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-8">
+                                    {/* 3. Missing Data */}
+                                    <section>
+                                        <h4 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">Missing Data</h4>
+                                        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                                            {summaryData.missingData.length > 0 ? (
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                                                            <th className="px-4 py-2 text-left font-medium text-zinc-500">Column</th>
+                                                            <th className="px-4 py-2 text-right font-medium text-zinc-500">Missing</th>
+                                                            <th className="px-4 py-2 text-right font-medium text-zinc-500">%</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                                        {summaryData.missingData.slice(0, 5).map((item, i) => (
+                                                            <tr key={i}>
+                                                                <td className="px-4 py-2 font-medium text-zinc-700 dark:text-zinc-300">{item.column}</td>
+                                                                <td className="px-4 py-2 text-right text-zinc-500">{item.count}</td>
+                                                                <td className="px-4 py-2 text-right">
+                                                                    <div className="flex items-center justify-end gap-2">
+                                                                        <span className={`font-medium ${item.percentage > 30 ? 'text-red-500' :
+                                                                            item.percentage > 5 ? 'text-amber-500' : 'text-zinc-500'
+                                                                            }`}>
+                                                                            {item.percentage.toFixed(1)}%
+                                                                        </span>
+                                                                        <div className="w-16 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className={`h-full rounded-full ${item.percentage > 30 ? 'bg-red-500' :
+                                                                                    item.percentage > 5 ? 'bg-amber-500' : 'bg-green-500'
+                                                                                    }`}
+                                                                                style={{ width: `${item.percentage}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="p-8 text-center text-zinc-500">
+                                                    <CheckCircle className="size-8 mx-auto mb-2 text-green-500/50" />
+                                                    <p>No missing data detected</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </section>
+
+                                    {/* 4. Outliers */}
+                                    <section>
+                                        <h4 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">Outliers Detected</h4>
+                                        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                                            {summaryData.outliers.length > 0 ? (
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                                                            <th className="px-4 py-2 text-left font-medium text-zinc-500">Column</th>
+                                                            <th className="px-4 py-2 text-right font-medium text-zinc-500">Count</th>
+                                                            <th className="px-4 py-2 text-right font-medium text-zinc-500">%</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                                        {summaryData.outliers.slice(0, 5).map((item, i) => (
+                                                            <tr key={i}>
+                                                                <td className="px-4 py-2 font-medium text-zinc-700 dark:text-zinc-300">{item.column}</td>
+                                                                <td className="px-4 py-2 text-right text-zinc-500">{item.count}</td>
+                                                                <td className="px-4 py-2 text-right text-zinc-500">
+                                                                    {item.percentage.toFixed(1)}%
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="p-8 text-center text-zinc-500">
+                                                    <CheckCircle className="size-8 mx-auto mb-2 text-green-500/50" />
+                                                    <p>No significant outliers detected</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div >
     );
 }
 

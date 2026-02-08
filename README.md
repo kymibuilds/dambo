@@ -1,36 +1,212 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dambo
+
+Dambo is an AI-powered data visualization and analysis platform that transforms CSV datasets into interactive charts and insights. It features a canvas-based interface where users can create, modify, and explore visualizations through natural language conversations with an AI assistant.
+
+## Features
+
+### Data Analysis
+- Upload CSV datasets for automatic profiling and analysis
+- AI-powered quick analysis with data quality scoring
+- Missing data detection and outlier identification
+- Correlation analysis between numeric columns
+- ML readiness assessment for datasets
+
+### Interactive Canvas
+- Drag-and-drop node-based visualization workspace
+- Create multiple charts from the same dataset
+- Pan, zoom, and organize visualizations freely
+- Export charts as PNG or JPEG images
+
+### Chart Types
+- Bar Chart - Categorical data distribution
+- Histogram - Numeric data distribution with customizable bins
+- Pie Chart - Proportional breakdown with top N categories
+- Line Chart - Time series with optional grouping
+- Area Chart - Stacked time series visualization
+- Scatter Plot - Two-variable correlation analysis
+- Box Plot - Statistical distribution with outlier detection
+- Correlation Heatmap - Multi-variable correlation matrix
+- Stacked Bar Chart - Grouped categorical comparison
+- Treemap - Hierarchical data visualization
+
+### AI-Powered Chat
+- Natural language chart modifications
+- Ask to change chart type, columns, or add filters
+- Style customization through conversation
+- Per-node and global chat interfaces
+- Powered by Google Gemini AI
+
+### Filtering
+- Apply data filters through natural language
+- Filter by numeric comparisons (greater than, less than, equals)
+- Filter by string matching and contains
+- Filters persist across chart type changes
+
+## Tech Stack
+
+### Frontend
+- Next.js 16 with App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Recharts for data visualization
+- XYFlow for canvas management
+- Framer Motion for animations
+- Radix UI and shadcn/ui components
+
+### Backend
+- FastAPI (Python)
+- Pandas for data processing
+- NumPy for numerical operations
+- Google Generative AI for analysis
+- Docker for containerization
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18 or later (or Bun)
+- Python 3.11 or later
+- Docker and Docker Compose (for backend)
+- Google Gemini API key
 
+### Environment Setup
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/kymibuilds/dambo.git
+cd dambo
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create frontend environment file:
+```bash
+# Create .env.local in the root directory
+NEXT_PUBLIC_API_URL=http://localhost:8000
+GEMINI_API_KEY=your_gemini_api_key
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Create backend environment file:
+```bash
+# Create .env in the server directory
+GEMINI_API_KEY=your_gemini_api_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Running the Backend
 
-## Learn More
+Using Docker Compose:
+```bash
+cd server
+docker compose up --build
+```
 
-To learn more about Next.js, take a look at the following resources:
+The backend API will be available at http://localhost:8000.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Running the Frontend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Install dependencies:
+```bash
+bun install
+# or
+npm install
+```
 
-## Deploy on Vercel
+Start the development server:
+```bash
+bun dev
+# or
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open http://localhost:3000 in your browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+dambo/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── dashboard/[id]/     # Project dashboard with canvas
+│   │   └── project/            # Project management
+│   ├── components/
+│   │   ├── analysis/           # Quick analysis panel components
+│   │   ├── canvas/             # Flow canvas and nodes
+│   │   ├── charts/             # All chart components
+│   │   └── ui/                 # Shared UI components
+│   └── lib/
+│       ├── api/                # API client functions
+│       └── gemini/             # Gemini AI integration
+├── server/
+│   ├── app/
+│   │   ├── routes/             # FastAPI route handlers
+│   │   ├── services/           # Business logic
+│   │   └── schemas/            # Pydantic models
+│   ├── storage/                # Uploaded datasets
+│   └── docker-compose.yml
+└── public/                     # Static assets
+```
+
+## API Endpoints
+
+### Dataset Management
+- `POST /datasets/upload` - Upload a CSV file
+- `GET /datasets/{id}/profile` - Get dataset profile and statistics
+- `GET /datasets/{id}/quick-analysis` - Run AI-powered analysis
+
+### Visualization
+- `GET /datasets/{id}/histogram` - Histogram data
+- `GET /datasets/{id}/bar` - Bar chart data
+- `GET /datasets/{id}/pie` - Pie chart data
+- `GET /datasets/{id}/scatter` - Scatter plot data
+- `GET /datasets/{id}/line` - Line chart data
+- `GET /datasets/{id}/area` - Area chart data
+- `GET /datasets/{id}/boxplot` - Box plot statistics
+- `GET /datasets/{id}/correlation` - Correlation matrix
+- `GET /datasets/{id}/stacked-bar` - Stacked bar data
+- `GET /datasets/{id}/treemap` - Treemap data
+
+All visualization endpoints support optional filter parameters:
+- `filter_column` - Column to filter on
+- `filter_operator` - Comparison operator
+- `filter_value` - Value to compare against
+
+## Usage
+
+1. Navigate to the landing page and click to access the dashboard
+2. Upload a CSV dataset using the upload panel
+3. The AI will automatically analyze your data and suggest visualizations
+4. Click on chart suggestions to add them to the canvas
+5. Use the chat interface on each node to modify charts:
+   - "Show this as a pie chart"
+   - "Filter where age is greater than 30"
+   - "Change the color to blue"
+   - "Show the Department column instead"
+6. Drag nodes to organize your workspace
+7. Export charts using the menu on each node
+
+## Development
+
+### Building for Production
+
+Frontend:
+```bash
+bun run build
+bun start
+```
+
+Backend:
+```bash
+docker compose -f server/docker-compose.yml up --build
+```
+
+### Running Tests
+
+```bash
+bun run lint
+```
+
+## License
+
+This project is private and proprietary.
+
+## Contributing
+
+This is a private project. For questions or issues, contact the repository owner.
